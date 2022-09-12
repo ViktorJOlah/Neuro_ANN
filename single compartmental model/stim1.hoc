@@ -1,0 +1,279 @@
+objref syn_exc, syn_inh
+
+
+access soma
+
+syn_exc = new Exp2Syn(0.5)
+syn_exc.tau1 = 0.5
+syn_exc.tau2 = 3
+syn_exc.e = 0
+
+syn_inh = new Exp2Syn(0.5)
+syn_inh.tau1 = 1
+syn_inh.tau2 = 8
+syn_inh.e = -75
+
+
+objref inp0, inp1, inp2, inp3, inp4, inp5, inp6, inp7, inp8, inp9
+objref inp10, inp11, inp12, inp13, inp14, inp15, inp16, inp17, inp18, inp19, inp20, inp21, inp22, inp23
+objref r1, rb, rp, rms, rec, rsch
+
+objref net0, net1, net2, net3, net4, net5, net6, net7, net8, net9
+objref net10, net11, net12, net13, net14, net15, net16, net17, net18, net19
+objref net20, net21, net22, net23
+
+objref vec0, vec1, vec2, vec3, vec4, vec5, vec6, vec7, vec8, vec9
+objref vec10, vec11, vec12, vec13, vec14, vec15, vec16, vec17, vec18, vec19
+objref vec20, vec21, vec22, vec23
+
+
+objref vec_rec, vec_rec_high, vec_rec_ik, vec_rec_ina, vec_rec_ik_high, vec_rec_ina_high
+objref m_inp, m_weight, m_v, m_ik, m_ina
+objref apc, apvec
+
+access soma
+
+apc = new APCount(0.5)
+apvec = new Vector()
+apc.record(apvec)
+
+m_inp = new Matrix()
+m_weight = new Matrix()
+m_v = new Matrix()
+m_ik = new Matrix()
+m_ina = new Matrix()
+
+vec_rec = new Vector()
+vec_rec_high = new Vector()
+vec_rec_ik = new Vector()
+vec_rec_ik_high = new Vector()
+vec_rec_ina = new Vector()
+vec_rec_ina_high = new Vector()
+
+
+
+vec_rec.record(&soma.v(0.5), 1)
+vec_rec_high.record(&soma.v(0.5), 0.01)
+vec_rec_ina.record(&soma.ina(0.5), 1)
+vec_rec_ina_high.record(&soma.ina(0.5), 0.01)
+vec_rec_ik.record(&soma.ik(0.5), 1)
+vec_rec_ik_high.record(&soma.ik(0.5), 0.01)
+
+tstop = 10000
+
+randint = 91321234
+
+r1 = new Random(randint)
+r1.uniform(0, tstop-10)
+
+rb = new Random()
+rb.uniform(1.1,2.9)
+
+
+
+
+objref scaling_activity
+scaling_activity = new Random(randint)
+scaling_activity.uniform(0,4)
+
+objref exc[100001], inh[100001]
+
+
+//this function creates random stimulation pattern with the AlphaSynapse class
+
+proc create_stim(){
+	objref exc[100001], inh[100001]
+	inp0 = new Vector()
+	inp1 = new Vector()
+
+	//we can scale activity levels (number of synapses per etap), to modulate firing or to isolate individual events. 
+	//first, it is better to have lower scaling, so the cell can learn resting membrane potential and the shape of individual events
+	//scaling activity can be set in line79 arguments
+	scale1 = scaling_activity.repick()
+	
+	//at the first ANN fitting round, where intensity is lower, the cell can learn resting MP better, if no events are present
+	if($1%20 == 0){
+		scale1 = 0
+	}
+	print(scale1)
+	
+	
+	//here, excitatory events are added (n = 800*scaling). the timing is randomly chosen.	
+	for i = 0, int(800*scale1){
+		timing = int(r1.repick())
+		//since this is a single compartmental model, we need to check whether there is an event with the same timing that would interfere
+		if(inp0.contains(timing)){
+			continue
+			}else{
+				access soma
+				exc[i] = new AlphaSynapse(0.5)
+				exc[i].onset = timing
+				exc[i].tau = 2
+				exc[i].gmax = 0.0025
+				exc[i].e = 0
+				inp0.append(timing)
+				}
+	}
+
+	//defining inhibitory events, similarly to previous excitatory events, but the total number is lower, so the cell can actually fire
+	for i = 0, int(300*scale1){
+		timing = int(r1.repick())
+		if(inp1.contains(timing)){
+			continue
+			}else{
+				access soma
+				inh[i] = new AlphaSynapse(0.5)
+				inh[i].onset = timing
+				inh[i].tau = 1
+				inh[i].gmax = 0.008
+				inh[i].e = -90
+				inp1.append(timing)
+			}
+	}
+	
+
+	inp0.sort()
+	inp1.sort()
+
+
+	//defining matrices for txt output
+	m_inp.resize(19601,2*($1+1))
+	m_weight.resize(($1+1)*1,2)
+	m_v.resize(tstop+1, 1*($1+1))
+	m_ik.resize(tstop+1, 1*($1+1))
+	m_ina.resize(tstop+1, 1*($1+1))
+
+	for i01 = 0, inp0.size()-1{
+		m_inp.setval(i01, 2*$1+0, inp0.x[i01])
+	}
+	for i01 = 0, inp1.size()-1{
+		m_inp.setval(i01, 2*$1+1, inp1.x[i01])
+	}
+
+	m_weight.setval($1+0, 0, exc[0].gmax)
+	m_weight.setval($1+0, 1, inh[0].gmax)
+
+	run()
+
+	// exchange recorded AP peak value for actual peaks from non-subsampled recordings
+	
+	for i = 0, apvec.size()-1{
+		if(apvec.x[i] < tstop-10){
+			ap_peak = vec_rec_high.max(int(apvec.x[i]*100-200), int(apvec.x[i]*100+200))
+			ina_peak = vec_rec_ina_high.min(int(apvec.x[i]*100-200), int(apvec.x[i]*100+200))
+			ik_peak = vec_rec_ik_high.max(int(apvec.x[i]*100-200), int(apvec.x[i]*100+200))
+			
+			//print ap_peak, ina_peak, ik_peak
+			
+			vec_rec.set(vec_rec.max_ind(int(apvec.x[i]-2), int(apvec.x[i]+2)), ap_peak)
+			vec_rec_ina.set(vec_rec_ina.min_ind(int(apvec.x[i]-2), int(apvec.x[i]+2)), ina_peak)
+			vec_rec_ik.set(vec_rec_ik.max_ind(int(apvec.x[i]-2), int(apvec.x[i]+2)), ik_peak)
+		
+		}
+	}
+	
+	
+
+
+	for i01 = 0, vec_rec.size()-1{
+		m_v.setval(i01, $1+0, vec_rec.x[i01])
+	}
+	
+	for i01 = 0, vec_rec.size()-1{
+		m_ik.setval(i01, $1+0, vec_rec_ik.x[i01])
+	}
+	
+	for i01 = 0, vec_rec.size()-1{
+		m_ina.setval(i01, $1+0, vec_rec_ina.x[i01])
+	}
+
+}
+
+//stimnum defines the number of rounds to run. it is generally advisable to present the ANNs with a couple million datapoints
+//as the simulation is sampled with a dt of 1ms, and every ms is 1 datapoint for ANN fitiing, the number of final datapoints will be (stimnum+1)*tstop = 1,000,000
+stimnum = 99
+
+for i02 = 0, stimnum{
+	print i02
+	create_stim(i02)
+}
+
+//write txts
+
+objref f_inp, f_weight, f_v, f_vmi, f_ina, f_ik
+f_inp = new File()
+f_ina = new File()
+f_ik = new File()
+f_weight = new File()
+f_v = new File()
+f_vmi = new File()
+
+f_inp.wopen("inp.txt")
+m_inp.fprint(f_inp, "%g ")
+f_inp.close()
+
+f_ina.wopen("ina.txt")
+m_ina.fprint(f_ina, "%g ")
+f_ina.close()
+
+f_ik.wopen("ik.txt")
+m_ik.fprint(f_ik, "%g ")
+f_ik.close()
+
+f_weight.wopen("weights.txt")
+m_weight.fprint(f_weight, "%g ")
+f_weight.close()
+
+f_v.wopen("v_soma.txt")
+m_v.fprint(f_v, "%g ")
+f_v.close()
+
+
+
+objref m_final
+m_final = new Matrix()
+m_final.resize(m_v.nrow()*m_v.ncol(),5)
+
+for j = 0, stimnum{
+
+	addrow = j*m_v.nrow()
+
+	for i = 0, m_v.nrow()-1{
+		m_final.setval(i+addrow, 0, m_v.x[i][j])
+	}
+	
+	for i = 0, m_ik.nrow()-1{
+		m_final.setval(i+addrow, 1, m_ik.x[i][j])
+	}
+	
+	for i = 0, m_ina.nrow()-1{
+		m_final.setval(i+addrow, 2, m_ina.x[i][j])
+	}
+
+
+	addcol = j*2
+	for k = 0, 1{
+		for i = 1, m_inp.nrow()-1{
+			//print m_inp.x[i][k+addcol], m_inp.x[i][k+addcol]+addrow, (m_inp.x[i][k+addcol]*2+addrow), k+1, m_weight.x[j][k]
+			m_final.setval((m_inp.x[i][k+addcol]+addrow), k+3, m_weight.x[j][k]) 
+			
+		}
+	}
+
+}
+
+
+
+
+f_vmi.wopen("final.txt")
+m_final.fprint(f_vmi, "%g ")
+f_vmi.close()
+
+
+
+
+
+
+
+
+

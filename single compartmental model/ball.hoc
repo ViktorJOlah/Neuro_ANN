@@ -1,0 +1,49 @@
+proc celldef() {
+  topol()
+  subsets()
+  geom()
+  biophys()
+  geom_nseg()
+}
+
+create soma
+
+proc topol() { local i
+  basic_shape()
+}
+proc basic_shape() {
+  soma {pt3dclear() pt3dadd(0, 0, 0, 1) pt3dadd(15, 0, 0, 1)}
+}
+
+objref all
+proc subsets() { local i
+  objref all
+  all = new SectionList()
+    soma all.append()
+
+}
+proc geom() {
+  forsec all {  }
+   soma.diam = 25
+   soma.L = 25
+}
+proc geom_nseg() {
+   forsec all { nseg = 1  }
+}
+proc biophys() {
+  forsec all {
+    Ra = 35.4
+    cm = 1
+    insert pas
+      g_pas = 0.001
+      e_pas = -70
+    insert hh
+      gnabar_hh = 0.12
+      gkbar_hh = 0.036
+      gl_hh = 0.0003
+      el_hh = -54.3
+  }
+}
+access soma
+
+celldef()

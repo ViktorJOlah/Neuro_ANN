@@ -1,0 +1,9 @@
+load_file("nrngui.hoc")
+
+//load morphology and biophysics
+load_file("ball.hoc")
+
+//load stimulation patterns and write txts
+load_file("stim1.hoc")
+
+
