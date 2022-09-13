@@ -1,0 +1,17 @@
+load_file("nrngui.hoc")
+
+load_file("morph.hoc")
+
+load_file("biophys.hoc")
+load_file("fix_nseg.hoc")
+
+geom_nseg()
+
+
+
+
+
+
+
+
+
