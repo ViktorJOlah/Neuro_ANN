@@ -1,0 +1,3 @@
+http://celltypes.brain-map.org/experiment/electrophysiology/471786879
+
+L6a PC that is identical to the one showed in the publication

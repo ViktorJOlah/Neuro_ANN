@@ -1,0 +1,254 @@
+load_file("nrngui.hoc")
+
+load_file("morph.hoc")
+load_file("biophys.hoc")
+load_file("fix_nseg.hoc")
+
+geom_nseg()
+
+load_file("1.ses")
+
+objref weight_m, vec_rec, bas_exc, bas_inh, f0, dends, aps
+
+f0 = new File("vmi.txt")
+weight_m = new Matrix()
+vec_rec = new Vector()
+
+basal_counter = 0
+forsec basal{
+	basal_counter += 1
+}
+
+apic_counter = 0
+forsec apical{
+	apic_counter += 1
+}
+
+print "basal counter: ", basal_counter
+print "apical counter: ", apic_counter
+
+numdend = 10
+
+dends = new Vector()
+for i=0,numdend-1{
+	dends.append(int(i*(basal_counter)/numdend))
+	print int(i*(basal_counter)/numdend)
+}
+
+
+numapic = 19
+
+aps = new Vector()
+for i=0,numapic-1{
+	aps.append(int(i*(apic_counter)/numapic))
+	print int(i*(apic_counter)/numapic)
+}
+numloc = numdend + numapic
+
+
+vec_rec.record(&soma.v(0.5))
+weight_m.resize(200,2)
+
+//for i = 0, 55{
+
+
+
+INITDUR = 100 // # ms to reach steady state
+
+
+proc init() { local temp
+
+v_init = -70
+  
+  finitialize(v_init)
+  t = -2*INITDUR // jump to a time "before" 0
+  temp = cvode.active()
+  if (temp != 0) { // if cvode is on, turn it off
+    cvode.active(0)
+    dt = 0.01
+  }
+  while (t < -INITDUR) {
+    fadvance()
+  }
+  if (temp != 0) { cvode.active(1) } // turn cvode back on if necessary
+  t = 0
+  if (cvode.active()) {
+    cvode.re_init()
+  } else {
+    fcurrent()
+  }
+  frecord_init()
+}
+
+
+load_file("1.ses")
+
+
+tstop = 10000
+
+
+objref dend_r, apic_r, r1, scaling_activity, inp_m, vec_rec, syn[100001], bas_exc[100001], apic_exc[100001], apic_inh[100001], bas_inh[100001], f1, f2
+
+dend_r = new Random()
+apic_r = new Random()
+r1 = new Random()
+scaling_activity = new Random()
+vec_rec = new Vector()
+f1 = new File()
+
+dend_r.discunif(0,dends.size()-1)
+apic_r.discunif(0,aps.size()-1)
+r1.discunif(0,tstop)
+//scaling_activity.lognormal(0.45,0.15)
+scaling_activity.uniform(0.1,0.8)
+access soma
+vec_rec.record(&soma.v(0.5), 0.5)
+
+
+soma distance()
+
+
+
+//19,28
+
+access soma
+
+objref apc
+apc = new APCount(0.5)
+
+rand_init = 5
+
+proc create_stim(){
+
+	dend_r = new Random($1*rand_init)
+	apic_r = new Random($1*rand_init)
+	r1 = new Random($1*rand_init)
+	scaling_activity = new Random($1*rand_init)
+
+	dend_r.discunif(0,dends.size()-1)
+	apic_r.discunif(0,aps.size()-1)
+	r1.uniform(0,tstop)
+	//scaling_activity.lognormal(0.15,0.05)
+	scaling_activity.uniform(0.1,0.8)
+
+
+	objref bas_exc[100001], bas_inh[100001], apic_exc[100001], apic_inh[100001]
+	inp_m = new Matrix()
+	num_col = 2*(numloc)+1
+	inp_m.resize(20001, num_col)
+
+	scale1 = scaling_activity.repick()
+	print(scale1)
+
+	
+
+	
+	//basal exc
+
+	for i = 0, int(3500*scale1){
+		dend_r.repick()
+		dend_r.repick()
+		
+		seg = int(dend_r.repick())
+		
+		access dend[seg]
+		timing = int(r1.repick())
+		bas_exc[i] = new AlphaSynapse(0.5)
+		bas_exc[i].onset = timing
+		bas_exc[i].tau = 1
+		bas_exc[i].gmax = 0.0065
+		bas_exc[i].e = -14
+		//print seg, timing, distance(0.5), bas_exc[i].gmax
+		inp_m.setval(timing*2, seg+1, bas_exc[i].gmax)
+	}
+	
+	//apical exc
+
+	for i = 0, int(3500*scale1){
+		apic_r.repick()
+		apic_r.repick()
+		
+		seg = int(apic_r.repick())
+		
+		access apic[seg]
+		timing = int(r1.repick())
+		apic_exc[i] = new AlphaSynapse(0.5)
+		apic_exc[i].onset = timing
+		apic_exc[i].tau = 1
+		apic_exc[i].gmax = 0.0065
+		apic_exc[i].e = -14
+		//print seg, timing, distance(0.5), apic_exc[i].gmax
+		inp_m.setval(timing*2, seg+1+numdend, apic_exc[i].gmax)
+	}
+	
+
+	//basal inh	
+	for i = 0, int(3000*scale1){
+		dend_r.repick()
+		seg = int(dend_r.repick())
+
+		access dend[seg]
+		timing = int(r1.repick())
+		bas_inh[i] = new AlphaSynapse(0.5)
+		bas_inh[i].onset = timing
+		bas_inh[i].tau = 1
+		bas_inh[i].gmax = 0.003
+		bas_inh[i].e = -107
+		//print timing, distance(0.5), bas_inh[i].gmax
+		inp_m.setval(timing*2, numloc+seg+1, bas_inh[i].gmax)
+	}
+	
+	//apic inh	
+	for i = 0, int(3000*scale1){
+		apic_r.repick()
+		apic_r.repick()
+		
+		seg = int(apic_r.repick())
+		
+		access apic[seg]
+		timing = int(r1.repick())
+		apic_inh[i] = new AlphaSynapse(0.5)
+		apic_inh[i].onset = timing
+		apic_inh[i].tau = 1
+		apic_inh[i].gmax = 0.003
+		apic_inh[i].e = -107
+		//print seg, timing, distance(0.5), apic_inh[i].gmax
+		inp_m.setval(timing*2, numloc+numdend+seg+1, apic_inh[i].gmax)
+	}		
+		
+		
+	
+	run()
+
+	
+	for i=0, vec_rec.size()-1{
+		inp_m.setval(i, 0, vec_rec.x[i])
+	}
+
+	if (apc.n < 300){
+		f1.aopen("vmi3.txt")
+		inp_m.fprint(f1, "%g ")
+		f1.close()
+	}
+	
+	
+	
+access soma
+}
+
+//create_stim(1)
+
+
+
+
+for i01 = 0, 300{
+	print i01
+	create_stim(i01)
+	
+}
+
+
+
+
+
+

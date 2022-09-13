@@ -1,0 +1,81 @@
+forall{
+	Ra = 216.579927866
+	celsius = 34 
+}
+
+forsec somatic{
+	insert pas
+	g_pas = 0.00092316608184282907
+	e_pas = -89.654541015625
+
+	cm = 1
+	Ra = 216.579927866
+
+	insert Im
+	gbar_Im = 6.8510140501798497e-07
+
+	insert NaTs
+	gbar_NaTs = 0.81857290399991345
+	
+	insert Nap
+	gbar_Nap = 1.5559780273320624e-07
+
+	insert Kv2like
+	gbar_Kv2like = 0.028124088251079149
+
+	insert K_P
+	gbar_K_P = 0.025225007414684926
+
+	insert K_T
+	gbar_K_T = 7.0557655255514401e-06
+	
+	insert Kv3_1
+	gbar_Kv3_1 = 0.073913073611030028
+	
+	insert SK
+	gbar_SK = 0.036943951384256095
+	
+	insert Ca_HVA
+	gbar_Ca_HVA = 0.0007218431730676287
+	
+	insert Ca_LVA
+	gbar_Ca_LVA = 0.0030063504814041111
+	
+	insert CaDynamics
+	gamma_CaDynamics = 7.6747566113802919e-05
+	decay_CaDynamics = 537.88494677977144
+	
+	insert Ih
+	gbar_Ih = 3.645626432950758e-05
+}
+
+
+
+forsec axonal{
+	insert pas
+	g_pas = 0.00034801331277063534
+	e_pas = -89.654541015625
+	cm = 1
+	Ra = 216.579927866
+}
+
+	
+forsec basal{
+	insert pas
+	g_pas = 2.2618397414069016e-05
+	e_pas = -89.654541015625
+	cm = 3.0584244097937123
+	Ra = 216.579927866
+    }
+	
+forsec apical{
+	insert pas
+	g_pas = 5.2212470174763149e-07  
+	e_pas = -89.654541015625
+	cm = 3.0584244097937123
+	Ra = 216.579927866
+    }
+	
+ena = 53.0
+ek = -107.0
+v_init = -89.654541015625
