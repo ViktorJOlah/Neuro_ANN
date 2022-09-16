@@ -1,0 +1,191 @@
+
+objref ff
+proc ch() { local i,j,fac, pos, chAll,chDe,chAp,chSo,chCol,chAis,chMy,chNo, chAllA,chDeA,chApA,chSoA,chColA,chAisA,chMyA,chNoA
+
+
+	//all
+	chAll=0
+	chAllA=0
+	ff=new File()	ff.wopen("exportOverlAll.tmp")	forall {
+		for j=1,nseg {
+			ff.printf("%e\n",overl_charge_(j/nseg))
+			pos=0.5/nseg+(j-1)/nseg			chAll = chAll + area(pos)*na_ch_charge_(pos)	//mA/cm^2 * um^2
+			chAllA = chAllA + area(pos)
+		}
+	}	ff.close()
+
+	//dend
+	chDe=0
+	chDeA=0
+	ff=new File()	ff.wopen("exportOverlDend.tmp")	for i=0,dendNum-1 {		dend[i] {			for j=1,nseg {
+				ff.printf("%e\n",overl_charge_(j/nseg))
+				pos=0.5/nseg+(j-1)/nseg				chDe = chDe + area(pos)*na_ch_charge_(pos)	//mA/cm^2 * um^2
+				chDeA = chDeA + area(pos)
+			}
+		}
+	}	ff.close()
+
+
+	//apic
+	chAp=0
+	chApA=0
+	ff=new File()	ff.wopen("exportOverlApic.tmp")	for i=0,apicNum-1 {		apic[i] {
+			for j=1,nseg {
+				ff.printf("%e\n",overl_charge_(j/nseg))
+				pos=0.5/nseg+(j-1)/nseg				chAp = chAp + area(pos)*na_ch_charge_(pos)	//mA/cm^2 * um^2
+				chApA = chApA + area(pos)	
+			}
+		}
+	}	ff.close()
+
+	//soma
+	chSo=0
+	chSoA=0
+	ff=new File()	ff.wopen("exportOverlSoma.tmp")	soma {
+		for j=1,nseg {
+			ff.printf("%e\n",overl_charge_(j/nseg))
+			pos=0.5/nseg+(j-1)/nseg			chSo = chSo + area(pos)*na_ch_charge_(pos)	//mA/cm^2 * um^2
+			chSoA = chSoA + area(pos)
+		}
+	}
+	ff.close()
+
+	//collaterals
+	chCol=0
+	chColA=0
+	ff=new File()	ff.wopen("exportOverlAxon.tmp")	for i=1,axonNum-1 {					//axon[0] is AIS
+		axon[i] {
+			for j=1,nseg {
+				ff.printf("%e\n",overl_charge_(j/nseg))
+				pos=0.5/nseg+(j-1)/nseg				chCol = chCol + area(pos)*na_ch_charge_(pos)	//mA/cm^2 * um^2
+				chColA = chColA + area(pos)
+			}
+		}
+	}
+	ff.close()
+
+	//ais
+	chAis=0
+	chAisA=0
+	ff=new File()	ff.wopen("exportOverlAxon.tmp")	axon[0] {
+		for j=1,nseg {
+			ff.printf("%e\n",overl_charge_(j/nseg))
+			pos=0.5/nseg+(j-1)/nseg			chAis = chAis + area(pos)*na_ch_charge_(pos)	//mA/cm^2 * um^2
+			chAisA = chAisA + area(pos)
+		}
+	}
+	ff.close()
+
+
+
+	//myelin
+	chMy=0
+	chMyA=0
+	ff=new File()	ff.wopen("exportOverlMyelin.tmp")	for i=0,myNum-1 {
+		my[i] {
+			for j=1,nseg {
+				ff.printf("%e\n",overl_charge_(j/nseg))
+				pos=0.5/nseg+(j-1)/nseg				chMy = chMy + area(pos)*na_ch_charge_(pos)	//mA/cm^2 * um^2
+				chMyA = chMyA + area(pos)
+			}
+		}
+	}	ff.close()
+
+	//node
+	chNo=0
+	chNoA=0
+	ff=new File()	ff.wopen("exportOverlNode.tmp")	for i=0,nodeNum-1 {		node[i]  {
+			for j=1,nseg {
+				ff.printf("%e\n",overl_charge_(j/nseg))
+				pos=0.5/nseg+(j-1)/nseg				chNo = chNo + area(pos)*na_ch_charge_(pos)	//mA/cm^2 * um^2
+				chNoA = chNoA + area(pos)
+			}
+		}
+	}	ff.close()
+
+
+	
+	fac=-10^-3*10^4*10^-12*dt*10^-3*6.24*10^18*(1/3)
+		// (current (mA) / area (cm^2) ) * area (um^2) * dt in ms   
+		//	10^-3          10^4           10^-12        10^-3
+		//                         => A*s
+		//and:
+		//     A*s * number of elementary charges per Coulomb * 3 Na per 1 ATP
+		//                   6.24*10^18=1/e=1/1.6*10^19              1/3
+
+
+	
+	printf("--------------------------------------------------------------------------------------\n")
+	printf("The Na influx was analyzed from %f to %f ms\n",tStart_charge_,tEnd_charge_)
+	printf("Required ATP molecules to pump Na ions out:\n")
+	printf("Total: %e\n",fac*chAll)
+	printf("Soma: %e\n",fac*chSo)
+	printf("Basal dendrite: %e\n",fac*chDe)
+	printf("Apical dendrite: %e\n",fac*chAp)
+	printf("Axon Initial Segment: %e\n",fac*chAis)
+	printf("Axon collaterals: %e\n",fac*chCol)
+	printf("Myelin: %e\n",fac*chMy)
+	printf("Node: %e\n",fac*chNo)
+	printf("--------------------------------------------------------------------------------------\n")
+	printf("--------------------------------------------------------------------------------------\n")
+	printf("Required ATP molecules to pump Na ions out per um^2:\n")
+	printf("Total: %e\n",fac*chAll/chAllA)
+	printf("Soma: %e\n",fac*chSo/chSoA)
+	printf("Basal dendrite: %e\n",fac*chDe/chDeA)
+	printf("Apical dendrite: %e\n",fac*chAp/chApA)
+	printf("Axon Initial Segment: %e\n",fac*chAis/chAisA)
+	printf("Axon collaterals: %e\n",fac*chCol/chColA)
+	printf("Myelin: %e\n",fac*chMy/chMyA)
+	printf("Node: %e\n",fac*chNo/chNoA)
+	printf("--------------------------------------------------------------------------------------\n")
+	printf("Total area (um^2): %e\n",chAllA)
+	printf("Soma area (um^2): %e\n",chSoA)
+	printf("--------------------------------------------------------------------------------------\n")
+
+	
+
+
+	//export
+	ff=new File()	ff.wopen("exportChargeNames.tmp")	ff.printf("%s\n","Total:")
+	ff.printf("%s\n","Soma:")
+	ff.printf("%s\n","Basal dendrite:")
+	ff.printf("%s\n","Apical dendrite:")
+	ff.printf("%s\n","Axon Initial Segment: ")
+	ff.printf("%s\n","Axon collaterals: ")
+	ff.printf("%s\n","Myelin:")
+	ff.printf("%s\n","Node: ")
+
+	ff.printf("%s\n","TotalA:")
+	ff.printf("%s\n","SomaA:")
+	ff.printf("%s\n","Basal dendriteA:")
+	ff.printf("%s\n","Apical dendriteA:")
+	ff.printf("%s\n","Axon Initial SegmentA: ")
+	ff.printf("%s\n","Axon collateralsA: ")
+	ff.printf("%s\n","MyelinA:")
+	ff.printf("%s\n","NodeA: ")
+
+	ff.close()
+
+
+	ff=new File()	ff.wopen("exportChargeValues.tmp")	ff.printf("%e\n",fac*chAll)
+	ff.printf("%e\n",fac*chSo)
+	ff.printf("%e\n",fac*chDe)
+	ff.printf("%e\n",fac*chAp)
+	ff.printf("%e\n",fac*chAis)
+	ff.printf("%e\n",fac*chCol)
+	ff.printf("%e\n",fac*chMy)
+	ff.printf("%e\n",fac*chNo)
+
+	ff.printf("%e\n",fac*chAll/chAllA)
+	ff.printf("%e\n",fac*chSo/chSoA)
+	ff.printf("%e\n",fac*chDe/chDeA)
+	ff.printf("%e\n",fac*chAp/chApA)
+	ff.printf("%e\n",fac*chAis/chAisA)
+	ff.printf("%e\n",fac*chCol/chColA)
+	ff.printf("%e\n",fac*chMy/chMyA)
+	ff.printf("%e\n",fac*chNo/chNoA)
+
+
+	ff.close()
+
+}

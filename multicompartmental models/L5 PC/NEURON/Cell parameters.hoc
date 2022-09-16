@@ -1,0 +1,425 @@
+load_proc("nrnmainmenu")
+load_file("nrngui.hoc")
+
+access soma
+area(0.5)
+distance()
+
+proc geom_nseg() {
+	soma area(0.5) // make sure diam reflects 3d points
+	forall {nseg = int((L/(0.1*lambda_f(10000))+0.9)/2)*2+1}
+}
+	
+
+//--------------------------------------------------------------
+//  Initialise user-defined membrane parameters 
+// --------------------------------------------------------------
+
+proc parameters() {
+	celsius = 33		
+	Ri = 80	    			
+	Cm = 1.0      		
+	Rm = 15000      	
+	v_init = -85
+	Spinescale = 1.5					
+}
+
+
+
+// ----------------------------------------------------------------------------
+// Channel densities
+//-----------------------------------------------------------------------------
+
+//CAVE: check for parameter-settings in loaded sessions
+
+na_ais		=	7000			
+na_node		=	7000
+na_collat	=	500
+na_soma		=	500				
+na_dend		=	20 						
+na_myelin	=	40
+max_distance_apic	=	300		// distance where gbar_na has reached na_dend
+max_distance_basal	=	100		//corresponding distance for basal dendrites
+
+vShift_na		=	10 // affecting activation and inactivation
+vShift_inact_na		=	10 // affects only inactivation
+q10_na			=	3
+q10h_na			=	3
+
+vShift_nax		=	10
+vShift_inact_nax	=	10		
+q10_nax			=	3.0
+q10h_nax		=	3.0
+
+
+length_constant_Kv_and_Kv1	=	80	//length constant of the exponential decay in um of Kv and Kv1
+						//according to Keren et al., 2009, JPhysiol, 587:1413-37
+Kv_soma	 	=	100
+Kv_dend	 	=	3	
+		
+
+Kv1_dend	=	0.3		
+Kv1_ais		=	2000 		
+Kv1_soma	=	100
+Kv1_collat	=	400
+
+vShift_Kv1		=	10
+vShift_inact_Kv1	=	-15
+
+Kv7_soma	=	1	
+Kv7_dend	=	1
+Kv7_ais		=	7
+	
+ca_reduce_fac	=	0.1
+
+gca_dend	=	2.0*ca_reduce_fac
+gca_soma	=	2.0*ca_reduce_fac 
+gca_ais		=	0.0
+
+
+git2_ais	=	0.0
+git2_dend	=	2.0*ca_reduce_fac
+git2_apic	=	6.0*ca_reduce_fac
+git2_soma	=	2.0*ca_reduce_fac
+
+gkca_soma	=	1.0*ca_reduce_fac 
+gkca_dend	=	1.0*ca_reduce_fac
+gkca_ais	=	1.0*ca_reduce_fac
+
+gCa_HVA_apic_hot_fac=	1	//i.e. no Ca hot spot	//ca
+gCa_LVAst_apic_hot_fac=	1				//it2
+gCa_hot_start	=	685
+gCa_hot_end	=	885
+
+spinescale	=	1.5
+sheaths		=	10	//number of myelin sheaths
+
+
+// ----------------------------------------------------------------------------
+// Initialisation of passive and active properties, spine scaling, Rm and Cm
+//-----------------------------------------------------------------------------
+
+proc init_channels() {
+
+//all		
+	forall {
+		insert pas 	 
+		Ra=Ri 
+		e_pas=v_init
+		g_pas=1/Rm
+		cm=Cm
+	}
+
+// dendrites
+	for i=0,dendNum-1 {
+		dend[i] {
+		
+			g_pas=1/(Rm/spinescale)
+			cm=Cm*spinescale 
+			
+			insert na 	//gbar_na=na_dend*spinescale		//see below
+			insert Kv 	gbar_Kv=Kv_dend*spinescale 		//see below
+			insert Kv7 	gbar_Kv7=Kv7_dend
+			insert kca 	gbar_kca = gkca_dend*spinescale
+			insert cad 
+			insert ca 	gbar_ca = gca_dend*spinescale
+			insert it2 	gcabar_it2 = git2_dend*spinescale
+			insert Kv1	gbar_Kv1 = Kv1_dend
+		}			 
+	}
+	
+	for i=0,apicNum-1 {
+		apic[i] {
+		
+			g_pas=1/(Rm/spinescale)
+			cm=Cm*spinescale
+
+			insert na 	//gbar_na=na_dend*spinescale		//see below	
+			insert Kv 	gbar_Kv=Kv_dend*spinescale 		//see below
+			insert Kv7 	gbar_Kv7=Kv7_soma
+			insert kca 	gbar_kca = gkca_dend*spinescale
+			insert cad 
+			insert ca 	gbar_ca = gca_dend*spinescale
+			insert it2 	gcabar_it2 = git2_apic*spinescale
+			insert Kv1	gbar_Kv1 = Kv1_dend
+		}			 
+	}
+
+//soma	
+	soma  {nseg=9}
+	soma  {
+		insert na 	gbar_na = na_soma	
+		insert Kv 	gbar_Kv = Kv_soma
+		insert ca 	gbar_ca = gca_soma
+		insert kca 	gbar_kca = gkca_soma
+		insert cad
+		insert it2	gcabar_it2 = git2_dend
+		insert Kv7 	gbar_Kv7 = Kv7_soma
+		insert Kv1 	gbar_Kv1 = Kv1_soma
+	} 		
+	
+//collaterals note that axon[0] is AIS
+	for i=1,axonNum-1 {	
+		axon[i]  {
+			g_pas=1/Rm
+			insert nax gbar_nax = na_collat
+			insert Kv1 gbar_Kv1 = Kv1_collat
+			insert cad 										// these are my modifications, not from the original article
+			insert ca 	gbar_ca = gca_soma
+		}
+	}	
+
+//AIS
+	axon[0]  {
+		nseg=21
+		insert nax 	gbar_nax(0:0.4) = 0:na_ais
+					gbar_nax(0.4:1) = na_ais:na_ais
+		insert na 	gbar_na(0:0.2) = na_soma:5000
+				 	gbar_na(0.2:0.4) = 5000:0
+
+		insert Kv1 	axon.gbar_Kv1(0:1)= Kv1_soma:Kv1_ais	
+		insert Kv7 	axon.gbar_Kv7(0:0.4) = Kv7_soma:Kv7_soma
+					axon.gbar_Kv7(0.4:1) = Kv7_soma:Kv7_ais
+		insert cad 
+		insert ca 	gbar_ca = gca_ais
+		insert it2 	gcabar_it2 = git2_ais
+		insert kca	gbar_kca = gkca_ais
+	}
+
+
+
+//main axon: i.e. myelin and nodes
+	for i=0,myNum-1 {
+		my[i] {
+			g_pas=1/(Rm * (sheaths + 1))
+			cm=Cm/(sheaths + 1)			
+			insert nax gbar_nax = na_myelin
+			insert Kv7 gbar_Kv7 = Kv7_soma
+			insert Kv1 gbar_Kv1 = 20
+	
+			
+		}	
+	}	
+
+	for i=0,myNum-1 {
+		node[i]  {
+			g_pas=1/Rm
+			insert nax gbar_nax = na_node
+			insert Kv1 gbar_Kv1 = Kv1_ais
+			insert Kv7 gbar_Kv7 = Kv7_ais
+		}
+	}	
+
+
+	forall ena=55
+	forall ek=-98
+	forall insert charge_
+
+// ---------------------------------------------------------------------
+// Calcium enhancement to reproduce frequency effect (Larkum et al,1999)
+// ----------------------------------------------------------------------
+
+	forall { 	
+		vh1_it2    = 56
+		vh2_it2    = 415
+		ah_it2     = 30				
+		v12m_it2   = 45
+		v12h_it2   = 65  
+		am_it2     = 3
+		vshift_it2 = 10
+		vm1_it2    = 50
+		vm2_it2    = 125
+	}
+
+	forall if(ismembrane("ca_ion")) {
+		eca = 140
+		ion_style("ca_ion",0,1,0,0,0)
+		vshift_ca = 8
+	} 
+
+	forall 	{
+		caix_kca  = 0.7  	// Ca-sensitivity of Kca channel
+		Ra_kca    = 1  	// Activation rate Kca 
+		Rb_kca    = 2.5	// inactivation rate Kca, important ! 
+		taur_cad = 80    	// Calcium extrusion rate, in ms 
+	}
+
+	//possibility to implement hot-zone
+	access soma
+	area(0.5)
+	distance()
+	//apical dendrites
+	for i=0,apicNum-1 {
+		apic[i] {
+			for j=1,nseg {
+				pos=0.5/nseg+(j-1)/nseg
+				if(distance(pos) > gCa_hot_start && distance(pos) < gCa_hot_end) {
+					gbar_ca(pos)	=	gca_dend*gCa_HVA_apic_hot_fac*spinescale
+					gcabar_it2(pos)	=	git2_apic*gCa_LVAst_apic_hot_fac*spinescale
+				}
+			}
+		}
+	}
+
+// --------------------------------------------------------------------------
+// Dendritic exponential distribution of Ih (Kole et al., 2006)
+// --------------------------------------------------------------------------
+			 
+	A = 0.0002 	//0.000429 before, and also the J Neurosci value I aim for a ~20 Mohm input resistance	
+	tau = 0.003087
+	spinescale = 1.5	
+
+	forall {
+		insert ih
+		gh_ih=-0.0002
+		eh_ih=-45		 
+	} 
+		
+	access soma
+	area(0.5)
+	distance()
+
+	//basal dendrites
+	for i=0,dendNum-1 {
+		dend[i] {
+			for j=1,nseg {
+				pos=0.5/nseg+(j-1)/nseg
+				gbar_ih(pos)=(gh_ih+(A*(exp(tau*distance(pos)))))*spinescale	
+			}
+		}
+	}
+
+	//apical dendrites
+	for i=0,apicNum-1 {
+		apic[i] {
+			for j=1,nseg {
+				pos=0.5/nseg+(j-1)/nseg
+				gbar_ih(pos)=(gh_ih+(A*(exp(tau*distance(pos)))))*spinescale	
+			}
+		}
+	}
+
+	soma {gbar_ih = 0.0002}	
+
+	for i=1,axonNum-1 {
+		axon[i] {gbar_ih=0.0005}
+	}
+
+// --------------------------------------------------------------------------
+// Dendritic linear distribution of na (Keren et al., 2009, JPhysiol, 587:1413-37)
+// --------------------------------------------------------------------------
+
+	access soma
+	area(0.5)
+	distance()
+		
+
+
+
+	//basal dendrites
+	for i=0,dendNum-1 {
+		dend[i] {
+			for j=1,nseg {
+				pos=0.5/nseg+(j-1)/nseg
+				if (distance(pos) >= max_distance_basal)  {
+					gbar_na(pos)=na_dend*spinescale	
+				} else {
+					gbar_na(pos)=(na_dend+(na_soma-na_dend)*(1-(distance(pos)/max_distance_basal)))*spinescale	
+				}
+			}
+		}
+	}
+
+	//apical dendrites
+	for i=0,apicNum-1 {
+		apic[i] {
+			for j=1,nseg {
+				pos=0.5/nseg+(j-1)/nseg
+				if (distance(pos) >= max_distance_apic)  {
+					gbar_na(pos)=na_dend*spinescale	
+				} else {
+					gbar_na(pos)=(na_dend+(na_soma-na_dend)*(1-(distance(pos)/max_distance_apic)))*spinescale	
+				}
+			}
+		}
+	}
+
+
+
+
+// --------------------------------------------------------------------------
+// Dendritic linear distribution of Kv and Kv1 (Keren et al., 2009, JPhysiol, 587:1413-37)
+// --------------------------------------------------------------------------
+
+	access soma
+	area(0.5)
+	distance()
+		
+	//basal dendrites
+	for i=0,dendNum-1 {
+		dend[i] {
+			for j=1,nseg {
+				pos=0.5/nseg+(j-1)/nseg
+				gbar_Kv(pos)=(Kv_dend+(Kv_soma-Kv_dend)*exp(-distance(pos)/length_constant_Kv_and_Kv1))*spinescale	
+				gbar_Kv1(pos)=(Kv1_dend+(Kv1_soma-Kv1_dend)*exp(-distance(pos)/length_constant_Kv_and_Kv1))*spinescale	
+			}
+		}
+	}
+
+	//apical dendrites
+	for i=0,apicNum-1 {
+		apic[i] {
+			for j=1,nseg {
+				pos=0.5/nseg+(j-1)/nseg
+				gbar_Kv(pos)=(Kv_dend+(Kv_soma-Kv_dend)*exp(-distance(pos)/length_constant_Kv_and_Kv1))*spinescale	
+				gbar_Kv1(pos)=(Kv1_dend+(Kv1_soma-Kv1_dend)*exp(-distance(pos)/length_constant_Kv_and_Kv1))*spinescale	
+			}
+		}
+	}
+
+}
+
+
+proc testAp() {
+	print "-----------------------------------------------------------------------------------------------------------------------------------------------------------"
+	print "-----------------------------------------------------------------------------------------------------------------------------------------------------------"
+	print "-----------------------------------------------------------------------------------------------------------------------------------------------------------"
+	print "---------------------------------------------------------         A  P  I   C         ---------------------------------------------------------------------"
+	print "-----------------------------------------------------------------------------------------------------------------------------------------------------------"
+	print "-----------------------------------------------------------------------------------------------------------------------------------------------------------"
+	print "-----------------------------------------------------------------------------------------------------------------------------------------------------------"
+
+	for i=0,apicNum-1 {
+		apic[i] {
+			for j=1,nseg {
+				pos=0.5/nseg+(j-1)/nseg
+				print " i ",i, " nseg ", j, " pos ",pos, " distance(pos) ",distance(pos)
+				print " 		gbar_ih ", gbar_ih(pos), " gbar_na ", gbar_na(pos), " gbar_Kv ", gbar_Kv(pos), " gbar_Kv1 ", gbar_Kv1(pos)
+			}
+		}
+	}
+}
+
+
+proc testBa() {
+	print "-----------------------------------------------------------------------------------------------------------------------------------------------------------"
+	print "-----------------------------------------------------------------------------------------------------------------------------------------------------------"
+	print "-----------------------------------------------------------------------------------------------------------------------------------------------------------"
+	print "---------------------------------------------------------         B  A  S  A   L        -------------------------------------------------------------------"
+	print "-----------------------------------------------------------------------------------------------------------------------------------------------------------"
+	print "-----------------------------------------------------------------------------------------------------------------------------------------------------------"
+	print "-----------------------------------------------------------------------------------------------------------------------------------------------------------"
+	for i=0,dendNum-1 {
+		dend[i] {
+			for j=1,nseg {
+				pos=0.5/nseg+(j-1)/nseg
+				print " i ",i, " nseg ", j, " pos ",pos, " distance(pos) ",distance(pos)
+				print " 		gbar_ih ", gbar_ih(pos), " gbar_na ", gbar_na(pos), " gbar_Kv ", gbar_Kv(pos), " gbar_Kv1 ", gbar_Kv1(pos)
+			}
+		}
+	}
+}
+
+
+
+

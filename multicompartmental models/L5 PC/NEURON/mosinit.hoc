@@ -1,0 +1,285 @@
+load_file("nrngui.hoc")xopen("28_04_10_num19.hoc")
+
+xopen("Cell parameters.hoc")
+//xopen("charge.hoc")parameters()
+geom_nseg()init_channels()
+objref zzzz = new Impedance()func rn() { local rn  init()  // make sure all changes to g, c, ri etc. have taken effect  soma zz.loc(0.5)  // sets origin for impedance calculations to middle of soma  zz.compute(0)  // DC input R  soma { rn = zz.input(0.5) }  // rn is input R at middle of the soma  return rn}t=5tstop=580steps_per_ms=40dt=0.05		INITDUR = 100 // # ms to reach steady state
+v_init = -55
+
+proc init() { local temp
+  
+  finitialize(v_init)
+  t = -2*INITDUR // jump to a time "before" 0
+  temp = cvode.active()
+  if (temp != 0) { // if cvode is on, turn it off
+    cvode.active(0)
+    dt = 0.01
+  }
+  while (t < -INITDUR) {
+    fadvance()
+  }
+  if (temp != 0) { cvode.active(1) } // turn cvode back on if necessary
+  t = 0
+  if (cvode.active()) {
+    cvode.re_init()
+  } else {
+    fcurrent()
+  }
+  frecord_init()
+}
+
+
+NUM_dend_exc = 50
+NUM_apic_exc = 100
+NUM_inh_apic = 30
+NUM_inh_dend = 20
+
+
+
+objref dend_arr, apic_arr, temp_dend_arr, temp_apic_arr, r_branch, r_seg, dend_branches, apic_branches, dend_segs, apic_segs, inh_apic_branches, inh_dend_branches, inh_apic_segs, inh_dend_segs
+
+dend_arr = new Vector()
+temp_dend_arr = new Vector()
+apic_arr = new Vector()
+temp_apic_arr = new Vector()
+dend_branches = new Vector()
+apic_branches = new Vector()
+inh_apic_branches = new Vector()
+inh_dend_branches = new Vector()
+dend_segs = new Vector()
+apic_segs = new Vector()
+inh_apic_segs = new Vector()
+inh_dend_segs = new Vector()
+r_branch = new Random()
+r_seg = new Random()
+r_seg.uniform(0,1)
+
+
+for i=0, 36{
+	dend_arr.append(dend[i].L)
+	for k = 0, int(dend[i].L)-1{
+		temp_dend_arr.append(i)
+		}
+}
+
+for i=0, 68{
+	apic_arr.append(apic[i].L)
+	for k = 0, int(apic[i].L)-1{
+		temp_apic_arr.append(i)
+		}
+}
+
+total_dend_L = dend_arr.sum()
+total_apic_L = apic_arr.sum()
+
+
+r_branch.uniform(0, temp_dend_arr.size()-1)
+
+for i=0, NUM_dend_exc-1{
+	place = int(r_branch.repick())
+	dend_branches.append(temp_dend_arr.x[place])
+	dend_segs.append(r_seg.repick())
+	}
+
+	
+r_branch.uniform(0, temp_apic_arr.size()-1)
+
+for i=0, NUM_apic_exc-1{
+	place = int(r_branch.repick())
+	apic_branches.append(temp_apic_arr.x[place])
+	apic_segs.append(r_seg.repick())
+	}
+	
+//INHIBITION
+r_branch.uniform(0, temp_dend_arr.size()-1)
+for i=0, NUM_inh_dend-1{
+	place = int(r_branch.repick())
+	inh_dend_branches.append(temp_dend_arr.x[place])
+	inh_dend_segs.append(r_seg.repick())
+	}
+	
+r_branch.uniform(0, temp_apic_arr.size()-1)
+
+for i=0, NUM_inh_apic-1{
+	place = int(r_branch.repick())
+	inh_apic_branches.append(temp_apic_arr.x[place])
+	inh_apic_segs.append(r_seg.repick())
+	}
+
+
+	
+
+///////////////////append synapses//////////////////////
+
+
+
+
+objref vec_rec, vec_rec_ik, vec_rec_ina, vec_rec_ica, vec_rec_tuft, vec_rec_ica_tuft, vec_rec_ica_axon, vec_rec_axon
+objref m_inp, m_weight, m_v, m_ik, m_ina, r1, inp_m, r101, r102, r103, r104
+
+
+
+m_inp = new Matrix()
+m_weight = new Matrix()
+m_v = new Matrix()
+m_ik = new Matrix()
+m_ina = new Matrix()
+
+r1 = new Random()
+r101 = new Random()
+r101.discunif(0, apic_branches.size()-1)
+r102 = new Random()
+r102.discunif(0, dend_branches.size()-1)
+r103 = new Random()
+r103.discunif(0, inh_apic_branches.size()-1)
+r104 = new Random()
+r104.discunif(0, inh_dend_branches.size()-1)
+
+vec_rec = new Vector()
+vec_rec_ik = new Vector()
+vec_rec_ina = new Vector()
+vec_rec_ica = new Vector()
+vec_rec_tuft = new Vector()
+vec_rec_ica_tuft = new Vector()
+vec_rec_axon = new Vector()
+vec_rec_ica_axon = new Vector()
+
+
+
+vec_rec.record(&soma.v(0.5), 0.5)
+vec_rec_ina.record(&soma.ina(0.5), 0.5)
+vec_rec_ik.record(&soma.ik(0.5), 0.5)
+vec_rec_ica.record(&soma.ica(0.5), 0.5)
+vec_rec_ica_tuft.record(&apic[36].ica(1), 0.5)
+vec_rec_tuft.record(&apic[36].v(1), 0.5)
+vec_rec_ica_axon.record(&axon[3].ica(0.5), 0.5)
+vec_rec_axon.record(&axon[3].v(0.5), 0.5)
+
+tstop = 1000
+stimnum = 80
+randint = 11547
+
+r1 = new Random(randint)
+r1.uniform(0, tstop-10)
+
+
+
+objref scaling_activity
+scaling_activity = new Random(randint)
+scaling_activity.uniform(0.2,0.7)
+
+
+//load_file("1.ses")
+objref ap_exc[10001], bas_exc[10001], ap_inh[10001], bas_inh[10001]
+
+	objref f1
+	f1 = new File()
+
+
+//2.2 -> 13 Hz
+proc create_stim(){
+	objref ap_exc[10001], bas_exc[10001], ap_inh[10001], bas_inh[10001]
+	inp_m = new Matrix()
+	inp_m.resize(2001, 208)
+
+	scale1 = scaling_activity.repick()
+	print(scale1)
+	
+	//apic exc
+	for i = 0, int(500*scale1){
+		seg101 = r101.repick()
+		access apic[apic_branches.x[seg101]]
+		timing = int(r1.repick())
+		ap_exc[i] = new AlphaSynapse(apic_segs.x[seg101])
+		ap_exc[i].onset = timing
+		ap_exc[i].tau = 2
+		ap_exc[i].gmax = 0.0009
+		ap_exc[i].e = 0
+		inp_m.setval(timing*2, seg101+8, inp_m.x[timing][seg101+8] + ap_exc[i].gmax)
+	}
+
+	
+	//basal exc
+	for i = 0, int(500*scale1){
+		seg101 = r102.repick()
+		access dend[dend_branches.x[seg101]]
+		timing = int(r1.repick())
+		bas_exc[i] = new AlphaSynapse(dend_segs.x[seg101])
+		bas_exc[i].onset = timing
+		bas_exc[i].tau = 2
+		bas_exc[i].gmax = 0.0009
+		bas_exc[i].e = 0
+		inp_m.setval(timing*2, apic_branches.size() + seg101+8, inp_m.x[timing][apic_branches.size() + seg101+8] + bas_exc[i].gmax)
+	}
+
+	//apic inh	
+	for i = 0, int(500*scale1){
+		seg101 = r103.repick()
+		access apic[inh_apic_branches.x[seg101]]
+		timing = int(r1.repick())
+		ap_inh[i] = new AlphaSynapse(inh_apic_segs.x[seg101])
+		ap_inh[i].onset = timing
+		ap_inh[i].tau = 1
+		ap_inh[i].gmax = 0.001
+		ap_inh[i].e = -90
+		inp_m.setval(timing*2, apic_branches.size() + dend_branches.size() + seg101+8, inp_m.x[timing][apic_branches.size() + dend_branches.size() + seg101+8] + ap_inh[i].gmax)		
+	}
+
+	//basal inh	
+	for i = 0, int(500*scale1){
+		seg101 = r104.repick()
+		access dend[inh_dend_branches.x[seg101]]
+		timing = int(r1.repick())
+		bas_inh[i] = new AlphaSynapse(inh_dend_segs.x[seg101])
+		bas_inh[i].onset = timing
+		bas_inh[i].tau = 1
+		bas_inh[i].gmax = 0.001
+		bas_inh[i].e = -90
+		inp_m.setval(timing*2, apic_branches.size() + dend_branches.size() + inh_apic_branches.size() + seg101+8, inp_m.x[timing][apic_branches.size() + dend_branches.size() + inh_apic_branches.size() + seg101+8] + bas_inh[i].gmax)		
+	}
+	
+	run()
+	for i=0, vec_rec.size()-1{
+		inp_m.setval(i, 0, vec_rec.x[i])
+		inp_m.setval(i, 1, vec_rec_ik.x[i])
+		inp_m.setval(i, 2, vec_rec_ina.x[i])
+		inp_m.setval(i, 3, vec_rec_ica.x[i])
+		inp_m.setval(i, 4, vec_rec_tuft.x[i])
+		inp_m.setval(i, 5, vec_rec_ica_tuft.x[i])
+		inp_m.setval(i, 6, vec_rec_axon.x[i])
+		inp_m.setval(i, 7, vec_rec_ica_axon.x[i])
+	}
+	
+	
+
+	
+	
+	f1.aopen("vmi.txt")
+	inp_m.fprint(f1, "%g ")
+	f1.close()
+	
+	
+	
+}
+
+
+
+for i02 = 0, 199{
+	print i02
+	create_stim(i02)
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

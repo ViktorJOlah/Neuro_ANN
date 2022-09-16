@@ -1,0 +1,50 @@
+load_file("nrngui.hoc")
+
+
+objref pc
+pc = new ParallelContext()
+
+
+
+
+
+func fi(){ local key	
+	key = $1
+	load_file("mosinit.hoc")
+	create_stim($1)
+	pc.pack(inp_m)
+	pc.post(key)
+	
+	return key
+}
+
+trun = startsw() 
+
+{pc.runworker()}
+
+
+
+proc batchrun(){ local ii, tmp
+	for k01 = 1, 200{
+		pc.submit("fi", k01)
+	}
+	while (pc.working) { // if a result is ready, get it; if not, pick a job and do it
+		pc.unpack(&tmp)
+		key = pc.retval()
+		pc.look_take(key)		
+
+	}
+}
+
+
+batchrun()
+
+{pc.done()}
+
+
+
+print startsw() - trun, "seconds" // report run time
+
+quit()
+
+
