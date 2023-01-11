@@ -229,7 +229,8 @@ access soma
 
 
 
-create_stim(0)
+for z1 = 0, 400{
+	create_stim()
 
 
 
