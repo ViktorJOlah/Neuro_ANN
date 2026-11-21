@@ -19,3 +19,7 @@ Second, as ANN fitting is memory intensive, there is an option for not load the 
 which can be found in fit_multicompartmental.py. 
 
 
+
+## Staged training pipeline (`training/`)
+
+`training/` is a configurable, tested replacement for the fitting scripts above. It runs the subthreshold then spiking stages (or a smooth curriculum) from one config file, with checkpoints, resume, a single normalization shared by all stages, a train/validation/test split by trace, and closed-loop evaluation. See `training/README.md` and `training/notebooks/train_colab.ipynb`.
