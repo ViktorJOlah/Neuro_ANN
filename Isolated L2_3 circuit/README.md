@@ -14,6 +14,7 @@ folder is named `L2_3` because `/` can't be used in a folder name.)
 | `experiments/dense3_izhikevich_subthreshold/` | 3 dense layers (32 units) as a learned current map in front of the Izhikevich layer, same data and evaluation. |
 | `experiments/cnnlstm_izhikevich_subthreshold/` | CNN-LSTM → Izhikevich and dense + CNN-LSTM → Izhikevich (`--arch`), same data and evaluation. |
 | `experiments/compare_architectures/` | Side-by-side comparison of the four models: one-step and continuous traces, RMSE bar plots. |
+| `experiments/expanded_subthreshold/` | All four models trained further with the ramp's spike-free start added (square + noise + ramp), and the comparison plots redone. |
 | `izhikevich/` | A batched, differentiable Izhikevich (2003) top layer, checked to be bit-identical to the published model. See `izhikevich/README.md`. |
 
 The repo-level `simulations/` and `training/` folders are unchanged, so old paths and Colab
