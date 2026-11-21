@@ -1,0 +1,95 @@
+{
+  "model": {
+    "allen_neuronal_model_id": 488462783,
+    "specimen_id": 487661754,
+    "name": "Biophysical - perisomatic_Cux2-CreERT2;Ai14-211772.05.02.01",
+    "source": "Neuro_ANN repo: multicompartmental models/L2_3 PC/NEURON/orig_file (Allen download)",
+    "build": "replicates allensdk.model.biophysical.utils.Utils (perisomatic): 60 um axon stub"
+  },
+  "simulation": {
+    "dt_ms": 0.01,
+    "sample_ms": 1.0,
+    "celsius": 34.0,
+    "init": "steady state at zero current (3 s, large-dt implicit settle) from v_init=e_pas",
+    "current_interpolation": "current defined at 1 ms samples, played with linear interpolation",
+    "injection_site": "soma[0](0.5)"
+  },
+  "array_layout": "(n_sim, n_ms, 2): [...,0]=injected current pA, [...,1]=somatic Vm mV",
+  "vm_convention": "Vm = v_sim - junction_potential (+14 mV), same as allensdk output / Allen recordings",
+  "calibration": {
+    "rheobase_pA": 83.7890625,
+    "rest_mV": -82.0188607106929,
+    "ramp_spike_amplitudes_pA": [
+      87.35400000160183,
+      90.50375000167058,
+      93.13825000172808,
+      95.60475000178192,
+      98.06650000183566,
+      100.62500000189151,
+      103.32600000195046,
+      106.15175000201214,
+      109.04425000207527,
+      111.94725000213865,
+      114.82800000220152,
+      117.6715000022636,
+      120.47275000232474,
+      123.23075000238494,
+      125.9457500024442,
+      128.61925000250255,
+      131.25275000256005,
+      133.8477500026167,
+      136.4055000026725,
+      138.92775000272758,
+      141.41550000278187,
+      143.87025000283546,
+      146.29325000288836,
+      148.68550000294056,
+      151.04800000299213,
+      153.3820000030431,
+      155.68825000309343
+    ],
+    "junction_potential": -14.0,
+    "n_sections": 96,
+    "n_segments": 210,
+    "v_init": -95.9708480834961
+  },
+  "protocols": {
+    "square": {
+      "shape": [
+        1000,
+        2000,
+        2
+      ],
+      "n_spikes_min": 0,
+      "n_spikes_max": 14,
+      "n_with_spikes": 452
+    },
+    "ramp": {
+      "shape": [
+        1000,
+        7800,
+        2
+      ],
+      "n_spikes_min": 1,
+      "n_spikes_max": 27,
+      "n_with_spikes": 1000
+    },
+    "noise": {
+      "shape": [
+        1000,
+        4500,
+        2
+      ],
+      "n_spikes_min": 0,
+      "n_spikes_max": 25,
+      "n_with_spikes": 914
+    }
+  },
+  "bounds_source": "Allen Cell Types Database, Technical White Paper: Electrophysiology (Oct 2017 v.5), Fig. 3 + Appendix",
+  "noise_band_Hz": [
+    1.0,
+    100.0
+  ],
+  "noise_band_note": "assumed; band not stated in the white paper",
+  "wall_time_s": 4750.9963364601135
+}

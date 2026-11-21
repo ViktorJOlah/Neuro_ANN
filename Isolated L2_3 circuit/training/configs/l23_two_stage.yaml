@@ -1,0 +1,55 @@
+# L2/3 PC (multicompartmental, calibrate.hoc output) -- classic two stages:
+# subthreshold data first, then spiking data, with one shared normalization.
+run_name: l23_two_stage
+output_dir: runs
+seed: 1234
+
+data:
+  files:
+    # Either give separate files per pool ...
+    subthreshold: [/content/drive/MyDrive/V1_DNN/L2_3/vmi_subthreshold.txt]
+    spiking: [/content/drive/MyDrive/V1_DNN/L2_3/vmi3.txt]
+    # ... or a single pool "all" and traces are split by spike count:
+    # all: [/content/drive/MyDrive/V1_DNN/L2_3/vmi3.txt]
+  trace_length: 20001        # rows per trace (0.5 ms sampling, 10 s); null = read from headers
+  state_columns: [0]         # somatic Vm is predicted and fed back
+  vm_column: 0
+  preprocess:
+    vm_clip_max: -20.0       # as in fit_multicompartmental.py
+  spike_threshold_mv: -30.0
+  min_spikes_spiking: 1
+  split: {train: 0.8, val: 0.1, test: 0.1}
+
+model:
+  architecture: cnn_lstm_multi
+  time_steps: 128
+  init_weights: null         # e.g. an earlier act_weights.h5 to fine-tune from
+
+training:
+  batch_size: 64
+  optimizer: adamax          # original choice for this model
+  loss: mae
+  steps_per_epoch: 5000
+  early_stopping_patience: 25
+  # opt-in closed-loop fixes (off = original behaviour)
+  state_noise_std: 0.0
+  rollout_steps: 0
+  rollout_loss_weight: 0.0
+
+stages:
+  - name: subthreshold
+    epochs: 150
+    lr: 1.0e-3
+    warmup_steps: 1000
+    spiking_fraction: 0.0
+  - name: spiking
+    epochs: 300
+    lr: 1.0e-4               # lower LR + warmup protects the stage-1 solution
+    warmup_steps: 2000
+    spiking_fraction: 1.0
+
+eval:
+  rollout_every: 5
+  rollout_traces: 16
+  rollout_steps: 2000        # 1 s closed loop
+  spike_threshold_mv: -30.0
