@@ -1,0 +1,47 @@
+# Same data as l23_two_stage.yaml, but a smooth curriculum instead of a hard
+# switch: a short subthreshold warm-up, then the share of spiking windows and
+# the extra weight on samples near spikes ramp up together.
+run_name: l23_curriculum
+output_dir: runs
+seed: 1234
+
+data:
+  files:
+    subthreshold: [/content/drive/MyDrive/V1_DNN/L2_3/vmi_subthreshold.txt]
+    spiking: [/content/drive/MyDrive/V1_DNN/L2_3/vmi3.txt]
+  trace_length: 20001
+  state_columns: [0]
+  vm_column: 0
+  preprocess:
+    vm_clip_max: -20.0
+  spike_threshold_mv: -30.0
+
+model:
+  architecture: cnn_lstm_multi
+  time_steps: 128
+
+training:
+  batch_size: 64
+  optimizer: adamax
+  loss: mae
+  steps_per_epoch: 5000
+  early_stopping_patience: 40   # > ramp length, the objective keeps moving during the ramp
+
+stages:
+  - name: subthreshold
+    epochs: 30
+    lr: 1.0e-3
+    warmup_steps: 1000
+    spiking_fraction: 0.0
+  - name: curriculum
+    epochs: 400
+    lr: 3.0e-4
+    warmup_steps: 1000
+    spiking_fraction: {start: 0.1, end: 0.7, ramp_epochs: 60, shape: cosine}
+    spike_loss_weight: {start: 1.0, end: 5.0, ramp_epochs: 60}
+
+eval:
+  rollout_every: 5
+  rollout_traces: 16
+  rollout_steps: 2000
+  spike_threshold_mv: -30.0
