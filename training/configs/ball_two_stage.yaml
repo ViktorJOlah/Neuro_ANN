@@ -1,0 +1,33 @@
+# Single-compartment ("ball") model from fit_CNN_LSTM_latest.py:
+# predicts vm, ik and ina; 1 ms sampling, 10001-row traces.
+run_name: ball_two_stage
+output_dir: runs
+
+data:
+  files:
+    subthreshold: [ball_passive/final.txt]
+    spiking: [ball_active/final.txt]
+  trace_length: 10001
+  state_columns: [0, 1, 2]
+  vm_column: 0
+  preprocess:
+    negate_columns: [2]                       # ina * -1
+    compress: {1: [0.05, 75], 2: [0.1, 190]}  # same piecewise compression as the original
+  spike_threshold_mv: -20.0
+
+model:
+  architecture: cnn_lstm_single
+  time_steps: 64
+
+training:
+  optimizer: nadam
+  loss: mse
+  state_loss_weights: [1.0, 0.7, 0.7]
+  steps_per_epoch: 2000
+
+stages:
+  - {name: subthreshold, epochs: 100, lr: 1.0e-3, warmup_steps: 500, spiking_fraction: 0.0}
+  - {name: spiking, epochs: 300, lr: 2.0e-4, warmup_steps: 1000, spiking_fraction: 1.0}
+
+eval:
+  spike_threshold_mv: -20.0
