@@ -10,7 +10,7 @@ Cux2-CreERT2;Ai14 L2/3 pyramidal cell, VISp). Model files are the Allen download
 | file | shape | contents |
 |---|---|---|
 | `square.npy` | (1000, 2000, 2) | 1 s current steps |
-| `ramp.npy` | (1000, T, 2) | 25 pA/s ramps, terminated at varying amplitudes |
+| `ramp.npy` | (1000, 7800, 2) | 25 pA/s ramps, terminated at varying amplitudes |
 | `noise.npy` | (1000, 4500, 2) | 3 s pink-noise epochs on a square offset |
 
 * `[..., 0]` = injected current (pA), `[..., 1]` = somatic Vm (mV). One sample per 1 ms.
@@ -62,10 +62,10 @@ python simulations/allen_L23_PC_protocols/code/generate_dataset.py \
   --out simulations/allen_L23_PC_protocols/data --progress progress.txt
 ```
 
-About 75 minutes on 4 cores (works on Colab CPU too). `N_SIM=4` env var gives a quick test run.
+About 80 minutes on 4 cores (works on Colab CPU too). `N_SIM=4` env var gives a quick test run.
 
 ## Caveats
 
-* The model's rheobase (~84 pA) is above the recorded cell's (~70 pA), and its hyperpolarizing
+* The model's rheobase (83.8 pA) is above the recorded cell's (~70 pA), and its hyperpolarizing
   response is larger than the recording (-110 pA gives about -132 mV vs about -101 mV recorded).
   These are properties of Allen's perisomatic fit, not of this code.
