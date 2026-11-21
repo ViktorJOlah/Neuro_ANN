@@ -95,16 +95,18 @@ def params_of(m):
                 I0=float(m.I0), V0=float(m.V0), Vs=float(m.Vs), dt=c.dt, n_substeps=c.n_substeps)
 
 
-def simulate_np(I, p, V_gt=None, clamp_until=None, one_step=False):
+def simulate_np(I, p, V_gt=None, clamp_until=None, one_step=False, x=None):
     """NumPy copy of the fitted model (float64). I, V_gt: (n, T) in pA / mV.
 
+    x: the cell's input current, if it comes from elsewhere (e.g. a dense front end).
     one_step: every step starts from ground truth Vm[t-1]. clamp_until: Vm is set to ground
     truth for t < clamp_until, then runs free. u always evolves with the model's update.
     """
     n, T = I.shape
     a, b, ts = p["a"], p["b"], p["time_scale"]
     h, dtu = p["dt"] / p["n_substeps"] * ts, p["dt"] * ts
-    x = p["g"] * (I.astype(np.float64) + p["I0"])   # same as layer: (I + I0) * g
+    if x is None:
+        x = p["g"] * (I.astype(np.float64) + p["I0"])   # same as layer: (I + I0) * g
     v = np.full(n, -65.0) if V_gt is None else (V_gt[:, 0].astype(np.float64) - p["V0"]) / p["Vs"]
     u = b * v
     out = np.empty((n, T))
@@ -276,7 +278,9 @@ def metrics_after(pred, true, start):
     return float(np.sqrt(np.mean(e ** 2))), float(np.mean(np.abs(e))), float(1 - np.mean(e ** 2) / np.var(t))
 
 
-def plots(sets, preds, p, res):
+def plots(sets, preds, p, res, out=None, label=None):
+    out = out or OUT
+    label = label or f"Izhikevich layer ({res['variant']} variant, rheobase {p['rheobase_pA']:.0f} pA)"
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
@@ -304,13 +308,12 @@ def plots(sets, preds, p, res):
         ax.set_title(f"{title}\nall test points: RMSE {np.sqrt(np.mean(e**2)):.2f} mV, "
                      f"R² {1-np.mean(e**2)/np.var(T):.3f}", fontsize=10)
         ax.set_xlabel("ground truth Vm (mV)")
-        ax.set_ylabel("Izhikevich layer Vm (mV)")
+        ax.set_ylabel("model Vm (mV)")
         ax.set_aspect("equal")
         ax.spines[["top", "right"]].set_visible(False)
-    fig.suptitle(f"Izhikevich layer ({res['variant']} variant, rheobase {p['rheobase_pA']:.0f} pA) on "
-                 "subthreshold Allen L2/3 test traces: 500 random points", fontsize=12)
+    fig.suptitle(f"{label} on subthreshold Allen L2/3 test traces: 500 random points", fontsize=12)
     fig.tight_layout()
-    fig.savefig(os.path.join(OUT, "scatter_500_points.png"), dpi=150)
+    fig.savefig(os.path.join(out, "scatter_500_points.png"), dpi=150)
     plt.close(fig)
 
     # 2. one random test trace, one-step prediction
@@ -320,17 +323,17 @@ def plots(sets, preds, p, res):
     t = np.arange(s["V"].shape[1]) / 1000
     fig, (a1, a2) = plt.subplots(2, 1, figsize=(11, 5), sharex=True, gridspec_kw={"height_ratios": [3, 1]})
     a1.plot(t, s["V"][i], color="k", lw=1.6, label="ground truth (NEURON)")
-    a1.plot(t, preds[proto]["one"][i], color=red, lw=1, ls="--", label="Izhikevich layer, one-step")
+    a1.plot(t, preds[proto]["one"][i], color=red, lw=1, ls="--", label="model, one-step")
     a1.set_ylabel("Vm (mV)")
     a1.legend(frameon=False, fontsize=9)
-    a1.set_title(f"Random test trace: {proto} #{s['ids'][i]} ({res['variant']} variant)", fontsize=10)
+    a1.set_title(f"Random test trace: {proto} #{s['ids'][i]}. {label}", fontsize=10)
     a2.plot(t, s["I"][i], color=grey)
     a2.set_ylabel("I (pA)")
     a2.set_xlabel("time (s)")
     for a in (a1, a2):
         a.spines[["top", "right"]].set_visible(False)
     fig.tight_layout()
-    fig.savefig(os.path.join(OUT, "trace_one_step.png"), dpi=150)
+    fig.savefig(os.path.join(out, "trace_one_step.png"), dpi=150)
     plt.close(fig)
 
     # 3. continuous prediction: 4 random square + 2 random noise test traces
@@ -352,10 +355,10 @@ def plots(sets, preds, p, res):
         ax.set_xlabel("time (s)")
         ax.spines[["top", "right"]].set_visible(False)
     axes[0, 0].legend(frameon=False, fontsize=8, loc="lower right")
-    fig.suptitle(f"{res['variant']} variant. Continuous prediction: Vm clamped to ground truth for the first {SEED_MS} ms (shaded), "
+    fig.suptitle(f"{label}\nContinuous prediction: Vm clamped to ground truth for the first {SEED_MS} ms (shaded), "
                  "then the cell runs on its own state", fontsize=11)
     fig.tight_layout()
-    fig.savefig(os.path.join(OUT, "continuous_prediction.png"), dpi=150)
+    fig.savefig(os.path.join(out, "continuous_prediction.png"), dpi=150)
     plt.close(fig)
 
 
