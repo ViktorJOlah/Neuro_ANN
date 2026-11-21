@@ -56,6 +56,12 @@ Three things are needed for bit-identity, and the layer handles the first itself
    differs from the float64 model after about 5 spikes under a step of 10. The 1 ms scheme makes
    v overshoot to around 10^3 mV on a spike step, so spike times are very sensitive to rounding.
 
+## Fitting a real cell
+
+`trainable_params` can also include `"time_scale"`, a per-cell factor on dt (1 = published,
+exactly). Combined with an affine map on the input current and the output voltage, this gives the
+general "simple model" of Izhikevich (2007). See `experiments/izhikevich_subthreshold/run.py`.
+
 ## Backpropagation
 
 * The forward pass uses the exact Heaviside spike. The backward pass uses the fast-sigmoid

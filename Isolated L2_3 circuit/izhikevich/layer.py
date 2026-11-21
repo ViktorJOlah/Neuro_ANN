@@ -114,6 +114,10 @@ class IzhikevichCell(keras.layers.Layer):
             init = (lambda arr: lambda shape, dtype=None: tf.constant(arr, dtype=dtype))(arr)
             setattr(self, name, self.add_weight(name=name, shape=(self.n_cells,), initializer=init,
                                                 trainable=name in self.trainable_params))
+        # Multiplies dt (both v and u). 1.0 is the published model, exactly; training it
+        # rescales the cell's time constants, e.g. to fit a real cell.
+        self.time_scale = self.add_weight(name="time_scale", shape=(self.n_cells,), initializer="ones",
+                                          trainable="time_scale" in self.trainable_params)
         self._spike = make_spike_fn(self.surrogate_scale)
         if self.stable_grad:
             self._quad, self._below_peak = make_stable_ops(self.v_peak)
@@ -133,10 +137,11 @@ class IzhikevichCell(keras.layers.Layer):
         v = s_reset * c + (1.0 - s_reset) * v
         u = u + s_reset * d
         # 2. integrate v in substeps, then u with the new v (same op order as reference.py)
-        h = tf.constant(self.dt / self.n_substeps, v.dtype)
+        ts = tf.cast(self.time_scale, v.dtype)
+        h = tf.constant(self.dt / self.n_substeps, v.dtype) * ts
         for _ in range(self.n_substeps):
             v = v + h * (self._quad(v) + 5.0 * v + 140.0 - u + I)
-        u = u + tf.constant(self.dt, v.dtype) * (a * (b * self._below_peak(v) - u))
+        u = u + (tf.constant(self.dt, v.dtype) * ts) * (a * (b * self._below_peak(v) - u))
         # spike output for this step: v >= v_peak (reset happens at the start of the next step)
         s_out = self._spike(v - self.v_peak)
         return tf.concat([v, s_out], axis=-1), [v, u]
@@ -150,7 +155,8 @@ class IzhikevichLayer(keras.layers.Layer):
     input_gain: trainable per-cell scale on the input current (starts at 1, exact).
     exact: call ``exact_graph_mode()`` so graph-mode runs stay bit-identical too.
     Other keyword arguments go to ``IzhikevichCell`` (dt, n_substeps, v0, v_peak,
-    trainable_params, surrogate_scale, detach_reset, stable_grad).
+    trainable_params, surrogate_scale, detach_reset, stable_grad). ``trainable_params``
+    may also include "time_scale", a per-cell factor on dt (1 = published).
     """
 
     def __init__(self, n_cells=1, neuron="RS", output_mode="both", input_gain_trainable=False,
