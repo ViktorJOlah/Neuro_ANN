@@ -1,0 +1,48 @@
+{
+  "l23_pattern": "^[ei]23",
+  "radius_um": null,
+  "n_l23_cells": 65949,
+  "n_v1_cells": 230924,
+  "l23_cells_by_class": {
+    "L2/3 E": 56057,
+    "L2/3 Htr3a": 4845,
+    "L2/3 Pvalb": 2927,
+    "L2/3 Sst": 2120
+  },
+  "l23_pop_names": {
+    "e23Cux2": 56057,
+    "i23Htr3a": 4845,
+    "i23Pvalb": 2927,
+    "i23Sst": 2120
+  },
+  "recurrent_l23_edges": 15036333,
+  "recurrent_l23_synapses": 15036333,
+  "n_v1ext_sources": 101792,
+  "v1ext_edges_onto_l23": 13321163,
+  "v1ext_synapses_onto_l23_by_source_class": {
+    "L4 E": 8213843,
+    "L1 Htr3a": 1459602,
+    "L5 E": 1103604,
+    "L4 Pvalb": 1041777,
+    "L4 Sst": 487161,
+    "L6 Pvalb": 412585,
+    "L5 Sst": 332638,
+    "L4 Htr3a": 250914,
+    "L5 Pvalb": 19039
+  },
+  "virtual_inputs": {
+    "lgn": {
+      "population": "lgn",
+      "edges_onto_l23": 756445,
+      "synapses_onto_l23": 756445
+    },
+    "bkg": {
+      "population": "bkg",
+      "edges_onto_l23": 65949,
+      "synapses_onto_l23": 65949
+    }
+  },
+  "fraction_of_l23_input_synapses_recurrent": 0.5152977958450152,
+  "source_network_dir": "v1_point/network",
+  "v1_population": "v1"
+}

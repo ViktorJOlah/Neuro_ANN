@@ -1,0 +1,55 @@
+{
+  "window_ms": [
+    0.0,
+    3000.0
+  ],
+  "spike_match_tol_ms": 0.5,
+  "matched_spike_fraction": 1.0,
+  "by_class": [
+    {
+      "class": "all",
+      "n": 65949,
+      "rate_full_hz": 1.7764383589339239,
+      "rate_isolated_hz": 1.7764383589339239,
+      "ratio": 1.0,
+      "per_cell_r": 1.0,
+      "ks_rate_distribution": 0.0
+    },
+    {
+      "class": "L2/3 E",
+      "n": 56057,
+      "rate_full_hz": 1.3759625619161449,
+      "rate_isolated_hz": 1.3759625619161449,
+      "ratio": 1.0,
+      "per_cell_r": 1.0,
+      "ks_rate_distribution": 0.0
+    },
+    {
+      "class": "L2/3 Htr3a",
+      "n": 4845,
+      "rate_full_hz": 2.727210182318542,
+      "rate_isolated_hz": 2.727210182318542,
+      "ratio": 1.0,
+      "per_cell_r": 1.0,
+      "ks_rate_distribution": 0.0
+    },
+    {
+      "class": "L2/3 Pvalb",
+      "n": 2927,
+      "rate_full_hz": 5.696276050563717,
+      "rate_isolated_hz": 5.696276050563717,
+      "ratio": 1.0,
+      "per_cell_r": 1.0,
+      "ks_rate_distribution": 0.0
+    },
+    {
+      "class": "L2/3 Sst",
+      "n": 2120,
+      "rate_full_hz": 4.7809748427672965,
+      "rate_isolated_hz": 4.7809748427672965,
+      "ratio": 1.0,
+      "per_cell_r": 1.0,
+      "ks_rate_distribution": 0.0
+    }
+  ]
+}

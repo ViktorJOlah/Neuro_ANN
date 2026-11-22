@@ -18,7 +18,7 @@ def toy(tmp_path_factory):
     d = str(tmp_path_factory.mktemp("toy"))
     cfg = toy_network.build(d, tstop_ms=500.0)
     full = simulate.run_full(cfg, os.path.join(d, "full"))
-    summary = extract_l23.extract(os.path.join(d, "network"), os.path.join(d, "l23"))
+    summary = extract_l23.extract(os.path.join(d, "network"), os.path.join(d, "l23"), max_edges_per_file=500)
     streams = simulate.make_streams(full, os.path.join(d, "l23"), os.path.join(d, "streams"))
     return d, cfg, summary, streams
 

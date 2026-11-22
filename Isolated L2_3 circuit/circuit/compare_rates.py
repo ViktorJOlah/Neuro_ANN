@@ -102,7 +102,7 @@ def _plot(r_ref, r_iso, cls, out_dir):
     import matplotlib.pyplot as plt
 
     classes = sorted(set(cls))
-    colors = {"L2/3 E": "#2a6fdb", "L2/3 Pvalb": "#d1495b", "L2/3 Sst": "#edae49", "L2/3 Htr3a": "#3c9d5d"}
+    colors = {"L2/3 E": "#2a78d6", "L2/3 Pvalb": "#eb6834", "L2/3 Sst": "#1baf7a", "L2/3 Htr3a": "#eda100"}
     fig, ax = plt.subplots(1, 2, figsize=(10, 4.2))
     hi = max(r_ref.max(initial=1), r_iso.max(initial=1)) * 1.05
     for c in classes:

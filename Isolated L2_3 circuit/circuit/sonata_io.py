@@ -182,6 +182,37 @@ def write_edges(path: str, population: str, src_pop: str, trg_pop: str, edges: D
     create_index_in_memory(path, f"edges/{population}", "source")
 
 
+def write_edges_split(path: str, population: str, src_pop: str, trg_pop: str, edges: Dict[str, np.ndarray],
+                      max_edges: int) -> list:
+    """Like write_edges, but split into parts of at most ~max_edges edges (by target id ranges).
+
+    BMTK builds virtual-input connections one edge file at a time and holds a whole file in
+    pandas while doing so, so a 13M-edge replay file runs out of memory on a 16 GB machine.
+    Returns the written paths (``<stem>.partK.h5``, or ``path`` itself when one part suffices).
+    """
+    n = len(edges["target_node_id"])
+    if n <= max_edges:
+        write_edges(path, population, src_pop, trg_pop, edges)
+        return [path]
+    order = np.argsort(edges["target_node_id"], kind="stable")
+    t_sorted = edges["target_node_id"][order]
+    cuts = [0]
+    while cuts[-1] < n:
+        nxt = min(n, cuts[-1] + max_edges)
+        if nxt < n:  # do not split one target across files
+            nxt = int(np.searchsorted(t_sorted, t_sorted[nxt], side="left")) or nxt
+        cuts.append(nxt)
+    stem = path[:-3] if path.endswith(".h5") else path
+    paths = []
+    for k, (a, b) in enumerate(zip(cuts[:-1], cuts[1:])):
+        sel = order[a:b]
+        part = {c: np.asarray(v)[sel] for c, v in edges.items()}
+        pk = f"{stem}.part{k}.h5"
+        write_edges(pk, population, src_pop, trg_pop, part)
+        paths.append(pk)
+    return paths
+
+
 def iter_spikes(spikes_h5: str) -> Iterator[tuple]:
     """Yield (population, node_ids, timestamps_ms) from a SONATA spikes file."""
     with h5py.File(spikes_h5, "r") as f:

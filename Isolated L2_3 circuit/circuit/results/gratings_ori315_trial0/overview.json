@@ -1,0 +1,20 @@
+{
+  "full network": {
+    "mean_rate_E_hz": 1.5816972010632038,
+    "silent_fraction_E": 0.295074656153558,
+    "top10_share_E": 0.327817452619517,
+    "median_rate_E_hz": 1.2
+  },
+  "isolated, replay": {
+    "mean_rate_E_hz": 1.5816972010632038,
+    "silent_fraction_E": 0.295074656153558,
+    "top10_share_E": 0.327817452619517,
+    "median_rate_E_hz": 1.2
+  },
+  "isolated, Poisson control": {
+    "mean_rate_E_hz": 1.5021710045132635,
+    "silent_fraction_E": 0.3125747007510213,
+    "top10_share_E": 0.3398569243485118,
+    "median_rate_E_hz": 0.8
+  }
+}

@@ -32,14 +32,50 @@ from . import sonata_io as sio
 def resolved_config(config_path: str) -> dict:
     """Load a BMTK config with the manifest substituted, as a plain dict."""
     from bmtk.simulator.core.simulation_config import SimulationConfig
-    cfg = SimulationConfig.from_json(config_path)
+    with open(config_path) as f:
+        raw = json.load(f)
+    # Relative manifest paths (the Allen configs use "$BASE_DIR": ".") are relative to the config file.
+    base = os.path.dirname(os.path.abspath(config_path))
+    for k, v in raw.get("manifest", {}).items():
+        if isinstance(v, str) and not v.startswith("$") and not os.path.isabs(v):
+            raw["manifest"][k] = os.path.normpath(os.path.join(base, v))
+    cfg = SimulationConfig.from_dict(raw)
     return json.loads(json.dumps({k: cfg[k] for k in cfg.keys()}, default=str))
+
+
+def patch_bmtk_gid_lookup():
+    """Replace BMTK's pandas node-id -> NEST-id lookup with a numpy array lookup.
+
+    BMTK 1.2 looks up the NEST ids of the sources of every virtual edge batch with
+    ``DataFrame.loc[node_ids]``. With ~100k replayed V1 sources and 13M edges this needs over
+    10 GB and gets the run killed on a 16 GB machine. The array lookup gives the same ids.
+    """
+    import numpy as np
+    from bmtk.simulator.pointnet import gids
+
+    def get_nestids(self, name, node_ids):
+        cache = self.__dict__.setdefault("_np_lookup", {})
+        table = self._nestid_lu[name]
+        key = (name, len(table))
+        if key not in cache:
+            idx = table.index.to_numpy().astype(np.int64)
+            arr = np.full(idx.max() + 1, -1, dtype=np.int64)
+            arr[idx] = table["nest_ids"].to_numpy()
+            cache[key] = arr
+        out = cache[key][np.asarray(node_ids, dtype=np.int64)]
+        if (out < 0).any():
+            raise KeyError(f"unknown node ids in population {name}")
+        return out
+
+    gids.GidPool.get_nestids = get_nestids
 
 
 def run_bmtk(config_path: str, threads: int = 1) -> float:
     """Run a PointNet config in a subprocess; returns wall-clock seconds."""
     code = (
         "import sys\n"
+        "from circuit.simulate import patch_bmtk_gid_lookup\n"
+        "patch_bmtk_gid_lookup()\n"
         "from bmtk.simulator import pointnet\n"
         "conf = pointnet.Config.from_json(sys.argv[1])\n"
         f"conf['run']['n_thread'] = {int(threads)}\n"
@@ -49,7 +85,10 @@ def run_bmtk(config_path: str, threads: int = 1) -> float:
         "sim.run()\n"
     )
     t0 = time.time()
-    subprocess.run([sys.executable, "-c", code, os.path.abspath(config_path)], check=True)
+    env = dict(os.environ)
+    here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    env["PYTHONPATH"] = here + os.pathsep + env.get("PYTHONPATH", "")
+    subprocess.run([sys.executable, "-c", code, os.path.abspath(config_path)], check=True, env=env)
     return time.time() - t0
 
 
@@ -61,14 +100,13 @@ def run_full(config_path: str, out_dir: str, tstop: float | None = None, threads
     cfg["output"].update({"output_dir": os.path.abspath(out_dir), "spikes_file": "spikes.h5",
                           "overwrite_output_dir": True, "log_file": "log.txt"})
     cfg.pop("reports", None)  # membrane reports of 230k cells are not needed here
-    if tstop is not None:
-        cfg["run"]["tstop"] = float(tstop)
+    _set_tstop(cfg, tstop)
     os.makedirs(out_dir, exist_ok=True)
     path = os.path.join(out_dir, "config_full.json")
     with open(path, "w") as f:
         json.dump(cfg, f, indent=2)
     wall = run_bmtk(path, threads)
-    _write_timing(out_dir, wall, cfg["run"]["tstop"])
+    _write_timing(out_dir, wall, _tstop(cfg))
     return os.path.join(out_dir, "spikes.h5")
 
 
@@ -133,9 +171,11 @@ def isolated_config(full_config: str, extract_dir: str, v1ext_spikes: str, out_d
     for p in ("l23", "v1ext", "lgn", "bkg"):
         if os.path.exists(os.path.join(net, f"{p}_nodes.h5")):
             nodes.append({"nodes_file": f"{net}/{p}_nodes.h5", "node_types_file": f"{net}/{p}_node_types.csv"})
+    import glob
     for p in ("l23_l23", "v1ext_l23", "lgn_l23", "bkg_l23"):
-        if os.path.exists(os.path.join(net, f"{p}_edges.h5")):
-            edges.append({"edges_file": f"{net}/{p}_edges.h5", "edge_types_file": f"{net}/{p}_edge_types.csv"})
+        files = sorted(glob.glob(os.path.join(net, f"{p}_edges.h5")) + glob.glob(os.path.join(net, f"{p}_edges.part*.h5")))
+        for fn in files:
+            edges.append({"edges_file": fn, "edge_types_file": f"{net}/{p}_edge_types.csv"})
     cfg["networks"] = {"nodes": nodes, "edges": edges}
     # keep the full run's LGN / bkg inputs unchanged and add the replayed V1 stream
     inputs = {k: v for k, v in cfg.get("inputs", {}).items()
@@ -146,8 +186,7 @@ def isolated_config(full_config: str, extract_dir: str, v1ext_spikes: str, out_d
     cfg["inputs"] = inputs
     cfg["output"] = {"output_dir": os.path.abspath(out_dir), "spikes_file": "spikes.h5",
                      "overwrite_output_dir": True, "log_file": "log.txt"}
-    if tstop is not None:
-        cfg["run"]["tstop"] = float(tstop)
+    _set_tstop(cfg, tstop)
     os.makedirs(out_dir, exist_ok=True)
     path = os.path.join(out_dir, "config_isolated.json")
     with open(path, "w") as f:
@@ -160,8 +199,22 @@ def run_isolated(full_config: str, extract_dir: str, v1ext_spikes: str, out_dir:
     path = isolated_config(full_config, extract_dir, v1ext_spikes, out_dir, tstop)
     wall = run_bmtk(path, threads)
     with open(path) as f:
-        _write_timing(out_dir, wall, json.load(f)["run"]["tstop"])
+        _write_timing(out_dir, wall, _tstop(json.load(f)))
     return os.path.join(out_dir, "spikes.h5")
+
+
+def _tstop(cfg) -> float:
+    run = cfg["run"]
+    return float(run.get("tstop", run.get("duration")))
+
+
+def _set_tstop(cfg, tstop):
+    """BMTK accepts either run/tstop or run/duration (the Allen configs use duration)."""
+    if tstop is None:
+        return
+    cfg["run"]["tstop"] = float(tstop)
+    if "duration" in cfg["run"]:
+        cfg["run"]["duration"] = float(tstop)
 
 
 def _write_timing(out_dir, wall, tstop_ms):

@@ -87,7 +87,7 @@ def select_l23(nodes: pd.DataFrame, pattern: str = L23_PATTERN, radius: Optional
 
 
 def extract(network_dir: str, out_dir: str, pattern: str = L23_PATTERN, radius: Optional[float] = None,
-            chunk: int = sio.EDGE_CHUNK) -> dict:
+            chunk: int = sio.EDGE_CHUNK, max_edges_per_file: int = 2_000_000) -> dict:
     files = find_files(network_dir)
     net_out = os.path.join(out_dir, "network")
     os.makedirs(net_out, exist_ok=True)
@@ -142,7 +142,8 @@ def extract(network_dir: str, out_dir: str, pattern: str = L23_PATTERN, radius: 
     ext_types.to_csv(os.path.join(net_out, "v1ext_node_types.csv"), sep=" ", index=False)
     ext["source_node_id"] = v1_to_ext[ext["source_node_id"]]
     ext["target_node_id"] = v1_to_l23[ext["target_node_id"]]
-    sio.write_edges(os.path.join(net_out, "v1ext_l23_edges.h5"), "v1ext_to_l23", "v1ext", "l23", ext)
+    sio.write_edges_split(os.path.join(net_out, "v1ext_l23_edges.h5"), "v1ext_to_l23", "v1ext", "l23", ext,
+                          max_edges_per_file)
     shutil.copy(files["v1_v1_edge_types"], os.path.join(net_out, "v1ext_l23_edge_types.csv"))
 
     # ---- LGN and background edges onto L2/3 ------------------------------------------------
@@ -212,8 +213,10 @@ def main(argv=None):
     p.add_argument("--radius", type=float, default=None,
                    help="keep only L2/3 cells within this radius (um) of the column axis; others are replayed")
     p.add_argument("--chunk", type=int, default=sio.EDGE_CHUNK)
+    p.add_argument("--max-edges-per-file", type=int, default=2_000_000,
+                   help="split the v1ext replay edges into files of this size (BMTK memory)")
     a = p.parse_args(argv)
-    s = extract(a.network_dir, a.out, a.l23_pattern, a.radius, a.chunk)
+    s = extract(a.network_dir, a.out, a.l23_pattern, a.radius, a.chunk, a.max_edges_per_file)
     print(json.dumps(s, indent=2))
 
 
