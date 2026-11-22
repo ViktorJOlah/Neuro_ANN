@@ -33,7 +33,7 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 
-HERE = os.path.dirname(os.path.abspath(__file__))
+HERE = os.environ.get("SB_HERE", os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.join(os.path.dirname(HERE), "spiking"))
 import channels as ch  # noqa: E402
@@ -41,7 +41,7 @@ import spiking as sp  # noqa: E402
 
 fs, base = sp.fs, sp.base
 OUT = os.path.join(HERE, "results")
-NREF = os.environ.get("NEURON_REF", "/tmp/nref")
+NREF = os.environ.get("NEURON_REF", "/tmp/nref_kv" if os.path.isdir("/tmp/nref_kv") else "/tmp/nref")
 sp.SEG_CLAMP = 1000          # Ca decays with tau ~900 ms: give the branch a second of history
 V_SPIKE = sp.SPIKE_DISPLAY_MV - ch.JP     # +16 mV sim
 # The subthreshold ANN was trained on spike-free traces whose Vm stayed below about -46 mV
@@ -50,20 +50,26 @@ V_SPIKE = sp.SPIKE_DISPLAY_MV - ch.JP     # +16 mV sim
 # ANN could not have learned: I_Na(V, h) - I_Na,steady(min(V, V_REF)). That is the regenerative
 # current above V_REF plus the non-steady-state part (e.g. NaTs inactivated after a spike).
 V_REF = -46.0
-NAMES = ("V_th", "c_mV", "d", "ln_s_na", "b_na", "ln_s_sk", "b_sk", "ln_s_ca")
-STEP = dict(V_th=1.5, c_mV=3.0, d=3.0, ln_s_na=0.7, b_na=10.0, ln_s_sk=0.7, b_sk=10.0, ln_s_ca=0.7)
-STARTS = [dict(ln_s_na=0.0, b_na=0.0, ln_s_sk=0.0, b_sk=0.0, ln_s_ca=0.0),
-          dict(ln_s_na=-1.5, b_na=0.0, ln_s_sk=1.0, b_sk=0.0, ln_s_ca=1.0),
-          dict(ln_s_na=-3.0, b_na=0.0, ln_s_sk=2.0, b_sk=0.0, ln_s_ca=0.0)]
+NAMES = ("V_th", "c_mV", "d", "ln_s_na", "b_na", "ln_s_sk", "b_sk", "ln_s_ca", "ln_s_kv", "b_kv", "ln_s_bk", "b_bk")
+STEP = dict(V_th=1.5, c_mV=3.0, d=3.0, ln_s_na=0.7, b_na=10.0, ln_s_sk=0.7, b_sk=10.0, ln_s_ca=0.7,
+            ln_s_kv=0.7, b_kv=10.0, ln_s_bk=0.7, b_bk=10.0)
+STARTS = [dict(ln_s_na=0.0, b_na=0.0, ln_s_sk=0.0, b_sk=0.0, ln_s_ca=0.0, ln_s_kv=0.0, b_kv=0.0, ln_s_bk=0.0, b_bk=0.0),
+          dict(ln_s_na=-1.5, b_na=0.0, ln_s_sk=1.0, b_sk=0.0, ln_s_ca=1.0, ln_s_kv=-1.0, b_kv=0.0, ln_s_bk=-2.0, b_bk=0.0),
+          dict(ln_s_na=-3.0, b_na=0.0, ln_s_sk=2.0, b_sk=0.0, ln_s_ca=0.0, ln_s_kv=0.5, b_kv=0.0, ln_s_bk=1.0, b_bk=0.0)]
+# fast-AHP branches (Kv3.1 from the Allen mod file, generic BK) are off unless --fast-k: scale exp(-30) ~ 0
+FAST_K_OFF = dict(ln_s_kv=-30.0, b_kv=0.0, ln_s_bk=-30.0, b_bk=0.0)
 
 
 class BranchCell(tf.Module):
     def __init__(self, p, vals):
         super().__init__()
         self.p = {k: tf.constant(float(p[k]), tf.float32) for k in ("a", "b", "time_scale", "Vs", "V0", "g")}
+        vals = {**FAST_K_OFF, **vals}   # fits from before the fast-K branches existed
         self.q = {k: tf.Variable(float(vals[k]), dtype=tf.float32, name=k) for k in NAMES}
         self.sk_on = tf.Variable(1.0, dtype=tf.float32, name="sk_on")    # 0 = SK edge removed
         self.na_on = tf.Variable(1.0, dtype=tf.float32, name="na_on")
+        self.kv_on = tf.Variable(1.0, dtype=tf.float32, name="kv_on")    # 0 = Kv3.1 edge removed (TEA-like)
+        self.bk_on = tf.Variable(1.0, dtype=tf.float32, name="bk_on")    # 0 = BK edge removed (paxilline-like)
 
     def get(self):
         return {k: float(v.numpy()) for k, v in self.q.items()}
@@ -77,6 +83,7 @@ class BranchCell(tf.Module):
         a, b, ts, Vs, V0, g = P["a"], P["b"], P["time_scale"], P["Vs"], P["V0"], P["g"]
         c = (Q["c_mV"] - V0) / Vs
         s_na, s_sk, s_ca = tf.exp(Q["ln_s_na"]) * self.na_on, tf.exp(Q["ln_s_sk"]) * self.sk_on, tf.exp(Q["ln_s_ca"])
+        s_kv, s_bk = tf.exp(Q["ln_s_kv"]) * self.kv_on, tf.exp(Q["ln_s_bk"]) * self.bk_on
         n, T = tf.shape(x)[0], tf.shape(x)[1]
         v = (V_gt[:, 0] - V0) / Vs
         u = b * v
@@ -84,7 +91,7 @@ class BranchCell(tf.Module):
         s = tf.zeros([n], tf.float32)
         ib = tf.zeros([n], tf.float32)
         vm_ta, s_ta = tf.TensorArray(tf.float32, size=T), tf.TensorArray(tf.float32, size=T)
-        na_ta, sk_ta, ca_ta = (tf.TensorArray(tf.float32, size=T) for _ in range(3))
+        na_ta, sk_ta, ca_ta, kv_ta, bk_ta = (tf.TensorArray(tf.float32, size=T) for _ in range(5))
         h = 0.5 * ts
         for t in tf.range(T):
             clamp = tf.logical_or(t < clamp_until, one_step)
@@ -106,19 +113,28 @@ class BranchCell(tf.Module):
             if clamp:      # branches follow the recorded voltage (spike onset -> spike pulse, rest of spike -> reset)
                 vb = gt_spk[:, t] * V_SPIKE + (1 - gt_spk[:, t]) * (
                     gt_in[:, t] * (Q["c_mV"] - ch.JP) + (1 - gt_in[:, t]) * (V_gt[:, t] - ch.JP))
+                spike_now = gt_spk[:, t]
             else:
                 vb = s * V_SPIKE + (1 - s) * (tf.minimum(vm, Q["V_th"]) - ch.JP)
+                spike_now = s
             st, cur = ch.step(st, vb, s_ca)
             i_na = -(cur["NaTs"] + cur["Nap"] - ch.na_steady(tf.minimum(vb, V_REF - ch.JP))) * ch.PA_PER_DENSITY  # pA, depolarizing +
             i_sk = -cur["SK"] * ch.PA_PER_DENSITY
-            ib = s_na * i_na + Q["b_na"] + s_sk * i_sk + Q["b_sk"]
+            # fast K: the current during the spike step itself repolarizes the spike, which the Izhikevich
+            # reset already does, so only the after-current (from the step after the spike) is passed on.
+            # Kv3.1's small steady current below V_REF is subtracted, as for Na (the ANN learned it).
+            i_kv = -(cur["Kv3_1"] - ch.kv31_steady(tf.minimum(vb, V_REF - ch.JP))) * ch.PA_PER_DENSITY * (1 - spike_now)
+            i_bk = -cur["BK"] * ch.PA_PER_DENSITY * (1 - spike_now)
+            ib = (s_na * i_na + Q["b_na"] + s_sk * i_sk + Q["b_sk"]
+                  + s_kv * i_kv + Q["b_kv"] + s_bk * i_bk + Q["b_bk"])
             vm_ta = vm_ta.write(t, s * sp.SPIKE_DISPLAY_MV + (1.0 - s) * vm)
             s_ta = s_ta.write(t, s)
             if record:
                 na_ta = na_ta.write(t, s_na * i_na); sk_ta = sk_ta.write(t, s_sk * i_sk); ca_ta = ca_ta.write(t, st["cai"])
+                kv_ta = kv_ta.write(t, s_kv * i_kv); bk_ta = bk_ta.write(t, s_bk * i_bk)
         out = (tf.transpose(vm_ta.stack()), tf.transpose(s_ta.stack()))
         if record:
-            out = out + tuple(tf.transpose(a_.stack()) for a_ in (na_ta, sk_ta, ca_ta))
+            out = out + tuple(tf.transpose(a_.stack()) for a_ in (na_ta, sk_ta, ca_ta, kv_ta, bk_ta))
         return out
 
 
@@ -147,38 +163,63 @@ def from_vec(q):
     return {k: float(x) for k, x in zip(NAMES, q)}
 
 
-def sk_block_test(cell, x_test, sets, chunk=64):
-    """Model vs NEURON with SK removed, on the NEURON reference test traces."""
+BLOCKS = dict(sk_block="sk_on", kv3_block="kv_on")   # NEURON condition -> model edge
+
+
+def sk_block_test(cell, x_test, sets, chunk=64, cond_block="sk_block"):
+    """Model vs NEURON with one conductance removed (SK by default; kv3_block = Kv3.1), on the NEURON
+    reference test traces. The model's edge is zeroed without retraining."""
     out = {}
+    edge = getattr(cell, BLOCKS[cond_block])
     f = tf.function(cell.run)
     for pr in sp.PROTOS:
         path = os.path.join(NREF, f"test_{pr}.npz")
         if not os.path.exists(path):
             return None
         z = np.load(path)
+        if f"{cond_block}_v" not in z.files:
+            return None
         rows = z["rows"]
         X = x_test[pr][rows]
         res = {}
-        for cond, on in (("control", 1.0), ("sk_block", 0.0)):
-            cell.sk_on.assign(on)
+        for cond, on in (("control", 1.0), (cond_block, 0.0)):
+            edge.assign(on)
             Vn = z[f"{cond}_v"]
             S, M = sp.gt_masks(Vn)
             spk = np.concatenate([f(tf.constant(X[k:k + chunk]), tf.constant(Vn[k:k + chunk]), tf.constant(S[k:k + chunk]),
                                     tf.constant(M[k:k + chunk]), tf.constant(base.SEED_MS), tf.constant(False))[1].numpy()
                                   for k in range(0, len(X), chunk)]) > 0.5
             res[cond] = dict(model_spikes=spk, neuron_spikes=S > 0.5)
-        cell.sk_on.assign(1.0)
+        edge.assign(1.0)
         st = base.SEED_MS
         cnt = {k: {c: res[c][k][:, st:].sum(1) for c in res} for k in ("model_spikes", "neuron_spikes")}
-        dn, dm = cnt["neuron_spikes"]["sk_block"] - cnt["neuron_spikes"]["control"], cnt["model_spikes"]["sk_block"] - cnt["model_spikes"]["control"]
+        dn, dm = cnt["neuron_spikes"][cond_block] - cnt["neuron_spikes"]["control"], cnt["model_spikes"][cond_block] - cnt["model_spikes"]["control"]
         out[pr] = dict(
             n=int(len(rows)),
-            neuron_count_control=float(cnt["neuron_spikes"]["control"].mean()), neuron_count_block=float(cnt["neuron_spikes"]["sk_block"].mean()),
-            model_count_control=float(cnt["model_spikes"]["control"].mean()), model_count_block=float(cnt["model_spikes"]["sk_block"].mean()),
+            neuron_count_control=float(cnt["neuron_spikes"]["control"].mean()), neuron_count_block=float(cnt["neuron_spikes"][cond_block].mean()),
+            model_count_control=float(cnt["model_spikes"]["control"].mean()), model_count_block=float(cnt["model_spikes"][cond_block].mean()),
             delta_count_corr=float(np.corrcoef(dn, dm)[0, 1]) if dn.std() > 0 and dm.std() > 0 else float("nan"),
-            gamma_block=fs.spike_metrics(res["sk_block"]["neuron_spikes"], res["sk_block"]["model_spikes"], st)["gamma"],
+            gamma_block=fs.spike_metrics(res[cond_block]["neuron_spikes"], res[cond_block]["model_spikes"], st)["gamma"],
             gamma_control=fs.spike_metrics(res["control"]["neuron_spikes"], res["control"]["model_spikes"], st)["gamma"])
         out[pr]["_arrays"] = {f"{c}_{k}": res[c][k] for c in res for k in res[c]}
+    return out
+
+
+def bk_block_counts(cell, test, chunk=64):
+    """Spikes per test trace with and without the BK edge (no NEURON counterpart: Allen has no BK)."""
+    f = tf.function(cell.run)
+    out = {}
+    for pr in sp.PROTOS:
+        X, V, S, M = (test[pr][k] for k in ("x", "V", "S", "M"))
+        cnt = {}
+        for lab, on in (("control", 1.0), ("bk_block", 0.0)):
+            cell.bk_on.assign(on)
+            spk = np.concatenate([f(*(tf.constant(a_[k:k + chunk]) for a_ in (X, V, S, M)), tf.constant(base.SEED_MS),
+                                    tf.constant(False))[1].numpy() for k in range(0, len(X), chunk)])
+            cnt[lab] = float(spk[:, base.SEED_MS:].sum(1).mean())
+        cell.bk_on.assign(1.0)
+        out[pr] = dict(model_count_control=cnt["control"], model_count_bk_block=cnt["bk_block"],
+                       gt_count=float(S[:, base.SEED_MS:].sum(1).mean()))
     return out
 
 
@@ -190,11 +231,22 @@ def main():
     ap.add_argument("--n-val-seg", type=int, default=128)
     ap.add_argument("--pin-sk", action="store_true",
                     help="fix the SK scale at Allen's strength (s_SK = 1); results go to results_sk_pinned/")
+    ap.add_argument("--fast-k", action="store_true",
+                    help="add the Kv3.1 and BK branches (SK pinned); results go to results_fast_k/")
+    ap.add_argument("--pin-kv", type=float, default=None,
+                    help="with --fast-k: fix the Kv3.1 scale (e.g. 0.67, its NEURON-matched strength) and start from the SK-pinned fit")
     args = ap.parse_args()
     global OUT
-    fixed = dict(ln_s_sk=0.0) if args.pin_sk else {}
+    fixed = dict(ln_s_sk=0.0) if (args.pin_sk or args.fast_k) else {}
+    if not args.fast_k:
+        fixed.update(FAST_K_OFF)
     if args.pin_sk:
         OUT = os.path.join(HERE, "results_sk_pinned")
+    if args.fast_k:
+        OUT = os.path.join(HERE, "results_fast_k")
+    if args.fast_k and args.pin_kv is not None:
+        fixed.update(ln_s_kv=float(np.log(args.pin_kv)))
+        OUT = os.path.join(HERE, "results_fast_k_kvpinned")
     fit = [k for k in NAMES if k not in fixed]
     out = os.path.join(OUT, args.model)
     os.makedirs(out, exist_ok=True)
@@ -205,6 +257,10 @@ def main():
     xs = {(pr, s): z[f"{pr}_{s}"] for pr in sp.PROTOS for s in ("train", "val", "test")}
     train, val, test = (sp.pools(sets, xs, s) for s in ("train", "val", "test"))
     st1 = json.load(open(os.path.join(sp.OUT, args.model, "metrics.json")))["trained"]
+    if args.fast_k and args.pin_kv is not None:   # start every simplex from the SK-pinned solution
+        pin = json.load(open(os.path.join(HERE, "results_sk_pinned", args.model, "metrics.json")))["trained"]
+    else:
+        pin = {}
     cell = BranchCell(p, dict(st1, **STARTS[0]))
     K = sp.gauss_kernel()
     tseg = draw_mixed(train, np.random.default_rng(0), args.n_train_seg)
@@ -225,10 +281,13 @@ def main():
         return np.sum([terms(*(a_[k:k + chunk] for a_ in seg)).numpy() * min(chunk, n - k) for k in range(0, n, chunk)], 0) / n
 
     # normalization: stage-1 model (branches off) on these segments, so stages are comparable
-    cell.na_on.assign(0.0); cell.sk_on.assign(0.0)
-    cell.set(dict(st1, b_na=0.0, b_sk=0.0))
+    edges = (cell.na_on, cell.sk_on, cell.kv_on, cell.bk_on)
+    for e_ in edges:
+        e_.assign(0.0)
+    cell.set(dict(st1, b_na=0.0, b_sk=0.0, b_kv=0.0, b_bk=0.0))
     norm = np.maximum(batched(tseg), 1e-6)
-    cell.na_on.assign(1.0); cell.sk_on.assign(1.0)
+    for e_ in edges:
+        e_.assign(1.0)
     w = np.array([1.0, sp.W_SPIKE, sp.W_COUNT]) / norm
     print("stage-1 terms (train segments): Vm %.2f mV^2, vR %.4f, count %.2f" % tuple(norm), flush=True)
     hist, best = [], [np.inf, None]
@@ -247,8 +306,11 @@ def main():
         return loss
 
     from scipy.optimize import minimize
-    for j, st in enumerate(STARTS):
-        v0 = {**st1, **st, **fixed}
+    starts = STARTS
+    if args.fast_k and args.pin_kv is not None:
+        starts = [dict(ln_s_bk=lb, b_bk=0.0, b_kv=0.0) for lb in (-4.0, -1.5, 0.0)]
+    for j, st in enumerate(starts):
+        v0 = {**st1, **pin, **st, **fixed}   # stage-1 normalization above still uses st1 alone
         q0 = np.array([v0[k] for k in fit])
         simplex = np.vstack([q0] + [q0 + np.eye(len(fit))[i] * STEP[k] for i, k in enumerate(fit)])
         opt = minimize(objective, q0, method="Nelder-Mead",
@@ -269,16 +331,25 @@ def main():
         sub[pr] = fs.vm_rmse(vm, test[pr]["V"][keep], base.SEED_MS)
     print("spike-free continuous RMSE (mV):", sub, flush=True)
     blk = sk_block_test(cell, {pr: test[pr]["x"] for pr in sp.PROTOS}, sets)
+    kvb = sk_block_test(cell, {pr: test[pr]["x"] for pr in sp.PROTOS}, sets, cond_block="kv3_block") if args.fast_k else None
+    bkb = bk_block_counts(cell, test) if args.fast_k else None
     arrays = {f"{pr}_{k}_{q}": (v.astype(np.float32) if q == "vm" else v) for pr, d in preds.items()
               for k, dd in d.items() for q, v in dd.items()}
     if blk:
         for pr in blk:
             arrays.update({f"skblock_{pr}_{k}": v for k, v in blk[pr].pop("_arrays").items()})
         print("SK-block test:", json.dumps(blk, indent=1), flush=True)
+    if kvb:
+        for pr in kvb:
+            arrays.update({f"kvblock_{pr}_{k}": v for k, v in kvb[pr].pop("_arrays").items()})
+        print("Kv3.1-block test:", json.dumps(kvb, indent=1), flush=True)
+    if bkb:
+        print("BK-block (model only):", json.dumps(bkb, indent=1), flush=True)
     np.savez_compressed(os.path.join(out, "predictions.npz"), **arrays)
     res = {"model": args.model, "trained": fitted, "scales": {k: float(np.exp(fitted[k])) for k in NAMES if k.startswith("ln_")},
            "frozen": p, "val_terms_fitted": val1.tolist(), "loss_norm_stage1": norm.tolist(),
-           "spike_free_cont_rmse_mV": sub, "sk_block": blk, "eval": res}
+           "spike_free_cont_rmse_mV": sub, "sk_block": blk, "kv3_block": kvb, "bk_block": bkb,
+           "fixed": fixed, "eval": res}
     with open(os.path.join(out, "metrics.json"), "w") as f:
         json.dump(res, f, indent=2)
     print(json.dumps({pr: {k: {q: round(v, 3) for q, v in d.items()} for k, d in r.items()} for pr, r in res["eval"].items()}, indent=1))

@@ -19,7 +19,8 @@ SOMA_AREA_UM2 = 516.4723901317091   # soma[0](0.5).area() in the built model
 PA_PER_DENSITY = SOMA_AREA_UM2 * 10.0  # mA/cm2 * um2 -> pA
 # fitted somatic values (fit_parameters.json genome)
 G = dict(NaTs=0.6838817113482546, Nap=1.04318930264212e-06, SK=0.0009437495816197669,
-         Ca_HVA=5.06464725789868e-05, Ca_LVA=0.0019267653289255383)
+         Ca_HVA=5.06464725789868e-05, Ca_LVA=0.0019267653289255383, Kv3_1=0.07834341196986132,
+         BK=0.01)   # BK is not in the Allen model: a generic somatic density, scaled by the fit
 CA_GAMMA, CA_DECAY, CA_DEPTH = 0.005385368415172307, 902.5077593614815, 0.1
 
 
@@ -68,6 +69,30 @@ def calva_rates(v):
     return minf, mtau, hinf, htau
 
 
+# ---- Kv3_1 (fast delayed rectifier, Allen mod file, vshift 0): m exact; reported current uses the
+# step-averaged gate, because m relaxes with tau 1-4 ms, i.e. within the 1 ms step after a spike
+def kv31_rates(v):
+    minf = 1.0 / (1 + tf.exp((v - 18.7) / -9.7))
+    mtau = 0.2 * 20.0 / (1 + tf.exp((v + 46.56) / -44.14))
+    return minf, mtau
+
+
+# ---- BK (generic; the Allen model has none): voltage- and Ca-gated, Cox-Aldrich-like shift of the
+# half-activation voltage with nanodomain Ca (about -80 mV per decade of Ca), tau 1 ms. The
+# nanodomain Ca is driven by the same Ca current as the bulk pool, through a thin shell with no
+# buffering (CA_ND_GAMMA), and clears in about 1 ms, so it only exists during and just after a spike.
+BK_K, BK_TAU, CA_ND_TAU, CA_ND_GAMMA = 12.0, 1.0, 1.0, 10.0   # gamma 10 ~ a 10 nm shell: ~10 uM per spike
+def bk_minf(v, ca_nd):
+    ca_um = tf.maximum(ca_nd * 1000.0, 1e-3)
+    vh = 40.0 - 80.0 * tf.math.log(ca_um) / np.log(10.0)
+    return 1.0 / (1 + tf.exp(-(v - vh) / BK_K))
+
+
+def mean_relax(x, xinf, tau, dt=1.0):
+    """average over the step of the exact exponential relaxation"""
+    return xinf + (x - xinf) * tau / dt * (1.0 - tf.exp(-dt / tau))
+
+
 def sk_zinf(cai):
     cai = tf.where(cai < 1e-7, cai + 1e-7, cai)
     return 1.0 / (1 + (0.00043 / cai) ** 4.8)
@@ -84,12 +109,15 @@ def init_state(v):
     m_h, _, h_h, _ = cahva_rates(v)
     m_l, _, h_l, _ = calva_rates(v)
     cai = tf.fill(tf.shape(v), MIN_CAI)
-    return dict(h_t=h_t, h_p=h_p, m_h=m_h, h_h=h_h, m_l=m_l, h_l=h_l, cai=cai, z=sk_zinf(cai))
+    ca_nd = tf.zeros_like(v)
+    return dict(h_t=h_t, h_p=h_p, m_h=m_h, h_h=h_h, m_l=m_l, h_l=h_l, cai=cai, z=sk_zinf(cai),
+                m_kv=kv31_rates(v)[0], ca_nd=ca_nd, m_bk=bk_minf(v, ca_nd))
 
 
 def step(st, v, ca_scale=1.0, dt=1.0):
     """Advance the gates by dt at frozen voltage v (sim mV), return new state and the 1 ms
-    currents (mA/cm2): NaTs, Nap, SK, and total Ca current (Ca enters only through cai)."""
+    currents (mA/cm2): NaTs, Nap, SK, total Ca current (Ca enters only through cai), and Kv3_1 and BK
+    (step-averaged gates)."""
     m_t, hinf_t, htau_t = nats_rates(v)
     _, hinf_p, htau_p = nap_rates(v)
     minf_h, mtau_h, hinf_h, htau_h = cahva_rates(v)
@@ -110,8 +138,20 @@ def step(st, v, ca_scale=1.0, dt=1.0):
     cai = tf.maximum(cai, 1e-7)
     z = relax(st["z"], sk_zinf(cai), 1.0, dt)
     i_sk = G["SK"] * z * (v - EK)
-    return dict(h_t=h_t, h_p=h_p, m_h=m_h, h_h=h_h, m_l=m_l, h_l=h_l, cai=cai, z=z), \
-        dict(NaTs=i_nats, Nap=i_nap, SK=i_sk, Ca=i_ca)
+    minf_kv, mtau_kv = kv31_rates(v)
+    m_kv = relax(st["m_kv"], minf_kv, mtau_kv, dt)
+    i_kv = G["Kv3_1"] * mean_relax(st["m_kv"], minf_kv, mtau_kv, dt) * (v - EK)
+    infl_nd = -10000.0 * ca_scale * i_ca * CA_ND_GAMMA / (2 * FARADAY * CA_DEPTH)
+    ca_nd = tf.maximum(infl_nd * CA_ND_TAU + (st["ca_nd"] - infl_nd * CA_ND_TAU) * np.exp(-dt / CA_ND_TAU), 0.0)
+    minf_bk = bk_minf(v, 0.5 * (st["ca_nd"] + ca_nd))
+    m_bk = relax(st["m_bk"], minf_bk, BK_TAU, dt)
+    i_bk = G["BK"] * mean_relax(st["m_bk"], minf_bk, BK_TAU, dt) * (v - EK)
+    return dict(h_t=h_t, h_p=h_p, m_h=m_h, h_h=h_h, m_l=m_l, h_l=h_l, cai=cai, z=z, m_kv=m_kv, ca_nd=ca_nd, m_bk=m_bk), \
+        dict(NaTs=i_nats, Nap=i_nap, SK=i_sk, Ca=i_ca, Kv3_1=i_kv, BK=i_bk)
+
+
+def kv31_steady(v):
+    return G["Kv3_1"] * kv31_rates(v)[0] * (v - EK)
 
 
 def na_steady(v):
