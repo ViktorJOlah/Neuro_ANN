@@ -113,6 +113,10 @@ def main():
     ap.add_argument("--na-threshold", action="store_true", help="also fit th_k, the Na-availability threshold gain")
     ap.add_argument("--post-spike", action="store_true", help="fit from 1 ms after each spike, first 10 ms up-weighted")
     ap.add_argument("--slow", action="store_true", help="also fit the K_P, Im and Ih branches; results go to results_slow_k/")
+    ap.add_argument("--slow-th", action="store_true", help="also fit th_d, th_tau: slow spike-triggered threshold")
+    ap.add_argument("--isi-loss", type=float, default=0.0,
+                    help="weight of a first-ISI term on strong (>=180 pA) training square steps, run continuously")
+    ap.add_argument("--keep-base", action="store_true", help="keep the base fit's branch scales, bias and d (skip the LS result)")
     args = ap.parse_args()
     if args.slow and args.out == os.path.join(HERE, "results_ls"):
         args.out = os.path.join(HERE, "results_slow_k")
@@ -158,6 +162,8 @@ def main():
     lg = lambda v_: float(np.log(max(v_, 1e-12)))
     vals = {**old, **{f"ln_s_{k}": lg(v) for k, v in scales.items()}, **{f"b_{k}": 0.0 for k in br},
             "b_na": float(b_all), "d": float(d)}
+    if args.keep_base:      # start the spike fit from the base fit's branch scales, bias and d (LS only reported)
+        vals = dict(old)
     cell.set(vals)
 
     # V_th and c on the free-running spike loss of stage 1 (normalized like spiking_branches.py)
@@ -183,26 +189,52 @@ def main():
     wl = np.array([1.0, sp.W_SPIKE, sp.W_COUNT]) / norm
     hist = []
 
+    # first-ISI term: strong training square steps, ground-truth seed to SEED_MS, then free-running to ISI_END
+    ISI_END, ISI_CAP = 800, 300.0
+    if args.isi_loss > 0:
+        sq = sets[("square", "train")]
+        strong = np.flatnonzero(sq["I"][:, 1000] >= 180)
+        Vq = sq["V"][strong, :ISI_END].astype(np.float32)
+        xq = z_cache["square_train"][strong, :ISI_END].astype(np.float32)
+        Sq, Mq = sp.gt_masks(Vq)
+
+        def first_isi(spk):
+            t_ = np.flatnonzero(spk[500:]); return float(t_[1] - t_[0]) if len(t_) > 1 else ISI_CAP
+        isi_gt = np.array([first_isi(Sq[i] > 0.5) for i in range(len(Sq))])
+        frun = tf.function(cell.run)
+        print(f"first-ISI term: {len(strong)} strong train steps, NEURON median {np.median(isi_gt):.0f} ms", flush=True)
+
+    def isi_term():
+        _, sq_ = frun(tf.constant(xq), tf.constant(Vq), tf.constant(Sq), tf.constant(Mq), tf.constant(base.SEED_MS), tf.constant(False))
+        sq_ = sq_.numpy() > 0.5
+        isi_m = np.array([first_isi(sq_[i]) for i in range(len(sq_))])
+        return float(np.mean(((isi_m - isi_gt) / isi_gt) ** 2)), float(np.median(isi_m)), int(np.sum(isi_m < 20))
+
+    free = ["V_th", "c_mV", "b_na"] + (["th_k"] if args.na_threshold else []) + (["th_d", "th_tau"] if args.slow_th else [])
+    start = {"th_k": 0.0, "th_d": 0.0, "th_tau": 30.0}
+    nm_step = dict(V_th=1.5, c_mV=3.0, b_na=3.0, th_k=10.0, th_d=3.0, th_tau=20.0)
+
     def obj(q):
-        cell.set({**vals, "V_th": float(q[0]), "c_mV": float(q[1]), "b_na": float(q[2]),
-                  **({"th_k": float(q[3])} if args.na_threshold else {})})
+        qd = dict(zip(free, map(float, q)))
+        cell.set({**vals, **qd})
         if q[1] > q[0] - 3.0:      # reset must sit below threshold, or the cell re-fires every step
             return 1e3 + float(q[1] - q[0])
+        if qd.get("th_d", 0.0) < 0 or qd.get("th_tau", 30.0) < 1.0:
+            return 1e3 + abs(qd.get("th_d", 0.0)) + abs(qd.get("th_tau", 30.0))
         tv = batched(tseg)
         loss = float(np.sum(wl * tv)) if np.all(np.isfinite(tv)) else 1e6
-        hist.append(dict(loss=loss, V_th=q[0], c_mV=q[1], bias=q[2], th_k=q[3] if args.na_threshold else 0.0,
-                         vm=tv[0], vr=tv[1], count=tv[2]))
+        isi = isi_term() if args.isi_loss > 0 else (0.0, np.nan, -1)
+        loss += args.isi_loss * isi[0]
+        hist.append(dict(loss=loss, **qd, vm=tv[0], vr=tv[1], count=tv[2], isi_err=isi[0], isi_med=isi[1], doublets=isi[2]))
         if len(hist) % 25 == 1:
-            print(f"  NM {len(hist)}  loss {loss:.4f}  V_th {q[0]:.2f} c {q[1]:.2f}  {time.time()-t0:.0f}s", flush=True)
+            print(f"  NM {len(hist)}  loss {loss:.4f}  {qd}  isi {isi[1]:.0f} ms dbl {isi[2]}  {time.time()-t0:.0f}s", flush=True)
         return loss
 
     # V_th, c and the summed bias (it sets the closed-loop drift) on the free-running spike loss
-    q0 = np.array([vals["V_th"], vals["c_mV"], vals["b_na"]] + ([0.0] if args.na_threshold else []))
-    simplex = np.vstack([q0] + [q0 + np.eye(len(q0))[i] * st_ for i, st_ in enumerate([1.5, 3.0, 3.0, 10.0][:len(q0)])])
+    q0 = np.array([vals[k] if k in ("V_th", "c_mV", "b_na") else start[k] for k in free])
+    simplex = np.vstack([q0] + [q0 + np.eye(len(q0))[i] * nm_step[k] for i, k in enumerate(free)])
     o = minimize(obj, q0, method="Nelder-Mead", options=dict(maxfev=args.evals, xatol=1e-2, fatol=1e-4, initial_simplex=simplex))
-    vals.update(V_th=float(o.x[0]), c_mV=float(o.x[1]), b_na=float(o.x[2]))
-    if args.na_threshold:
-        vals.update(th_k=float(o.x[3]))
+    vals.update(dict(zip(free, map(float, o.x))))
     cell.set(vals)
     print("fitted", {k: round(v, 3) for k, v in vals.items()}, f"loss {o.fun:.4f}", flush=True)
     pd.DataFrame(hist).to_csv(os.path.join(out, "history.csv"), index=False)
