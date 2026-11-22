@@ -1,0 +1,209 @@
+{
+  "model": "cnnlstm",
+  "base": "/home/user/neuro_ann/Isolated L2_3 circuit/experiments/conductance_branches/results_fast_k",
+  "trained": {
+    "ln_s_kv": -2.246577149425523,
+    "b_kv": 0.0,
+    "ln_s_bk": -4.117733936040202,
+    "b_bk": 0.0,
+    "ln_s_kp": -1.388968371453541,
+    "b_kp": 0.0,
+    "ln_s_im": -27.631021115928547,
+    "b_im": 0.0,
+    "ln_s_ih": -27.631021115928547,
+    "b_ih": 0.0,
+    "V_th": -28.08049211660049,
+    "c_mV": -42.13576644209313,
+    "d": -0.12870017885670437,
+    "ln_s_na": 0.019392008869407715,
+    "b_na": 0.7662999115609623,
+    "b_sk": 0.0,
+    "ln_s_ca": 0.23071100165427955,
+    "ln_s_sk": -0.2703556381093094,
+    "th_k": 1.9367808168678922
+  },
+  "frozen": {
+    "a": 3.0143768787384033,
+    "b": 0.02230210229754448,
+    "c": -65.0,
+    "d": 8.0,
+    "time_scale": 0.015217888168990612,
+    "g": 0.18562011420726776,
+    "I0": 6.787137508392334,
+    "V0": 207.45823669433594,
+    "Vs": 3.616441011428833,
+    "dt": 1.0,
+    "n_substeps": 2
+  },
+  "ls_solution": [
+    1.0195812551827452,
+    0.7631080557666126,
+    0.10576060848696488,
+    0.016281367290356903,
+    0.2493323904118586,
+    5e-324,
+    1.2537859404743304e-26,
+    2.804869261306742,
+    -0.12870017885670437
+  ],
+  "ls_val_rms": {
+    "base": 4.138380465087111,
+    "ls": 1.6272854318324952
+  },
+  "loss_norm_stage1": [
+    7.1374101638793945,
+    0.0848955363035202,
+    31.94140625
+  ],
+  "train_spike_loss": 0.9565877332448802,
+  "spike_free_cont_rmse_mV": {
+    "square": 0.4787176251411438,
+    "noise": 0.6422967314720154
+  },
+  "sk_block": {
+    "square": {
+      "n": 69,
+      "neuron_count_control": 10.159420289855072,
+      "neuron_count_block": 39.53623188405797,
+      "model_count_control": 10.130434782608695,
+      "model_count_block": 48.63768115942029,
+      "delta_count_corr": 0.9980121089728025,
+      "gamma_block": 0.25521541510550566,
+      "gamma_control": 0.16057354943767982
+    },
+    "noise": {
+      "n": 138,
+      "neuron_count_control": 15.166666666666666,
+      "neuron_count_block": 42.231884057971016,
+      "model_count_control": 14.73913043478261,
+      "model_count_block": 47.98550724637681,
+      "delta_count_corr": 0.9976518135497587,
+      "gamma_block": 0.2777646026359935,
+      "gamma_control": 0.1851761496534402
+    },
+    "ramp": {
+      "n": 150,
+      "neuron_count_control": 12.646666666666667,
+      "neuron_count_block": 29.046666666666667,
+      "model_count_control": 12.46,
+      "model_count_block": 33.48,
+      "delta_count_corr": 0.9991253526281791,
+      "gamma_block": 0.1300596726692048,
+      "gamma_control": 0.13132519453633307
+    }
+  },
+  "kv3_block": {
+    "square": {
+      "n": 69,
+      "neuron_count_control": 10.159420289855072,
+      "neuron_count_block": 2.289855072463768,
+      "model_count_control": 10.130434782608695,
+      "model_count_block": 8.927536231884059,
+      "delta_count_corr": 0.47049840571739654,
+      "gamma_block": 0.16338305006907425,
+      "gamma_control": 0.16057354943767982
+    },
+    "noise": {
+      "n": 138,
+      "neuron_count_control": 15.166666666666666,
+      "neuron_count_block": 7.521739130434782,
+      "model_count_control": 14.73913043478261,
+      "model_count_block": 15.094202898550725,
+      "delta_count_corr": 0.2704398891231065,
+      "gamma_block": 0.05074176440419779,
+      "gamma_control": 0.1851761496534402
+    },
+    "ramp": {
+      "n": 150,
+      "neuron_count_control": 12.646666666666667,
+      "neuron_count_block": 1.16,
+      "model_count_control": 12.46,
+      "model_count_block": 13.293333333333333,
+      "delta_count_corr": -0.20096728332842406,
+      "gamma_block": 0.0032884073139786,
+      "gamma_control": 0.13132519453633307
+    }
+  },
+  "bk_block": {
+    "square": {
+      "model_count_control": 4.598684310913086,
+      "model_count_bk_block": 4.3684210777282715,
+      "gt_count": 4.611842155456543
+    },
+    "noise": {
+      "model_count_control": 13.388157844543457,
+      "model_count_bk_block": 13.440789222717285,
+      "gt_count": 13.769737243652344
+    },
+    "ramp": {
+      "model_count_control": 12.460000038146973,
+      "model_count_bk_block": 12.533333778381348,
+      "gt_count": 12.646666526794434
+    }
+  },
+  "fixed": {
+    "ln_s_sk": 0.0
+  },
+  "eval": {
+    "square": {
+      "one": {
+        "vm_rmse_clipped_mV": 0.2782537341117859,
+        "gamma": 0.4765325011156808,
+        "ev": 0.31442454863667535,
+        "count_abs_err": 3.0592105263157894,
+        "count_bias": -3.0592105263157894,
+        "n_true": 701,
+        "n_model": 236
+      },
+      "cont": {
+        "vm_rmse_clipped_mV": 2.4150502681732178,
+        "gamma": 0.16057354943767982,
+        "ev": -0.16698079590722803,
+        "count_abs_err": 0.21052631578947367,
+        "count_bias": -0.013157894736842105,
+        "n_true": 701,
+        "n_model": 699
+      }
+    },
+    "noise": {
+      "one": {
+        "vm_rmse_clipped_mV": 0.2839709222316742,
+        "gamma": 0.4569809233197871,
+        "ev": 0.28109701905526685,
+        "count_abs_err": 9.546052631578947,
+        "count_bias": -9.546052631578947,
+        "n_true": 2093,
+        "n_model": 642
+      },
+      "cont": {
+        "vm_rmse_clipped_mV": 2.7767763137817383,
+        "gamma": 0.18420135606618168,
+        "ev": 0.07254771558546158,
+        "count_abs_err": 0.6447368421052632,
+        "count_bias": -0.3815789473684211,
+        "n_true": 2093,
+        "n_model": 2035
+      }
+    },
+    "ramp": {
+      "one": {
+        "vm_rmse_clipped_mV": 0.2221202552318573,
+        "gamma": 0.7014155136713592,
+        "ev": 0.46721620725022994,
+        "count_abs_err": 6.54,
+        "count_bias": -6.54,
+        "n_true": 1897,
+        "n_model": 916
+      },
+      "cont": {
+        "vm_rmse_clipped_mV": 1.632144570350647,
+        "gamma": 0.13132519453633307,
+        "ev": -0.08872491729125898,
+        "count_abs_err": 0.2,
+        "count_bias": -0.18666666666666668,
+        "n_true": 1897,
+        "n_model": 1869
+      }
+    }
+  }
+}

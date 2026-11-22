@@ -51,10 +51,10 @@ V_SPIKE = sp.SPIKE_DISPLAY_MV - ch.JP     # +16 mV sim
 # current above V_REF plus the non-steady-state part (e.g. NaTs inactivated after a spike).
 V_REF = -46.0
 NAMES = ("V_th", "c_mV", "d", "ln_s_na", "b_na", "ln_s_sk", "b_sk", "ln_s_ca", "ln_s_kv", "b_kv", "ln_s_bk", "b_bk",
-         "ln_s_kp", "b_kp", "ln_s_im", "b_im", "ln_s_ih", "b_ih")
+         "ln_s_kp", "b_kp", "ln_s_im", "b_im", "ln_s_ih", "b_ih", "th_k")
 STEP = dict(V_th=1.5, c_mV=3.0, d=3.0, ln_s_na=0.7, b_na=10.0, ln_s_sk=0.7, b_sk=10.0, ln_s_ca=0.7,
             ln_s_kv=0.7, b_kv=10.0, ln_s_bk=0.7, b_bk=10.0,
-            ln_s_kp=0.7, b_kp=10.0, ln_s_im=0.7, b_im=10.0, ln_s_ih=0.7, b_ih=10.0)
+            ln_s_kp=0.7, b_kp=10.0, ln_s_im=0.7, b_im=10.0, ln_s_ih=0.7, b_ih=10.0, th_k=5.0)
 STARTS = [dict(ln_s_na=0.0, b_na=0.0, ln_s_sk=0.0, b_sk=0.0, ln_s_ca=0.0, ln_s_kv=0.0, b_kv=0.0, ln_s_bk=0.0, b_bk=0.0),
           dict(ln_s_na=-1.5, b_na=0.0, ln_s_sk=1.0, b_sk=0.0, ln_s_ca=1.0, ln_s_kv=-1.0, b_kv=0.0, ln_s_bk=-2.0, b_bk=0.0),
           dict(ln_s_na=-3.0, b_na=0.0, ln_s_sk=2.0, b_sk=0.0, ln_s_ca=0.0, ln_s_kv=0.5, b_kv=0.0, ln_s_bk=1.0, b_bk=0.0)]
@@ -62,13 +62,18 @@ STARTS = [dict(ln_s_na=0.0, b_na=0.0, ln_s_sk=0.0, b_sk=0.0, ln_s_ca=0.0, ln_s_k
 FAST_K_OFF = dict(ln_s_kv=-30.0, b_kv=0.0, ln_s_bk=-30.0, b_bk=0.0)
 # slow stateful K_P, Im, Ih branches: off here; they are fitted by least squares in fit_currents.py --slow
 SLOW_OFF = dict(ln_s_kp=-30.0, b_kp=0.0, ln_s_im=-30.0, b_im=0.0, ln_s_ih=-30.0, b_ih=0.0)
+# Na-availability threshold: V_th,eff = V_th + th_k * (H0 - h), h = the Na branch's NaTs inactivation gate.
+# After a spike h drops and the threshold rises; it relaxes as Na recovers. H0 = h at steady state at V_REF,
+# so the threshold is V_th there. th_k = 0 (default) is the fixed threshold; fitted by fit_currents.py --na-threshold
+TH_OFF = dict(th_k=0.0)
+H0 = float(ch.nats_rates(np.float32(V_REF - ch.JP))[1])
 
 
 class BranchCell(tf.Module):
     def __init__(self, p, vals):
         super().__init__()
         self.p = {k: tf.constant(float(p[k]), tf.float32) for k in ("a", "b", "time_scale", "Vs", "V0", "g")}
-        vals = {**FAST_K_OFF, **SLOW_OFF, **vals}   # fits from before these branches existed
+        vals = {**FAST_K_OFF, **SLOW_OFF, **TH_OFF, **vals}   # fits from before these branches existed
         self.q = {k: tf.Variable(float(vals[k]), dtype=tf.float32, name=k) for k in NAMES}
         self.sk_on = tf.Variable(1.0, dtype=tf.float32, name="sk_on")    # 0 = SK edge removed
         self.na_on = tf.Variable(1.0, dtype=tf.float32, name="na_on")
@@ -117,13 +122,14 @@ class BranchCell(tf.Module):
                 v = v + h * (0.04 * v * v + 5.0 * v + 140.0 - u + xt)
             u = u + ts * a * (b * v - u)
             vm = Vs * v + V0
-            s = tf.cast(vm >= Q["V_th"], tf.float32)
+            v_th = Q["V_th"] + Q["th_k"] * (H0 - st["h_t"])     # st: branch state from the previous step
+            s = tf.cast(vm >= v_th, tf.float32)
             if clamp:      # branches follow the recorded voltage (spike onset -> spike pulse, rest of spike -> reset)
                 vb = gt_spk[:, t] * V_SPIKE + (1 - gt_spk[:, t]) * (
                     gt_in[:, t] * (Q["c_mV"] - ch.JP) + (1 - gt_in[:, t]) * (V_gt[:, t] - ch.JP))
                 spike_now = gt_spk[:, t]
             else:
-                vb = s * V_SPIKE + (1 - s) * (tf.minimum(vm, Q["V_th"]) - ch.JP)
+                vb = s * V_SPIKE + (1 - s) * (tf.minimum(vm, v_th) - ch.JP)
                 spike_now = s
             st, cur = ch.step(st, vb, s_ca)
             i_na = -(cur["NaTs"] + cur["Nap"] - ch.na_steady(tf.minimum(vb, V_REF - ch.JP))) * ch.PA_PER_DENSITY  # pA, depolarizing +
@@ -259,6 +265,7 @@ def main():
     if not args.fast_k:
         fixed.update(FAST_K_OFF)
     fixed.update(SLOW_OFF)
+    fixed.update(TH_OFF)
     if args.pin_sk:
         OUT = os.path.join(HERE, "results_sk_pinned")
     if args.fast_k:

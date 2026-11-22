@@ -41,7 +41,10 @@ BR = ("na", "sk", "kv", "bk")
 SLOW_BR = ("kp", "im", "ih")
 
 
-def components(cell, x, I, V, chunk=128):
+POST_W, POST_MS = 3.0, 10   # --post-spike: weight of the samples 1-10 ms after a spike onset
+
+
+def components(cell, x, I, V, chunk=128, post=False):
     """Per-sample pieces of the linear problem for traces (n, T)."""
     P = {k: float(v.numpy()) for k, v in cell.p.items()}
     Q = cell.get()
@@ -82,9 +85,22 @@ def components(cell, x, I, V, chunk=128):
         v1 = v_prev + h * (F(v_prev) + z)
         v2 = v1 + h * (F(v1) + z)
         z = z - (v2 - vs) / (h * (1 + h * (0.08 * v1 + 5.0)) + h)
-    keep = sf.keep_mask(tf.constant(S)).numpy() * (1 - M) * (1 - in_prev)
+    if post:
+        # keep the samples right after a spike (where Kv3.1 / BK act); drop only the onset, the in-spike
+        # samples and the 2 ms upstroke before an onset (the Izhikevich threshold makes that part)
+        pre = np.zeros_like(S)
+        pre[:, :-1] = np.maximum(pre[:, :-1], S[:, 1:]); pre[:, :-2] = np.maximum(pre[:, :-2], S[:, 2:])
+        keep = (1 - S) * (1 - M) * (1 - pre)
+    else:
+        keep = sf.keep_mask(tf.constant(S)).numpy() * (1 - M) * (1 - in_prev)
     keep[:, :W_WIN] = 0
     w = keep * (1 + (W_NEAR - 1) * ((V >= NEAR[0]) & (V <= NEAR[1])))
+    if post:
+        since = np.full(S.shape, 10 ** 6)
+        last = np.full(len(S), -10 ** 6)
+        for t in range(S.shape[1]):
+            last = np.where(S[:, t] > 0.5, t, last); since[:, t] = t - last
+        w = w * np.where((since >= 1) & (since <= POST_MS), POST_W, 1.0)
     return dict(z=z, u0=u0, u1=u1, cur=cur, w=w, S=S)
 
 
@@ -94,6 +110,8 @@ def main():
     ap.add_argument("--base", default=os.path.join(HERE, "results_fast_k"))
     ap.add_argument("--out", default=os.path.join(HERE, "results_ls"))
     ap.add_argument("--evals", type=int, default=150)
+    ap.add_argument("--na-threshold", action="store_true", help="also fit th_k, the Na-availability threshold gain")
+    ap.add_argument("--post-spike", action="store_true", help="fit from 1 ms after each spike, first 10 ms up-weighted")
     ap.add_argument("--slow", action="store_true", help="also fit the K_P, Im and Ih branches; results go to results_slow_k/")
     args = ap.parse_args()
     if args.slow and args.out == os.path.join(HERE, "results_ls"):
@@ -115,7 +133,7 @@ def main():
             s = sets[(pr, split)]
             I, V = s["I"].astype(np.float32), s["V"].astype(np.float32)
             x = z_cache[f"{pr}_{split}"].astype(np.float32)
-            c = components(cell, x, I, V)
+            c = components(cell, x, I, V, post=args.post_spike)
             lhs = c["z"] + c["u0"] - x            # x = ANN + g(I + I0), the frozen front end's output
             rr, cc = np.nonzero(c["w"])
             if rng is not None and len(rr) > per:   # equal share per protocol
@@ -166,19 +184,25 @@ def main():
     hist = []
 
     def obj(q):
-        cell.set({**vals, "V_th": float(q[0]), "c_mV": float(q[1]), "b_na": float(q[2])})
+        cell.set({**vals, "V_th": float(q[0]), "c_mV": float(q[1]), "b_na": float(q[2]),
+                  **({"th_k": float(q[3])} if args.na_threshold else {})})
+        if q[1] > q[0] - 3.0:      # reset must sit below threshold, or the cell re-fires every step
+            return 1e3 + float(q[1] - q[0])
         tv = batched(tseg)
         loss = float(np.sum(wl * tv)) if np.all(np.isfinite(tv)) else 1e6
-        hist.append(dict(loss=loss, V_th=q[0], c_mV=q[1], bias=q[2], vm=tv[0], vr=tv[1], count=tv[2]))
+        hist.append(dict(loss=loss, V_th=q[0], c_mV=q[1], bias=q[2], th_k=q[3] if args.na_threshold else 0.0,
+                         vm=tv[0], vr=tv[1], count=tv[2]))
         if len(hist) % 25 == 1:
             print(f"  NM {len(hist)}  loss {loss:.4f}  V_th {q[0]:.2f} c {q[1]:.2f}  {time.time()-t0:.0f}s", flush=True)
         return loss
 
     # V_th, c and the summed bias (it sets the closed-loop drift) on the free-running spike loss
-    q0 = np.array([vals["V_th"], vals["c_mV"], vals["b_na"]])
-    o = minimize(obj, q0, method="Nelder-Mead", options=dict(maxfev=args.evals, xatol=1e-2, fatol=1e-4,
-                                                             initial_simplex=np.vstack([q0, q0 + [1.5, 0, 0], q0 + [0, 3.0, 0], q0 + [0, 0, 3.0]])))
+    q0 = np.array([vals["V_th"], vals["c_mV"], vals["b_na"]] + ([0.0] if args.na_threshold else []))
+    simplex = np.vstack([q0] + [q0 + np.eye(len(q0))[i] * st_ for i, st_ in enumerate([1.5, 3.0, 3.0, 10.0][:len(q0)])])
+    o = minimize(obj, q0, method="Nelder-Mead", options=dict(maxfev=args.evals, xatol=1e-2, fatol=1e-4, initial_simplex=simplex))
     vals.update(V_th=float(o.x[0]), c_mV=float(o.x[1]), b_na=float(o.x[2]))
+    if args.na_threshold:
+        vals.update(th_k=float(o.x[3]))
     cell.set(vals)
     print("fitted", {k: round(v, 3) for k, v in vals.items()}, f"loss {o.fun:.4f}", flush=True)
     pd.DataFrame(hist).to_csv(os.path.join(out, "history.csv"), index=False)
