@@ -11,7 +11,7 @@ subthreshold training data never went above about -46 mV, so the ANN's current i
 Step 1 (Adam, ANN weights only; Izhikevich and branch parameters from the SK-pinned fit, frozen):
   spikes are forced at the ground-truth times (Izhikevich reset, u jump and the branches' spike
   pulse at each onset), Vm runs free in between with no threshold.
-  loss = Vm MSE outside spikes (2 ms before to 3 ms after each onset excluded)
+  loss = Vm MSE below -40 mV outside spikes (2 ms before to 3 ms after each onset excluded)
        + W_SUB x free-running Vm MSE on spike-free segments
        + L2_ANN x mean squared change of the ANN weights from their subthreshold values.
 Step 2 (Nelder-Mead, ANN fixed): V_th, c, d, Na scale and bias, SK bias and Ca scale refit on the
@@ -40,12 +40,14 @@ import spiking_forced as sf  # noqa: E402
 PIN = os.path.join(HERE, "results_sk_pinned")
 OUT = os.path.join(HERE, "results_finetune")
 W_SUB, SUB_BATCH, L2_ANN = 10.0, 8, 100.0
+V_LOSS = -40.0  # forced-mode Vm compared below this, so an early run-up costs a bounded error with a useful gradient
 
 
 class ForcedBranchCell(sb.BranchCell):
     def run_forced(self, x, V_gt, gt_spk, gt_in, clamp_until):
-        """Spikes at the ground-truth onsets, Vm free in between (no threshold, capped at 0 mV)."""
-        P, Q = self.p, self.q
+        """Spikes at the ground-truth onsets, Vm free in between (no threshold; held at V_th if it would have fired)."""
+        P = self.p
+        Q = {k: tf.stop_gradient(tf.convert_to_tensor(v)) for k, v in self.q.items()}  # fixed in step 1
         a, b, ts, Vs, V0, g = P["a"], P["b"], P["time_scale"], P["Vs"], P["V0"], P["g"]
         c = (Q["c_mV"] - V0) / Vs
         s_na, s_sk, s_ca = tf.exp(Q["ln_s_na"]) * self.na_on, tf.exp(Q["ln_s_sk"]) * self.sk_on, tf.exp(Q["ln_s_ca"])
@@ -55,8 +57,11 @@ class ForcedBranchCell(sb.BranchCell):
         st = ch.init_state(V_gt[:, 0] - ch.JP)
         ib = tf.zeros([n], tf.float32)
         vm_ta = tf.TensorArray(tf.float32, size=T)
+        # x is read through a TensorArray: slicing the captured tensor makes the loop gradient accumulate
+        # into it with a TemporaryVariable, which crashes (AlreadyExistsError) on the CNN-LSTM models
+        x_ta = tf.TensorArray(tf.float32, size=T).unstack(tf.transpose(x))
         h = 0.5 * ts
-        vcap = (0.0 - V0) / Vs
+        vcap = (Q["V_th"] - V0) / Vs  # where the model would have fired: hold there instead of running away
         for t in tf.range(T):
             prev = tf.maximum(t - 1, 0)
             first = tf.cast(t > 0, tf.float32)
@@ -64,7 +69,7 @@ class ForcedBranchCell(sb.BranchCell):
                 v = (V_gt[:, prev] - V0) / Vs
             v = first * gt_in[:, prev] * c + (1.0 - first * gt_in[:, prev]) * v
             u = u + first * gt_spk[:, prev] * Q["d"]
-            xt = x[:, t] + g * ib
+            xt = x_ta.read(t) + g * ib
             for _ in range(2):
                 v = v + h * (0.04 * v * v + 5.0 * v + 140.0 - u + xt)
             u = u + ts * a * (b * v - u)
@@ -95,6 +100,9 @@ def main():
     out = os.path.join(OUT, args.model)
     os.makedirs(out, exist_ok=True)
     keras.utils.set_random_seed(0)
+    # Grappler rewrites the loop-gradient AddN into a TemporaryVariable accumulator whose name clashes
+    # across iterations on the CNN-LSTM graphs (AlreadyExistsError); run the graphs unoptimized
+    tf.config.optimizer.set_experimental_options({"disable_meta_optimizer": True})
     t0 = time.time()
     sets = fs.load_split()
     m, p0 = sp.load_frozen(args.model)
@@ -108,7 +116,7 @@ def main():
     def forced_mse(I, V, S, M):
         vm = cell.run_forced(x_of(I), V, S, M, C)
         keep = sf.keep_mask(S)[:, C:]
-        e = (vm[:, C:] - V[:, C:]) * keep
+        e = (tf.minimum(vm[:, C:], V_LOSS) - tf.minimum(V[:, C:], V_LOSS)) * keep
         return tf.reduce_sum(e * e) / tf.reduce_sum(keep)
 
     def sub_mse(I, V, S, M):
@@ -144,15 +152,25 @@ def main():
     opt = keras.optimizers.Adam(args.lr_ann)
     opt.build(ann_vars)
 
+    # the two simulation losses are differentiated in separate graphs: two while-loop gradients in one
+    # graph hit a TensorFlow AlreadyExistsError (TemporaryVariable name clash) on the CNN-LSTM models
     @tf.function
-    def step(I, V, S, M, Is, Vs_, Ss, Ms):
+    def grad_forced(I, V, S, M):
         with tf.GradientTape() as tape:
-            loss = forced_mse(I, V, S, M) + W_SUB * sub_mse(Is, Vs_, Ss, Ms) + anchor()
-        gr = tape.gradient(loss, ann_vars)
+            loss = forced_mse(I, V, S, M) + anchor()
+        return tape.gradient(loss, ann_vars)
+
+    @tf.function
+    def grad_sub(I, V, S, M):
+        with tf.GradientTape() as tape:
+            loss = W_SUB * sub_mse(I, V, S, M)
+        return tape.gradient(loss, ann_vars)
+
+    def step(I, V, S, M, Is, Vs_, Ss, Ms):
+        gr = [a_ + b_ for a_, b_ in zip(grad_forced(I, V, S, M), grad_sub(Is, Vs_, Ss, Ms))]
         gr = [tf.where(tf.math.is_finite(g_), g_, tf.zeros_like(g_)) for g_ in gr]
         gr, _ = tf.clip_by_global_norm(gr, 10.0)
         opt.apply(gr, ann_vars)
-        return loss
 
     f_mse, s_mse = tf.function(forced_mse), tf.function(sub_mse)
     vseg = seg4(sall.segments(sets, zero, "val", np.random.default_rng(1), 64))
