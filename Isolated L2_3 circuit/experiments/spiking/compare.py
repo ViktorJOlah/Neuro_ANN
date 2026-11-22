@@ -30,6 +30,8 @@ OUT = os.environ.get("SPIKING_OUT", sp.OUT)
 MODELS = [("izh", "Izhikevich alone"), ("dense3", "3×32 dense → Izh"), ("cnnlstm", "CNN-LSTM → Izh"),
           ("dense_cnnlstm", "dense + CNN-LSTM → Izh")]
 COLORS = {"izh": "#e67e22", "dense3": "#2e86c1", "cnnlstm": "#27ae60", "dense_cnnlstm": "#8e44ad"}
+if os.environ.get("SPIKING_MODELS"):       # e.g. "dense3,cnnlstm" when only some models were fitted
+    MODELS = [(k, lab) for k, lab in MODELS if k in os.environ["SPIKING_MODELS"].split(",")]
 PL = {"square": "square", "noise": "noise", "ramp": "ramp"}
 
 
@@ -101,7 +103,7 @@ def main():
     def bars(ax, kind, metric, title, ylab):
         for j, (key, lab) in enumerate(MODELS):
             vals = [res[key]["eval"][pr][kind][metric] for pr in sp.PROTOS]
-            b = ax.bar(xg + (j - 1.5) * w, vals, w, color=COLORS[key], label=lab)
+            b = ax.bar(xg + (j - (len(MODELS) - 1) / 2) * w, vals, w, color=COLORS[key], label=lab)
             ax.bar_label(b, fmt="%.2f", fontsize=7)
         ax.set_xticks(xg, [PL[p] for p in sp.PROTOS])
         ax.set_title(title, fontsize=10)
