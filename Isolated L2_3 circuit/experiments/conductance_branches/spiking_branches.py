@@ -235,6 +235,8 @@ def main():
                     help="add the Kv3.1 and BK branches (SK pinned); results go to results_fast_k/")
     ap.add_argument("--pin-kv", type=float, default=None,
                     help="with --fast-k: fix the Kv3.1 scale (e.g. 0.67, its NEURON-matched strength) and start from the SK-pinned fit")
+    ap.add_argument("--warm", action="store_true",
+                    help="with --fast-k: start from the SK-pinned fit, fast-K scales free; results go to results_fast_k_warm/")
     args = ap.parse_args()
     global OUT
     fixed = dict(ln_s_sk=0.0) if (args.pin_sk or args.fast_k) else {}
@@ -247,6 +249,9 @@ def main():
     if args.fast_k and args.pin_kv is not None:
         fixed.update(ln_s_kv=float(np.log(args.pin_kv)))
         OUT = os.path.join(HERE, "results_fast_k_kvpinned")
+    if args.fast_k and args.warm:
+        OUT = os.path.join(HERE, "results_fast_k_warm")
+    warm = args.fast_k and (args.pin_kv is not None or args.warm)
     fit = [k for k in NAMES if k not in fixed]
     out = os.path.join(OUT, args.model)
     os.makedirs(out, exist_ok=True)
@@ -257,7 +262,7 @@ def main():
     xs = {(pr, s): z[f"{pr}_{s}"] for pr in sp.PROTOS for s in ("train", "val", "test")}
     train, val, test = (sp.pools(sets, xs, s) for s in ("train", "val", "test"))
     st1 = json.load(open(os.path.join(sp.OUT, args.model, "metrics.json")))["trained"]
-    if args.fast_k and args.pin_kv is not None:   # start every simplex from the SK-pinned solution
+    if warm:   # start every simplex from the SK-pinned solution
         pin = json.load(open(os.path.join(HERE, "results_sk_pinned", args.model, "metrics.json")))["trained"]
     else:
         pin = {}
@@ -307,8 +312,8 @@ def main():
 
     from scipy.optimize import minimize
     starts = STARTS
-    if args.fast_k and args.pin_kv is not None:
-        starts = [dict(ln_s_bk=lb, b_bk=0.0, b_kv=0.0) for lb in (-4.0, -1.5, 0.0)]
+    if warm:   # fast-K starts off, small or at 1 (Kv3.1 follows BK unless pinned)
+        starts = [dict(ln_s_bk=lb, b_bk=0.0, b_kv=0.0, ln_s_kv=lb) for lb in (-4.0, -1.5, 0.0)]
     for j, st in enumerate(starts):
         v0 = {**st1, **pin, **st, **fixed}   # stage-1 normalization above still uses st1 alone
         q0 = np.array([v0[k] for k in fit])
