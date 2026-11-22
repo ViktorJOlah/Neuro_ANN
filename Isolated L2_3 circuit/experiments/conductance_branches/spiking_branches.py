@@ -50,26 +50,33 @@ V_SPIKE = sp.SPIKE_DISPLAY_MV - ch.JP     # +16 mV sim
 # ANN could not have learned: I_Na(V, h) - I_Na,steady(min(V, V_REF)). That is the regenerative
 # current above V_REF plus the non-steady-state part (e.g. NaTs inactivated after a spike).
 V_REF = -46.0
-NAMES = ("V_th", "c_mV", "d", "ln_s_na", "b_na", "ln_s_sk", "b_sk", "ln_s_ca", "ln_s_kv", "b_kv", "ln_s_bk", "b_bk")
+NAMES = ("V_th", "c_mV", "d", "ln_s_na", "b_na", "ln_s_sk", "b_sk", "ln_s_ca", "ln_s_kv", "b_kv", "ln_s_bk", "b_bk",
+         "ln_s_kp", "b_kp", "ln_s_im", "b_im", "ln_s_ih", "b_ih")
 STEP = dict(V_th=1.5, c_mV=3.0, d=3.0, ln_s_na=0.7, b_na=10.0, ln_s_sk=0.7, b_sk=10.0, ln_s_ca=0.7,
-            ln_s_kv=0.7, b_kv=10.0, ln_s_bk=0.7, b_bk=10.0)
+            ln_s_kv=0.7, b_kv=10.0, ln_s_bk=0.7, b_bk=10.0,
+            ln_s_kp=0.7, b_kp=10.0, ln_s_im=0.7, b_im=10.0, ln_s_ih=0.7, b_ih=10.0)
 STARTS = [dict(ln_s_na=0.0, b_na=0.0, ln_s_sk=0.0, b_sk=0.0, ln_s_ca=0.0, ln_s_kv=0.0, b_kv=0.0, ln_s_bk=0.0, b_bk=0.0),
           dict(ln_s_na=-1.5, b_na=0.0, ln_s_sk=1.0, b_sk=0.0, ln_s_ca=1.0, ln_s_kv=-1.0, b_kv=0.0, ln_s_bk=-2.0, b_bk=0.0),
           dict(ln_s_na=-3.0, b_na=0.0, ln_s_sk=2.0, b_sk=0.0, ln_s_ca=0.0, ln_s_kv=0.5, b_kv=0.0, ln_s_bk=1.0, b_bk=0.0)]
 # fast-AHP branches (Kv3.1 from the Allen mod file, generic BK) are off unless --fast-k: scale exp(-30) ~ 0
 FAST_K_OFF = dict(ln_s_kv=-30.0, b_kv=0.0, ln_s_bk=-30.0, b_bk=0.0)
+# slow stateful K_P, Im, Ih branches: off here; they are fitted by least squares in fit_currents.py --slow
+SLOW_OFF = dict(ln_s_kp=-30.0, b_kp=0.0, ln_s_im=-30.0, b_im=0.0, ln_s_ih=-30.0, b_ih=0.0)
 
 
 class BranchCell(tf.Module):
     def __init__(self, p, vals):
         super().__init__()
         self.p = {k: tf.constant(float(p[k]), tf.float32) for k in ("a", "b", "time_scale", "Vs", "V0", "g")}
-        vals = {**FAST_K_OFF, **vals}   # fits from before the fast-K branches existed
+        vals = {**FAST_K_OFF, **SLOW_OFF, **vals}   # fits from before these branches existed
         self.q = {k: tf.Variable(float(vals[k]), dtype=tf.float32, name=k) for k in NAMES}
         self.sk_on = tf.Variable(1.0, dtype=tf.float32, name="sk_on")    # 0 = SK edge removed
         self.na_on = tf.Variable(1.0, dtype=tf.float32, name="na_on")
         self.kv_on = tf.Variable(1.0, dtype=tf.float32, name="kv_on")    # 0 = Kv3.1 edge removed (TEA-like)
         self.bk_on = tf.Variable(1.0, dtype=tf.float32, name="bk_on")    # 0 = BK edge removed (paxilline-like)
+        self.kp_on = tf.Variable(1.0, dtype=tf.float32, name="kp_on")    # K_P
+        self.im_on = tf.Variable(1.0, dtype=tf.float32, name="im_on")    # Im (XE991/linopirdine-like)
+        self.ih_on = tf.Variable(1.0, dtype=tf.float32, name="ih_on")    # Ih (ZD7288-like)
 
     def get(self):
         return {k: float(v.numpy()) for k, v in self.q.items()}
@@ -84,6 +91,7 @@ class BranchCell(tf.Module):
         c = (Q["c_mV"] - V0) / Vs
         s_na, s_sk, s_ca = tf.exp(Q["ln_s_na"]) * self.na_on, tf.exp(Q["ln_s_sk"]) * self.sk_on, tf.exp(Q["ln_s_ca"])
         s_kv, s_bk = tf.exp(Q["ln_s_kv"]) * self.kv_on, tf.exp(Q["ln_s_bk"]) * self.bk_on
+        s_kp, s_im, s_ih = tf.exp(Q["ln_s_kp"]) * self.kp_on, tf.exp(Q["ln_s_im"]) * self.im_on, tf.exp(Q["ln_s_ih"]) * self.ih_on
         n, T = tf.shape(x)[0], tf.shape(x)[1]
         v = (V_gt[:, 0] - V0) / Vs
         u = b * v
@@ -91,7 +99,7 @@ class BranchCell(tf.Module):
         s = tf.zeros([n], tf.float32)
         ib = tf.zeros([n], tf.float32)
         vm_ta, s_ta = tf.TensorArray(tf.float32, size=T), tf.TensorArray(tf.float32, size=T)
-        na_ta, sk_ta, ca_ta, kv_ta, bk_ta = (tf.TensorArray(tf.float32, size=T) for _ in range(5))
+        na_ta, sk_ta, ca_ta, kv_ta, bk_ta, kp_ta, im_ta, ih_ta = (tf.TensorArray(tf.float32, size=T) for _ in range(8))
         h = 0.5 * ts
         for t in tf.range(T):
             clamp = tf.logical_or(t < clamp_until, one_step)
@@ -125,16 +133,24 @@ class BranchCell(tf.Module):
             # Kv3.1's small steady current below V_REF is subtracted, as for Na (the ANN learned it).
             i_kv = -(cur["Kv3_1"] - ch.kv31_steady(tf.minimum(vb, V_REF - ch.JP))) * ch.PA_PER_DENSITY * (1 - spike_now)
             i_bk = -cur["BK"] * ch.PA_PER_DENSITY * (1 - spike_now)
+            # slow, stateful K_P / Im / Ih (gates carried across steps = memory of past spikes); their steady
+            # state below V_REF is subtracted, as for Na and Kv3.1, because the ANN learned it
+            ss = ch.slow_steady(tf.minimum(vb, V_REF - ch.JP))
+            i_kp = -(cur["K_P"] - ss["K_P"]) * ch.PA_PER_DENSITY * (1 - spike_now)
+            i_im = -(cur["Im"] - ss["Im"]) * ch.PA_PER_DENSITY * (1 - spike_now)
+            i_ih = -(cur["Ih"] - ss["Ih"]) * ch.PA_PER_DENSITY * (1 - spike_now)
             ib = (s_na * i_na + Q["b_na"] + s_sk * i_sk + Q["b_sk"]
-                  + s_kv * i_kv + Q["b_kv"] + s_bk * i_bk + Q["b_bk"])
+                  + s_kv * i_kv + Q["b_kv"] + s_bk * i_bk + Q["b_bk"]
+                  + s_kp * i_kp + Q["b_kp"] + s_im * i_im + Q["b_im"] + s_ih * i_ih + Q["b_ih"])
             vm_ta = vm_ta.write(t, s * sp.SPIKE_DISPLAY_MV + (1.0 - s) * vm)
             s_ta = s_ta.write(t, s)
             if record:
                 na_ta = na_ta.write(t, s_na * i_na); sk_ta = sk_ta.write(t, s_sk * i_sk); ca_ta = ca_ta.write(t, st["cai"])
                 kv_ta = kv_ta.write(t, s_kv * i_kv); bk_ta = bk_ta.write(t, s_bk * i_bk)
+                kp_ta = kp_ta.write(t, s_kp * i_kp); im_ta = im_ta.write(t, s_im * i_im); ih_ta = ih_ta.write(t, s_ih * i_ih)
         out = (tf.transpose(vm_ta.stack()), tf.transpose(s_ta.stack()))
         if record:
-            out = out + tuple(tf.transpose(a_.stack()) for a_ in (na_ta, sk_ta, ca_ta, kv_ta, bk_ta))
+            out = out + tuple(tf.transpose(a_.stack()) for a_ in (na_ta, sk_ta, ca_ta, kv_ta, bk_ta, kp_ta, im_ta, ih_ta))
         return out
 
 
@@ -242,6 +258,7 @@ def main():
     fixed = dict(ln_s_sk=0.0) if (args.pin_sk or args.fast_k) else {}
     if not args.fast_k:
         fixed.update(FAST_K_OFF)
+    fixed.update(SLOW_OFF)
     if args.pin_sk:
         OUT = os.path.join(HERE, "results_sk_pinned")
     if args.fast_k:
@@ -286,10 +303,10 @@ def main():
         return np.sum([terms(*(a_[k:k + chunk] for a_ in seg)).numpy() * min(chunk, n - k) for k in range(0, n, chunk)], 0) / n
 
     # normalization: stage-1 model (branches off) on these segments, so stages are comparable
-    edges = (cell.na_on, cell.sk_on, cell.kv_on, cell.bk_on)
+    edges = (cell.na_on, cell.sk_on, cell.kv_on, cell.bk_on, cell.kp_on, cell.im_on, cell.ih_on)
     for e_ in edges:
         e_.assign(0.0)
-    cell.set(dict(st1, b_na=0.0, b_sk=0.0, b_kv=0.0, b_bk=0.0))
+    cell.set(dict(st1, b_na=0.0, b_sk=0.0, b_kv=0.0, b_bk=0.0, b_kp=0.0, b_im=0.0, b_ih=0.0))
     norm = np.maximum(batched(tseg), 1e-6)
     for e_ in edges:
         e_.assign(1.0)

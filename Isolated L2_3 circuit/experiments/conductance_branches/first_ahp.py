@@ -13,7 +13,8 @@ import spiking_branches as sb
 MODELS = [("dense3", "3×32 dense"), ("cnnlstm", "CNN-LSTM"), ("dense_cnnlstm", "dense + CNN-LSTM")]
 COL = {"dense3": "#2e86c1", "cnnlstm": "#27ae60", "dense_cnnlstm": "#8e44ad"}
 SETS = [("results", "original fit"), ("results_sk_pinned", "SK pinned"), ("results_finetune", "SK pinned + ANN fine-tune"),
-        ("results_fast_k", "+ Kv3.1 and BK branches")]
+        ("results_fast_k", "+ Kv3.1 and BK branches"), ("results_slow_k", "+ K_P, Im, Ih (least squares)")]
+SETS = [x for x in SETS if x[0] != "results_finetune"] if os.environ.get("AHP_SKIP_FINETUNE") else SETS
 SETS = [(d, l) for d, l in SETS if all(os.path.exists(os.path.join(HERE, d, m, "predictions.npz")) for m, _ in MODELS)]
 OUT = os.path.join(HERE, "results_first_ahp"); os.makedirs(OUT, exist_ok=True)
 PRE, POST = 10, 150

@@ -20,7 +20,9 @@ PA_PER_DENSITY = SOMA_AREA_UM2 * 10.0  # mA/cm2 * um2 -> pA
 # fitted somatic values (fit_parameters.json genome)
 G = dict(NaTs=0.6838817113482546, Nap=1.04318930264212e-06, SK=0.0009437495816197669,
          Ca_HVA=5.06464725789868e-05, Ca_LVA=0.0019267653289255383, Kv3_1=0.07834341196986132,
-         BK=0.01)   # BK is not in the Allen model: a generic somatic density, scaled by the fit
+         BK=0.01,   # BK is not in the Allen model: a generic somatic density, scaled by the fit
+         K_P=0.03605217478073147, Im=0.0002836840689563063, Ih=4.314651014112247e-08)
+EHCN = -45.0
 CA_GAMMA, CA_DECAY, CA_DEPTH = 0.005385368415172307, 902.5077593614815, 0.1
 
 
@@ -93,6 +95,39 @@ def mean_relax(x, xinf, tau, dt=1.0):
     return xinf + (x - xinf) * tau / dt * (1.0 - tf.exp(-dt / tau))
 
 
+# ---- K_P (persistent K, Allen mod file, vshift 0, tauF 1): m and h exact, m step-averaged for the current
+def kp_rates(v):
+    qt = 2.3 ** ((CELSIUS - 21) / 10)
+    minf = 1.0 / (1 + tf.exp(-(v + 14.3) / 14.6))
+    mtau = tf.where(v < -50.0, 1.25 + 175.03 * tf.exp(v * 0.026), 1.25 + 13.0 * tf.exp(-v * 0.026)) / qt
+    hinf = 1.0 / (1 + tf.exp((v + 54.0) / 11.0))
+    htau = (360.0 + (1010.0 + 24.0 * (v + 55.0)) * tf.exp(-tf.square((v + 75.0) / 48.0))) / qt
+    return minf, mtau, hinf, htau
+
+
+# ---- Im (M current, Allen mod file): m exact
+def im_rates(v):
+    qt = 2.3 ** ((CELSIUS - 21) / 10)
+    al = 3.3e-3 * tf.exp(2.5 * 0.04 * (v + 35.0))
+    be = 3.3e-3 * tf.exp(-2.5 * 0.04 * (v + 35.0))
+    return al / (al + be), 1.0 / (al + be) / qt
+
+
+# ---- Ih (HCN, Allen mod file, no q10 in the mod): m exact. Allen's somatic density is tiny (4e-8 S/cm2);
+# the branch is there for real cells, its fitted scale decides
+def ih_rates(v):
+    al = 0.001 * 6.43 * vtrap(v + 154.9, 11.9)
+    be = 0.001 * 193.0 * tf.exp(v / 33.1)
+    return al / (al + be), 1.0 / (al + be)
+
+
+def slow_steady(v):
+    """Steady-state K_P, Im and Ih current densities at voltage v (sim mV)."""
+    mp, _, hp, _ = kp_rates(v)
+    return dict(K_P=G["K_P"] * mp * mp * hp * (v - EK), Im=G["Im"] * im_rates(v)[0] * (v - EK),
+                Ih=G["Ih"] * ih_rates(v)[0] * (v - EHCN))
+
+
 def sk_zinf(cai):
     cai = tf.where(cai < 1e-7, cai + 1e-7, cai)
     return 1.0 / (1 + (0.00043 / cai) ** 4.8)
@@ -110,8 +145,10 @@ def init_state(v):
     m_l, _, h_l, _ = calva_rates(v)
     cai = tf.fill(tf.shape(v), MIN_CAI)
     ca_nd = tf.zeros_like(v)
+    mp, _, hp, _ = kp_rates(v)
     return dict(h_t=h_t, h_p=h_p, m_h=m_h, h_h=h_h, m_l=m_l, h_l=h_l, cai=cai, z=sk_zinf(cai),
-                m_kv=kv31_rates(v)[0], ca_nd=ca_nd, m_bk=bk_minf(v, ca_nd))
+                m_kv=kv31_rates(v)[0], ca_nd=ca_nd, m_bk=bk_minf(v, ca_nd),
+                m_kp=mp, h_kp=hp, m_im=im_rates(v)[0], m_ih=ih_rates(v)[0])
 
 
 def step(st, v, ca_scale=1.0, dt=1.0):
@@ -146,8 +183,20 @@ def step(st, v, ca_scale=1.0, dt=1.0):
     minf_bk = bk_minf(v, 0.5 * (st["ca_nd"] + ca_nd))
     m_bk = relax(st["m_bk"], minf_bk, BK_TAU, dt)
     i_bk = G["BK"] * mean_relax(st["m_bk"], minf_bk, BK_TAU, dt) * (v - EK)
-    return dict(h_t=h_t, h_p=h_p, m_h=m_h, h_h=h_h, m_l=m_l, h_l=h_l, cai=cai, z=z, m_kv=m_kv, ca_nd=ca_nd, m_bk=m_bk), \
-        dict(NaTs=i_nats, Nap=i_nap, SK=i_sk, Ca=i_ca, Kv3_1=i_kv, BK=i_bk)
+    # slow, stateful K_P / Im / Ih: gates carried from step to step (their memory of past spikes)
+    minf_p, mtau_p, hinf_p, htau_p = kp_rates(v)
+    m_kp_avg = mean_relax(st["m_kp"], minf_p, mtau_p, dt)
+    m_kp, h_kp = relax(st["m_kp"], minf_p, mtau_p, dt), relax(st["h_kp"], hinf_p, htau_p, dt)
+    i_kp = G["K_P"] * m_kp_avg * m_kp_avg * 0.5 * (st["h_kp"] + h_kp) * (v - EK)
+    minf_m, mtau_m = im_rates(v)
+    i_im = G["Im"] * mean_relax(st["m_im"], minf_m, mtau_m, dt) * (v - EK)
+    m_im = relax(st["m_im"], minf_m, mtau_m, dt)
+    minf_i, mtau_i = ih_rates(v)
+    i_ih = G["Ih"] * mean_relax(st["m_ih"], minf_i, mtau_i, dt) * (v - EHCN)
+    m_ih = relax(st["m_ih"], minf_i, mtau_i, dt)
+    return dict(h_t=h_t, h_p=h_p, m_h=m_h, h_h=h_h, m_l=m_l, h_l=h_l, cai=cai, z=z, m_kv=m_kv, ca_nd=ca_nd, m_bk=m_bk,
+                m_kp=m_kp, h_kp=h_kp, m_im=m_im, m_ih=m_ih), \
+        dict(NaTs=i_nats, Nap=i_nap, SK=i_sk, Ca=i_ca, Kv3_1=i_kv, BK=i_bk, K_P=i_kp, Im=i_im, Ih=i_ih)
 
 
 def kv31_steady(v):

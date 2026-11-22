@@ -15,7 +15,7 @@ all samples outside the spikes (2 ms before to 3 ms after onset excluded), with 
 up-weighted. Why: a current-only ANN cannot see spike history, and after the earlier fits the leftover
 error is a clean function of time since the last spike (too little outward current 3-25 ms after a
 spike, too much 25-200 ms after), which is exactly what these terms shape.
-Then V_th and c are refit by Nelder-Mead on the free-running spike loss (everything else fixed), and
+Then V_th, c and the summed bias are refit by Nelder-Mead on the free-running spike loss (everything else fixed), and
 the usual evaluation, spike-free check and block tests are run. Results: results_ls/<model>/.
 """
 from __future__ import annotations
@@ -38,6 +38,7 @@ import spiking_forced as sf  # noqa: E402
 
 W_NEAR, NEAR, W_WIN = 5.0, (-50.0, -40.0), 64
 BR = ("na", "sk", "kv", "bk")
+SLOW_BR = ("kp", "im", "ih")
 
 
 def components(cell, x, I, V, chunk=128):
@@ -48,16 +49,16 @@ def components(cell, x, I, V, chunk=128):
     h = 0.5 * ts
     S, M = sp.gt_masks(V)
     T = V.shape[1]
-    unit = {**Q, "ln_s_na": 0.0, "ln_s_sk": 0.0, "ln_s_kv": 0.0, "ln_s_bk": 0.0}
+    unit = {**Q, **{f"ln_s_{k}": 0.0 for k in BR + SLOW_BR}}
     cell.set(unit)
     f = tf.function(cell.run)
-    cur = {k: [] for k in BR}
+    cur = {k: [] for k in BR + SLOW_BR}
     for k in range(0, len(V), chunk):
         sl = slice(k, k + chunk)
         out = f(tf.constant(x[sl]), tf.constant(V[sl]), tf.constant(S[sl]), tf.constant(M[sl]), tf.constant(T),
                 tf.constant(False), record=True)
-        na, sk, _, kv, bk = (o.numpy() for o in out[2:])
-        for key, arr in zip(BR, (na, sk, kv, bk)):
+        na, sk, _, kv, bk, kp, im, ih = (o.numpy() for o in out[2:])
+        for key, arr in zip(BR + SLOW_BR, (na, sk, kv, bk, kp, im, ih)):
             cur[key].append(arr)
     cell.set(Q)
     cur = {k: np.concatenate(v) for k, v in cur.items()}
@@ -93,7 +94,11 @@ def main():
     ap.add_argument("--base", default=os.path.join(HERE, "results_fast_k"))
     ap.add_argument("--out", default=os.path.join(HERE, "results_ls"))
     ap.add_argument("--evals", type=int, default=150)
+    ap.add_argument("--slow", action="store_true", help="also fit the K_P, Im and Ih branches; results go to results_slow_k/")
     args = ap.parse_args()
+    if args.slow and args.out == os.path.join(HERE, "results_ls"):
+        args.out = os.path.join(HERE, "results_slow_k")
+    br = BR + (SLOW_BR if args.slow else ())
     out = os.path.join(args.out, args.model)
     os.makedirs(out, exist_ok=True)
     t0 = time.time()
@@ -115,27 +120,26 @@ def main():
             rr, cc = np.nonzero(c["w"])
             if rng is not None and len(rr) > per:   # equal share per protocol
                 j = rng.choice(len(rr), per, replace=False); rr, cc = rr[j], cc[j]
-            cols = [g * c["cur"][k][rr, cc] for k in BR] + [np.full(len(rr), g), -c["u1"][rr, cc]]
+            cols = [g * c["cur"][k][rr, cc] for k in br] + [np.full(len(rr), g), -c["u1"][rr, cc]]
             A.append(np.stack(cols, 1)); y.append(lhs[rr, cc]); w.append(c["w"][rr, cc])
             print(f"  {pr} {split}: {len(rr)} samples  {time.time()-t0:.0f}s", flush=True)
         return np.concatenate(A), np.concatenate(y), np.concatenate(w)
 
     A, y, w = design("train", np.random.default_rng(0), per=400000)
     sw = np.sqrt(w)
-    lo = [0, 0, 0, 0, -np.inf, -20.0]
-    hi = [np.inf, np.inf, np.inf, np.inf, np.inf, 40.0]
+    lo = [0] * len(br) + [-np.inf, -20.0]
+    hi = [np.inf] * len(br) + [np.inf, 40.0]
     sol = lsq_linear(A * sw[:, None], y * sw, bounds=(lo, hi))
-    s_na, s_sk, s_kv, s_bk, b_all, d = sol.x
-    old = r["trained"]
-    old_vec = np.array([np.exp(old["ln_s_na"]), np.exp(old["ln_s_sk"]), np.exp(old["ln_s_kv"]), np.exp(old["ln_s_bk"]),
-                        old["b_na"] + old["b_sk"] + old["b_kv"] + old["b_bk"], old["d"]])
+    scales, b_all, d = dict(zip(br, sol.x[:len(br)])), sol.x[-2], sol.x[-1]
+    old = {**sb.FAST_K_OFF, **sb.SLOW_OFF, **r["trained"]}
+    old_vec = np.array([np.exp(old[f"ln_s_{k}"]) for k in br] + [sum(old[f"b_{k}"] for k in br), old["d"]])
     Av, yv, wv = design("val", np.random.default_rng(1), per=100000)
     rms = lambda vec: float(np.sqrt(np.sum(wv * (Av @ vec - yv) ** 2) / np.sum(wv)))
-    print("LS solution: s_na %.3f s_sk %.3f s_kv %.3f s_bk %.3f b %.2f d %.3f" % tuple(sol.x), flush=True)
+    print("LS solution:", {**{f"s_{k}": round(float(v), 3) for k, v in scales.items()}, "b": round(float(b_all), 2), "d": round(float(d), 3)}, flush=True)
     print("val weighted RMS (x units): base fit %.3f -> LS %.3f" % (rms(old_vec), rms(sol.x)), flush=True)
     lg = lambda v_: float(np.log(max(v_, 1e-12)))
-    vals = {**old, "ln_s_na": lg(s_na), "ln_s_sk": lg(s_sk), "ln_s_kv": lg(s_kv), "ln_s_bk": lg(s_bk),
-            "b_na": float(b_all), "b_sk": 0.0, "b_kv": 0.0, "b_bk": 0.0, "d": float(d)}
+    vals = {**old, **{f"ln_s_{k}": lg(v) for k, v in scales.items()}, **{f"b_{k}": 0.0 for k in br},
+            "b_na": float(b_all), "d": float(d)}
     cell.set(vals)
 
     # V_th and c on the free-running spike loss of stage 1 (normalized like spiking_branches.py)
@@ -162,18 +166,19 @@ def main():
     hist = []
 
     def obj(q):
-        cell.set({**vals, "V_th": float(q[0]), "c_mV": float(q[1])})
+        cell.set({**vals, "V_th": float(q[0]), "c_mV": float(q[1]), "b_na": float(q[2])})
         tv = batched(tseg)
         loss = float(np.sum(wl * tv)) if np.all(np.isfinite(tv)) else 1e6
-        hist.append(dict(loss=loss, V_th=q[0], c_mV=q[1], vm=tv[0], vr=tv[1], count=tv[2]))
+        hist.append(dict(loss=loss, V_th=q[0], c_mV=q[1], bias=q[2], vm=tv[0], vr=tv[1], count=tv[2]))
         if len(hist) % 25 == 1:
             print(f"  NM {len(hist)}  loss {loss:.4f}  V_th {q[0]:.2f} c {q[1]:.2f}  {time.time()-t0:.0f}s", flush=True)
         return loss
 
-    q0 = np.array([vals["V_th"], vals["c_mV"]])
+    # V_th, c and the summed bias (it sets the closed-loop drift) on the free-running spike loss
+    q0 = np.array([vals["V_th"], vals["c_mV"], vals["b_na"]])
     o = minimize(obj, q0, method="Nelder-Mead", options=dict(maxfev=args.evals, xatol=1e-2, fatol=1e-4,
-                                                             initial_simplex=np.vstack([q0, q0 + [1.5, 0], q0 + [0, 3.0]])))
-    vals.update(V_th=float(o.x[0]), c_mV=float(o.x[1]))
+                                                             initial_simplex=np.vstack([q0, q0 + [1.5, 0, 0], q0 + [0, 3.0, 0], q0 + [0, 0, 3.0]])))
+    vals.update(V_th=float(o.x[0]), c_mV=float(o.x[1]), b_na=float(o.x[2]))
     cell.set(vals)
     print("fitted", {k: round(v, 3) for k, v in vals.items()}, f"loss {o.fun:.4f}", flush=True)
     pd.DataFrame(hist).to_csv(os.path.join(out, "history.csv"), index=False)

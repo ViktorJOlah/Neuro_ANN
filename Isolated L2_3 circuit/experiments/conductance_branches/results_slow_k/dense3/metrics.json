@@ -1,0 +1,208 @@
+{
+  "model": "dense3",
+  "base": "/home/user/neuro_ann/Isolated L2_3 circuit/experiments/conductance_branches/results_fast_k",
+  "trained": {
+    "ln_s_kv": -1.8918725432514616,
+    "b_kv": 0.0,
+    "ln_s_bk": -5.335830911546236,
+    "b_bk": 0.0,
+    "ln_s_kp": -1.4307293283620195,
+    "b_kp": 0.0,
+    "ln_s_im": -1.0885794603376073,
+    "b_im": 0.0,
+    "ln_s_ih": -27.631021115928547,
+    "b_ih": 0.0,
+    "V_th": -33.47972779080079,
+    "c_mV": -45.014432352019355,
+    "d": -0.8362548080127413,
+    "ln_s_na": -0.08484318063837043,
+    "b_na": 0.0679129807307601,
+    "b_sk": 0.0,
+    "ln_s_ca": 0.16138733534698763,
+    "ln_s_sk": 0.12544625218580796
+  },
+  "frozen": {
+    "a": 0.46169376373291016,
+    "b": 0.02230210229754448,
+    "c": -65.0,
+    "d": 8.0,
+    "time_scale": 0.01421410497277975,
+    "g": 0.1915135681629181,
+    "I0": 6.180722713470459,
+    "V0": 209.6686248779297,
+    "Vs": 3.744729518890381,
+    "dt": 1.0,
+    "n_substeps": 2
+  },
+  "ls_solution": [
+    0.9186563362063069,
+    1.133654235885803,
+    0.15078918503547684,
+    0.004815906856712622,
+    0.23913445109059173,
+    0.33669444196304943,
+    2.4030344451655597e-15,
+    0.36212641316595945,
+    -0.8362548080127413
+  ],
+  "ls_val_rms": {
+    "base": 2.36808212734703,
+    "ls": 1.4594756699436762
+  },
+  "loss_norm_stage1": [
+    15.02042007446289,
+    0.04654466360807419,
+    4.125
+  ],
+  "train_spike_loss": 1.0286403621905518,
+  "spike_free_cont_rmse_mV": {
+    "square": 0.6080625057220459,
+    "noise": 0.49055978655815125
+  },
+  "sk_block": {
+    "square": {
+      "n": 69,
+      "neuron_count_control": 10.159420289855072,
+      "neuron_count_block": 39.53623188405797,
+      "model_count_control": 9.608695652173912,
+      "model_count_block": 52.82608695652174,
+      "delta_count_corr": 0.9981998249430983,
+      "gamma_block": 0.2798793711734101,
+      "gamma_control": 0.09718219368186269
+    },
+    "noise": {
+      "n": 138,
+      "neuron_count_control": 15.166666666666666,
+      "neuron_count_block": 42.231884057971016,
+      "model_count_control": 14.115942028985508,
+      "model_count_block": 56.06521739130435,
+      "delta_count_corr": 0.9976114437353613,
+      "gamma_block": 0.219308056835359,
+      "gamma_control": 0.16674137449442217
+    },
+    "ramp": {
+      "n": 150,
+      "neuron_count_control": 12.646666666666667,
+      "neuron_count_block": 29.046666666666667,
+      "model_count_control": 12.133333333333333,
+      "model_count_block": 35.07333333333333,
+      "delta_count_corr": 0.9994086031830725,
+      "gamma_block": 0.34355768463527414,
+      "gamma_control": 0.2806501879952465
+    }
+  },
+  "kv3_block": {
+    "square": {
+      "n": 69,
+      "neuron_count_control": 10.159420289855072,
+      "neuron_count_block": 2.289855072463768,
+      "model_count_control": 9.608695652173912,
+      "model_count_block": 7.782608695652174,
+      "delta_count_corr": 0.7776818537383806,
+      "gamma_block": 0.17139959639327274,
+      "gamma_control": 0.09718219368186269
+    },
+    "noise": {
+      "n": 138,
+      "neuron_count_control": 15.166666666666666,
+      "neuron_count_block": 7.521739130434782,
+      "model_count_control": 14.115942028985508,
+      "model_count_block": 14.434782608695652,
+      "delta_count_corr": -0.05355807905985409,
+      "gamma_block": 0.051300083497315976,
+      "gamma_control": 0.16674137449442217
+    },
+    "ramp": {
+      "n": 150,
+      "neuron_count_control": 12.646666666666667,
+      "neuron_count_block": 1.16,
+      "model_count_control": 12.133333333333333,
+      "model_count_block": 12.853333333333333,
+      "delta_count_corr": -0.35396526002880446,
+      "gamma_block": 0.0032971921581849474,
+      "gamma_control": 0.2806501879952465
+    }
+  },
+  "bk_block": {
+    "square": {
+      "model_count_control": 4.361842155456543,
+      "model_count_bk_block": 4.302631378173828,
+      "gt_count": 4.611842155456543
+    },
+    "noise": {
+      "model_count_control": 12.815789222717285,
+      "model_count_bk_block": 12.815789222717285,
+      "gt_count": 13.769737243652344
+    },
+    "ramp": {
+      "model_count_control": 12.133333206176758,
+      "model_count_bk_block": 12.180000305175781,
+      "gt_count": 12.646666526794434
+    }
+  },
+  "fixed": {
+    "ln_s_sk": 0.0
+  },
+  "eval": {
+    "square": {
+      "one": {
+        "vm_rmse_clipped_mV": 0.4769716262817383,
+        "gamma": 0.7150352588799713,
+        "ev": 0.5679386320342177,
+        "count_abs_err": 1.881578947368421,
+        "count_bias": -1.881578947368421,
+        "n_true": 701,
+        "n_model": 415
+      },
+      "cont": {
+        "vm_rmse_clipped_mV": 2.804295539855957,
+        "gamma": 0.09718219368186269,
+        "ev": -0.4534286814747366,
+        "count_abs_err": 0.2631578947368421,
+        "count_bias": -0.25,
+        "n_true": 701,
+        "n_model": 663
+      }
+    },
+    "noise": {
+      "one": {
+        "vm_rmse_clipped_mV": 0.49039438366889954,
+        "gamma": 0.6969074876044627,
+        "ev": 0.5307487212856721,
+        "count_abs_err": 6.052631578947368,
+        "count_bias": -6.052631578947368,
+        "n_true": 2093,
+        "n_model": 1173
+      },
+      "cont": {
+        "vm_rmse_clipped_mV": 3.1470553874969482,
+        "gamma": 0.16674137449442217,
+        "ev": 0.014139940092469994,
+        "count_abs_err": 1.138157894736842,
+        "count_bias": -0.9539473684210527,
+        "n_true": 2093,
+        "n_model": 1948
+      }
+    },
+    "ramp": {
+      "one": {
+        "vm_rmse_clipped_mV": 0.3876013457775116,
+        "gamma": 0.7738317000702015,
+        "ev": 0.5459792783904951,
+        "count_abs_err": 5.546666666666667,
+        "count_bias": -5.546666666666667,
+        "n_true": 1897,
+        "n_model": 1065
+      },
+      "cont": {
+        "vm_rmse_clipped_mV": 1.888745903968811,
+        "gamma": 0.2806501879952465,
+        "ev": -0.13693506650111242,
+        "count_abs_err": 0.5133333333333333,
+        "count_bias": -0.5133333333333333,
+        "n_true": 1897,
+        "n_model": 1820
+      }
+    }
+  }
+}
