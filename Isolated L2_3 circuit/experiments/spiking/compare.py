@@ -26,7 +26,7 @@ sys.path.insert(0, HERE)
 import spiking as sp  # noqa: E402
 
 fs, base = sp.fs, sp.base
-OUT = sp.OUT
+OUT = os.environ.get("SPIKING_OUT", sp.OUT)
 MODELS = [("izh", "Izhikevich alone"), ("dense3", "3×32 dense → Izh"), ("cnnlstm", "CNN-LSTM → Izh"),
           ("dense_cnnlstm", "dense + CNN-LSTM → Izh")]
 COLORS = {"izh": "#e67e22", "dense3": "#2e86c1", "cnnlstm": "#27ae60", "dense_cnnlstm": "#8e44ad"}
