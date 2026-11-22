@@ -1,0 +1,103 @@
+{
+  "model": {
+    "specimen_id": 318808427,
+    "specimen_name": "Nr5a1-Cre;Ai14-169250.03.02.01",
+    "swc_source": "github.com/YaxuanLi-cn/MorphRep benchmark_dataset/allen_cell_type_processed/Nr5a1-Cre_Ai14-169250.03.02.01_491119754_m.swc (byte-identical copy of Allen download, checked on cell 487661754)",
+    "fit_source": "github.com/AllenInstitute/All-active-Manuscript assets/mouse_models/318808427/hof_models/hof_param_318808427_0.json (best hall-of-fame all-active model, Nandi et al. 2022)",
+    "type": "Allen all-active (Nandi et al. 2022 hall-of-fame #0)",
+    "build": "replicates allensdk AllActiveUtils, axon_type=stub (2 x 30 um, 1 um diameter, at soma(0.5))"
+  },
+  "simulation": {
+    "dt_ms": 0.01,
+    "sample_ms": 1.0,
+    "celsius": 34.0,
+    "init": "steady state at zero current (3 s, large-dt implicit settle) from v_init",
+    "current_interpolation": "current defined at 1 ms samples, played with linear interpolation",
+    "injection_site": "soma[0](0.5)"
+  },
+  "array_layout": "(n_sim, n_ms, 2): [...,0]=injected current pA, [...,1]=somatic Vm mV",
+  "vm_convention": "Vm = v_sim - junction_potential (+14 mV), same as allensdk output / Allen recordings",
+  "calibration": {
+    "rheobase_pA": 111.87744140625,
+    "rest_mV": -75.9481590306174,
+    "ramp_spike_amplitudes_pA": [
+      115.47375000221562,
+      118.75450000228723,
+      120.53875000232618,
+      122.08875000236002,
+      123.5172500023912,
+      124.86750000242067,
+      126.16175000244891,
+      127.41350000247624,
+      128.63150000250283,
+      129.8217500025288,
+      130.9890000025543,
+      132.13650000257934,
+      133.26700000260402,
+      134.38250000262835,
+      135.48450000265242,
+      136.57450000267622,
+      137.65400000269977,
+      138.72325000272312,
+      139.78375000274625,
+      140.83575000276923,
+      141.880000002792,
+      142.91700000281466,
+      143.94750000283713,
+      144.9715000028595,
+      145.98975000288172,
+      147.00225000290382,
+      148.0097500029258
+    ],
+    "ramp_total_spikes_to_2nA": 4677,
+    "ramp_last_spike_pA": 1999.8742499736936,
+    "junction_potential": -14.0,
+    "n_sections": 39,
+    "n_segments": 95,
+    "v_init": -80,
+    "axon_type": "stub",
+    "axon_diams_um": [
+      1.0,
+      1.0
+    ]
+  },
+  "protocols": {
+    "square": {
+      "shape": [
+        100,
+        2000,
+        2
+      ],
+      "n_spikes_min": 0,
+      "n_spikes_max": 28,
+      "n_with_spikes": 42
+    },
+    "ramp": {
+      "shape": [
+        100,
+        7500,
+        2
+      ],
+      "n_spikes_min": 1,
+      "n_spikes_max": 27,
+      "n_with_spikes": 100
+    },
+    "noise": {
+      "shape": [
+        100,
+        4500,
+        2
+      ],
+      "n_spikes_min": 0,
+      "n_spikes_max": 68,
+      "n_with_spikes": 99
+    }
+  },
+  "n_sim_per_protocol": 100,
+  "protocol_source": "../../code/generate_dataset.py (identical protocols to the first cell)",
+  "noise_band_Hz": [
+    1.0,
+    100.0
+  ],
+  "wall_time_s": 5241.599906682968
+}
