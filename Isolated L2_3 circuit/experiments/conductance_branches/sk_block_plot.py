@@ -13,8 +13,9 @@ MODELS = [("dense3", "3×32 dense → Izh"), ("cnnlstm", "CNN-LSTM → Izh"), ("
 COL = {"dense3": "#2e86c1", "cnnlstm": "#27ae60", "dense_cnnlstm": "#8e44ad"}
 PR = sb.sp.PROTOS
 st = sb.base.SEED_MS
-R = {m: json.load(open(os.path.join(sb.OUT, m, "metrics.json")))["sk_block"] for m, _ in MODELS}
-Z = {m: np.load(os.path.join(sb.OUT, m, "predictions.npz")) for m, _ in MODELS}
+OUT = os.environ.get("SB_OUT", sb.OUT)
+R = {m: json.load(open(os.path.join(OUT, m, "metrics.json")))["sk_block"] for m, _ in MODELS}
+Z = {m: np.load(os.path.join(OUT, m, "predictions.npz")) for m, _ in MODELS}
 
 fig, ax = plt.subplots(2, 3, figsize=(15, 8.5))
 for j, pr in enumerate(PR):
@@ -38,7 +39,7 @@ for j, pr in enumerate(PR):
     b.plot(lim, lim, "k--", lw=0.8); b.set_xlabel("NEURON: extra spikes with SK removed"); b.set_ylabel("model: extra spikes with SK edge zeroed")
     b.set_title(f"{pr}: per-trace effect of removing SK"); b.legend(fontsize=7)
 fig.suptitle("In-silico SK blocker: model predictions with the SK edge zeroed, no retraining", fontsize=12)
-fig.tight_layout(); fig.savefig(os.path.join(sb.OUT, "sk_block_counts.png"), dpi=130)
+fig.tight_layout(); fig.savefig(os.path.join(OUT, "sk_block_counts.png"), dpi=130)
 
 # example traces: NEURON control / blocked, CNN-LSTM model control / blocked
 z = np.load(os.path.join(sb.NREF, "test_square.npz"))
@@ -53,4 +54,4 @@ for a, c, lab in ((ax[0], "control", "control"), (ax[1], "sk_block", "SK removed
         a.axvline(tt, ymin=0.92, ymax=1.0, color=COL[m], lw=1.2)
     a.set_ylabel("Vm (mV)"); a.set_title(f"{lab}: NEURON trace (black), CNN-LSTM → Izh spike times (green ticks)")
 ax[1].set_xlabel("time (s)")
-fig.tight_layout(); fig.savefig(os.path.join(sb.OUT, "sk_block_traces.png"), dpi=130)
+fig.tight_layout(); fig.savefig(os.path.join(OUT, "sk_block_traces.png"), dpi=130)

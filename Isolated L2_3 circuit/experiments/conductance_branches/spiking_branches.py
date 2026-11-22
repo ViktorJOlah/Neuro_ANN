@@ -188,7 +188,14 @@ def main():
     ap.add_argument("--evals", type=int, default=500)
     ap.add_argument("--n-train-seg", type=int, default=256)
     ap.add_argument("--n-val-seg", type=int, default=128)
+    ap.add_argument("--pin-sk", action="store_true",
+                    help="fix the SK scale at Allen's strength (s_SK = 1); results go to results_sk_pinned/")
     args = ap.parse_args()
+    global OUT
+    fixed = dict(ln_s_sk=0.0) if args.pin_sk else {}
+    if args.pin_sk:
+        OUT = os.path.join(HERE, "results_sk_pinned")
+    fit = [k for k in NAMES if k not in fixed]
     out = os.path.join(OUT, args.model)
     os.makedirs(out, exist_ok=True)
     t0 = time.time()
@@ -227,7 +234,7 @@ def main():
     hist, best = [], [np.inf, None]
 
     def objective(q):
-        vals = from_vec(q)
+        vals = {**dict(zip(fit, map(float, q))), **fixed}
         cell.set(vals)
         tv = batched(tseg)
         loss = float(np.sum(w * tv)) if np.all(np.isfinite(tv)) else 1e6
@@ -241,8 +248,9 @@ def main():
 
     from scipy.optimize import minimize
     for j, st in enumerate(STARTS):
-        q0 = to_vec(dict(st1, **st))
-        simplex = np.vstack([q0] + [q0 + np.eye(len(NAMES))[i] * STEP[k] for i, k in enumerate(NAMES)])
+        v0 = {**st1, **st, **fixed}
+        q0 = np.array([v0[k] for k in fit])
+        simplex = np.vstack([q0] + [q0 + np.eye(len(fit))[i] * STEP[k] for i, k in enumerate(fit)])
         opt = minimize(objective, q0, method="Nelder-Mead",
                        options=dict(maxfev=args.evals, xatol=1e-3, fatol=1e-4, initial_simplex=simplex, adaptive=True))
         print(f"start {j}: loss {opt.fun:.4f} after {opt.nfev} evaluations; best so far {best[0]:.4f}", flush=True)
