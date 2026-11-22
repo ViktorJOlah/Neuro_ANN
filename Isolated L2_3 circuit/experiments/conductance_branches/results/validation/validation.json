@@ -1,0 +1,32 @@
+{
+ "square": {
+  "na_subthreshold_corr": 0.9988113297957529,
+  "na_subthreshold_ratio": 1.002098560333252,
+  "ca_rise_ratio_pulse": 0.8138988018035889,
+  "ca_rise_ratio_raw": 0.8928155899047852,
+  "ca_corr_pulse": 0.9995431416636353,
+  "sk_corr_pulse": 0.9970846465492081,
+  "sk_ratio_pulse": 0.6323978900909424,
+  "sk_peak_pA_neuron": 258.00640869140625
+ },
+ "noise": {
+  "na_subthreshold_corr": 0.9987399297600551,
+  "na_subthreshold_ratio": 1.0013682842254639,
+  "ca_rise_ratio_pulse": 0.81428462266922,
+  "ca_rise_ratio_raw": 0.8709374666213989,
+  "ca_corr_pulse": 0.9997700704769378,
+  "sk_corr_pulse": 0.9992869512880892,
+  "sk_ratio_pulse": 0.5854569673538208,
+  "sk_peak_pA_neuron": 64.23590087890625
+ },
+ "ramp": {
+  "na_subthreshold_corr": 0.9994698973957743,
+  "na_subthreshold_ratio": 1.001408338546753,
+  "ca_rise_ratio_pulse": 0.8103612661361694,
+  "ca_rise_ratio_raw": 0.8500763177871704,
+  "ca_corr_pulse": 0.9999069776259787,
+  "sk_corr_pulse": 0.999672508071844,
+  "sk_ratio_pulse": 0.5838102698326111,
+  "sk_peak_pA_neuron": 64.24345397949219
+ }
+}
