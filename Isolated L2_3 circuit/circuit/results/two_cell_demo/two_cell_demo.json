@@ -1,0 +1,43 @@
+{
+  "weight_pA": 60.0,
+  "delay_ms": 1.6,
+  "effective_delay_ms": 1.75,
+  "tau_ms": 5.5,
+  "layer_vs_nest_I_syn": {
+    "max_abs_err_pA": 5.682561565745203e-08,
+    "samples_compared": 237864,
+    "samples_in_B_refractory": 2136,
+    "peak_pA": 61.169931986797884
+  },
+  "glif_B_layer_current_vs_synapse": {
+    "spikes_matched_within_2ms": 0.9213483146067416,
+    "n_spikes": [
+      177,
+      178
+    ],
+    "median_abs_dVm_mV": 0.08727252412483821
+  },
+  "stateful_vs_closed_form_max_err_pA": 6.837315138717117e-08,
+  "rates_hz": {
+    "GLIF A": 9.547738693467336,
+    "GLIF B unconnected": 1.1892797319932997,
+    "GLIF B connected": 2.981574539363484,
+    "ANN A": 5.6951423785594635,
+    "ANN B unconnected": 3.182579564489112,
+    "ANN B connected": 3.7688442211055273
+  },
+  "cv_isi_A": {
+    "GLIF": 0.5365156745841492,
+    "ANN": 0.816918732395744
+  },
+  "ann_input_range_pA": {
+    "I_A": [
+      -101.06681066685954,
+      393.08889509311916
+    ],
+    "I_B + synaptic": [
+      -22.320489927006687,
+      210.82829310928565
+    ]
+  }
+}
