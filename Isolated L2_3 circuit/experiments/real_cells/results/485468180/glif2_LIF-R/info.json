@@ -1,0 +1,6 @@
+{
+ "model": "glif2_LIF-R",
+ "config": "model_2_485720574_neuron_config.json",
+ "dt_s": 5e-05,
+ "wall_s": 5.534768342971802
+}

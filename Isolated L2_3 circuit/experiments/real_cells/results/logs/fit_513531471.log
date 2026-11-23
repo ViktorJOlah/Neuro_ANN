@@ -1,0 +1,63 @@
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795414331.822703     937 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795414331.862350     937 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX512F AVX512_VNNI AVX512_BF16 AVX512_FP16 AVX_VNNI AMX_TILE AMX_INT8 AMX_BF16 FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795414333.115973     937 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+[513531471 standard     0s] train 29 sweeps (2.46 min), test 11 sweeps
+[513531471 standard     0s] input rescaling k = 0.493 (rheobase 170 pA)
+W0000 00:00:1795414340.903742     937 type_inference.cc:340] Type inference failed. This indicates an invalid graph that escaped type checking. Error message: INVALID_ARGUMENT: expected compatible input types, but input 1:
+goo.gle/debugproto  
+type_id: TFT_OPTIONAL
+args {
+  type_id: TFT_PRODUCT
+  args {
+    type_id: TFT_TENSOR
+    args {
+      type_id: TFT_FLOAT
+    }
+  }
+}
+ is neither a subtype nor a supertype of the combined inputs preceding it:
+goo.gle/debugproto  
+type_id: TFT_OPTIONAL
+args {
+  type_id: TFT_PRODUCT
+  args {
+    type_id: TFT_TENSOR
+    args {
+      type_id: TFT_INT32
+    }
+  }
+}
+
+	for Tuple type infernce function 0
+	while inferring type of node 'StatefulPartitionedCall/while_517/body/_1728/while/cond_1/output/_10266'
+[513531471 standard    23s] stage 1 it   0  train Vm RMSE 5.596 mV
+[513531471 standard   178s] stage 1 it  20  train Vm RMSE 5.690 mV
+[513531471 standard   325s] stage 1 it  40  train Vm RMSE 4.032 mV
+[513531471 standard   464s] stage 1 it  60  train Vm RMSE 3.390 mV
+[513531471 standard   609s] stage 1 it  80  train Vm RMSE 4.525 mV
+[513531471 standard   743s] stage 1 it 100  train Vm RMSE 4.197 mV
+[513531471 standard   876s] stage 1 it 120  train Vm RMSE 4.598 mV
+[513531471 standard  1010s] stage 1 it 140  train Vm RMSE 4.880 mV
+[513531471 standard  1146s] stage 1 it 160  train Vm RMSE 4.522 mV
+[513531471 standard  1285s] stage 1 it 180  train Vm RMSE 4.210 mV
+[513531471 standard  1424s] stage 1 it 200  train Vm RMSE 3.916 mV
+[513531471 standard  1558s] stage 1 it 220  train Vm RMSE 4.891 mV
+[513531471 standard  1695s] stage 1 it 240  train Vm RMSE 4.142 mV
+[513531471 standard  1758s] stage 1 it 249  train Vm RMSE 4.526 mV
+[513531471 standard  1770s] stage 2 start loss 2.1
+[513531471 standard  1834s] stage 2 loss 1.6171 {'V_th': -28.103, 'c_mV': -41.973, 'd': -0.031, 'b_na': 0.091, 'ln_s_sk': 0.273}
+[513531471 standard  1839s] test sweep 7 (Ramp, 800 pA): spikes 36 -> 24
+[513531471 standard  1841s] test sweep 27 (Long Square, -90 pA): spikes 0 -> 0
+[513531471 standard  1842s] test sweep 32 (Long Square, 10 pA): spikes 0 -> 0
+[513531471 standard  1843s] test sweep 36 (Long Square, 90 pA): spikes 0 -> 0
+[513531471 standard  1844s] test sweep 39 (Long Square, 150 pA): spikes 4 -> 2
+[513531471 standard  1845s] test sweep 42 (Long Square, 210 pA): spikes 11 -> 10
+[513531471 standard  1846s] test sweep 45 (Long Square, 270 pA): spikes 14 -> 12
+[513531471 standard  1855s] test sweep 56 (Noise 2, 448 pA): spikes 21 -> 55
+[513531471 standard  1862s] test sweep 58 (Noise 2, 448 pA): spikes 14 -> 55
+[513531471 standard  1870s] test sweep 60 (Noise 2, 448 pA): spikes 10 -> 55
+[513531471 standard  1878s] test sweep 62 (Noise 2, 448 pA): spikes 8 -> 55
+[513531471 standard  1878s] done

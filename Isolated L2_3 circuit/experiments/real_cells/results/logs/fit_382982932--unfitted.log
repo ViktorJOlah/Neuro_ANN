@@ -1,0 +1,23 @@
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795420110.286538    2459 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795420110.323952    2459 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX512F AVX512_VNNI AVX512_BF16 AVX512_FP16 AVX_VNNI AMX_TILE AMX_INT8 AMX_BF16 FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795420111.442886    2459 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+[382982932 standard_unfitted     0s] train 40 sweeps (2.85 min), test 15 sweeps
+[382982932 standard_unfitted     4s] test sweep 7 (Ramp, 800 pA): spikes 14 -> 10
+[382982932 standard_unfitted     7s] test sweep 25 (Long Square, -90 pA): spikes 0 -> 0
+[382982932 standard_unfitted     7s] test sweep 28 (Long Square, -30 pA): spikes 0 -> 0
+[382982932 standard_unfitted     8s] test sweep 31 (Long Square, 30 pA): spikes 0 -> 0
+[382982932 standard_unfitted     9s] test sweep 34 (Long Square, 90 pA): spikes 0 -> 5
+[382982932 standard_unfitted    10s] test sweep 36 (Long Square, 130 pA): spikes 1 -> 9
+[382982932 standard_unfitted    11s] test sweep 37 (Long Square, 150 pA): spikes 6 -> 10
+[382982932 standard_unfitted    12s] test sweep 38 (Long Square, 170 pA): spikes 12 -> 11
+[382982932 standard_unfitted    13s] test sweep 40 (Long Square, 210 pA): spikes 22 -> 13
+[382982932 standard_unfitted    14s] test sweep 43 (Long Square, 270 pA): spikes 32 -> 20
+[382982932 standard_unfitted    15s] test sweep 51 (Long Square, 170 pA): spikes 1 -> 11
+[382982932 standard_unfitted    24s] test sweep 54 (Noise 2, 401 pA): spikes 79 -> 106
+[382982932 standard_unfitted    31s] test sweep 56 (Noise 2, 401 pA): spikes 64 -> 106
+[382982932 standard_unfitted    39s] test sweep 58 (Noise 2, 401 pA): spikes 60 -> 106
+[382982932 standard_unfitted    46s] test sweep 60 (Noise 2, 401 pA): spikes 57 -> 106
+[382982932 standard_unfitted    46s] done
