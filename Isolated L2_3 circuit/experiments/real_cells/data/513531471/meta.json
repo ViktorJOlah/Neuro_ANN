@@ -1,0 +1,115 @@
+{
+ "specimen": {
+  "cell_reporter_status": "positive",
+  "csl__normalized_depth": 0.113322723557272,
+  "csl__x": 9214.0,
+  "csl__y": 871.125117481572,
+  "csl__z": 3076.42007866976,
+  "donor__age": "",
+  "donor__disease_state": "",
+  "donor__id": 510023681,
+  "donor__name": "Cux2-CreERT2;Ai14-239083",
+  "donor__race": "",
+  "donor__sex": "",
+  "donor__species": "Mus musculus",
+  "donor__years_of_seizure_history": "",
+  "ef__adaptation": 0.0526763296410991,
+  "ef__avg_firing_rate": 9.47488103760477,
+  "ef__avg_isi": 105.542222222222,
+  "ef__f_i_curve_slope": 0.0708333343551264,
+  "ef__fast_trough_v_long_square": -44.4062538146973,
+  "ef__peak_t_ramp": 6.53735,
+  "ef__ri": 129.799082875252,
+  "ef__tau": 14.1557831411327,
+  "ef__threshold_i_long_square": 150.0,
+  "ef__upstroke_downstroke_ratio_long_square": 4.66653740674142,
+  "ef__vrest": -77.2036209106445,
+  "ephys_inst_thresh_thumb_path": "/api/v2/well_known_file_download/515022450",
+  "ephys_thumb_path": "/api/v2/well_known_file_download/515022448",
+  "erwkf__id": 544782042,
+  "line_name": "Cux2-CreERT2",
+  "m__biophys": 0,
+  "m__biophys_all_active": 0,
+  "m__biophys_perisomatic": 0,
+  "m__glif": 5,
+  "morph_thumb_path": "/api/v2/well_known_file_download/541010622",
+  "nr__average_contraction": 0.890543791939576,
+  "nr__average_parent_daughter_ratio": 0.883401985710181,
+  "nr__max_euclidean_distance": 206.378928494214,
+  "nr__number_bifurcations": 38,
+  "nr__number_stems": 10,
+  "nr__reconstruction_type": "dendrite-only",
+  "nrwkf__id": 537041941,
+  "si__height": 5743,
+  "si__path": "/external/mousecelltypes/prod743/specimen_513531471/min_xy_513531471.aff",
+  "si__width": 5736,
+  "specimen__hemisphere": "right",
+  "specimen__id": 513531471,
+  "specimen__name": "Cux2-CreERT2;Ai14-239083.03.02.01",
+  "structure__acronym": "VISp2/3",
+  "structure__id": 821,
+  "structure__layer": "2/3",
+  "structure__name": "\"Primary visual area, layer 2/3\"",
+  "structure_parent__acronym": "VISp",
+  "structure_parent__id": 385,
+  "tag__apical": "intact",
+  "tag__dendrite_type": "spiny"
+ },
+ "models": [
+  {
+   "id": 515020574,
+   "name": "4 LIF-R + Afterspike Currents (LIF-R-ASC)",
+   "runs": [
+    {
+     "id": 566621647,
+     "ev": 0.852443712706351,
+     "rms": null
+    }
+   ]
+  },
+  {
+   "id": 515020570,
+   "name": "2 LIF + Reset Rules (LIF-R)",
+   "runs": [
+    {
+     "id": 566619173,
+     "ev": 0.80115585736675,
+     "rms": null
+    }
+   ]
+  },
+  {
+   "id": 515020576,
+   "name": "5 LIF-R-ASC + Threshold Adaptation (LIF-R-ASC-A)",
+   "runs": [
+    {
+     "id": 566621459,
+     "ev": 0.833940136107928,
+     "rms": null
+    }
+   ]
+  },
+  {
+   "id": 515020572,
+   "name": "3 LIF + Afterspike Currents (LIF-ASC)",
+   "runs": [
+    {
+     "id": 566621306,
+     "ev": 0.857731108511273,
+     "rms": null
+    }
+   ]
+  },
+  {
+   "id": 515020568,
+   "name": "1 Leaky Integrate and Fire (LIF)",
+   "runs": [
+    {
+     "id": 566621041,
+     "ev": 0.650339980963253,
+     "rms": null
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,14 @@
+318808427 glif1_LIF 5s
+318808427 glif3_LIF-ASC 9s
+Warning: no DISPLAY environment variable.
+--No graphics will be displayed.
+318808427 allactive sweep 6 Ramp spikes 10 -> 35 9s
+318808427 allactive sweep 27 Long Square spikes 0 -> 0 11s
+318808427 allactive sweep 31 Long Square spikes 0 -> 0 13s
+318808427 allactive sweep 34 Long Square spikes 0 -> 0 16s
+318808427 allactive sweep 37 Long Square spikes 1 -> 15 18s
+318808427 allactive sweep 39 Long Square spikes 13 -> 26 21s
+318808427 allactive sweep 42 Long Square spikes 22 -> 28 23s
+318808427 allactive sweep 48 Noise 2 spikes 56 -> 118 48s
+318808427 allactive sweep 50 Noise 2 spikes 56 -> 118 72s
+318808427 allactive sweep 52 Noise 2 spikes 55 -> 118 98s

@@ -1,0 +1,22 @@
+{
+ "model": "allactive",
+ "source": {
+  "specimen_id": 502269786,
+  "fit_source": "github.com/AllenInstitute/All-active-Manuscript assets/mouse_models/502269786/hof_models/hof_param_502269786_0.json (best hall-of-fame all-active model, Nandi et al. 2022)",
+  "swc_source": "Allen Cell Types Database 3DNeuronReconstruction via api.brain-map.org"
+ },
+ "dt_ms": 0.025,
+ "info": {
+  "junction_potential": -14.0,
+  "n_sections": 50,
+  "n_segments": 134,
+  "v_init": -80,
+  "axon_type": "stub",
+  "axon_diams_um": [
+   1.0,
+   1.0
+  ]
+ },
+ "rest_mV": -78.9554881197932,
+ "wall_s": 170.04970979690552
+}
