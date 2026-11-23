@@ -3,7 +3,7 @@
 Code that cuts layer 2/3 out of the Allen V1 point-neuron network (Billeh et al. 2020) and runs
 it on its own, with every removed input replayed as a fixed spike stream. This is the "Extract
 L2/3" and "Make the input streams" part of step 5, plus the 5a reference check, all with GLIF
-cells. Swapping in the model PCs (5b) comes next.
+cells. The hybrid circuit with ANN PCs (5b) is described at the end.
 
 ## What is kept and what is replayed
 
@@ -29,6 +29,8 @@ the cells you swap in, not from the isolation.
 | `plot_overview.py` | population rates over time, the L2/3 E rate distribution (with the top-10% spike share) and a raster |
 | `synaptic_layer.py` | the fixed synaptic layer for model cells: presynaptic spikes → summed alpha PSC current (pA), exactly as Allen's `glif_psc` cells do it. Closed-form (`alpha_current`, `binned_current`) and stateful per-step (`AlphaPSC`) forms. |
 | `demo_two_cells.py` | two-cell demo: a GLIF pair with a NEST synapse next to a pair of Standard ANN cells joined by the synaptic layer |
+| `pc_layer.py` | all PCs as one batch of Standard cells, advanced one 1 ms step at a time (same output as `StandardCell.simulate`) |
+| `hybrid.py` | the hybrid circuit: GLIF interneurons in NEST, ANN PCs batched every ms (`prepare`, `run`, `tune`, `report`) |
 | `toy_network.py` | a 350-cell Billeh-like network with the same file layout, used by the tests |
 | `sonata_io.py` | small h5py readers and writers for SONATA nodes, edges and spikes |
 
@@ -118,4 +120,67 @@ cells.
 ```bash
 python -m circuit.demo_two_cells --glif-dir $V1/components/cell_models/nest_models \
     --standard-dir Standard --out results/two_cell_demo
+```
+
+## Hybrid circuit: ANN PCs with GLIF interneurons (`hybrid.py`)
+
+Every L2/3 interneuron stays the Allen GLIF cell and runs in NEST at 0.25 ms. All 56,057 L2/3 PCs
+are the Standard ANN cell (node type 487661754, which is also every PC of the GLIF network, so both
+networks are homogeneous in their PCs). At each whole millisecond all PCs read their synaptic
+current for the past millisecond and take one batched 1 ms step. The two halves trade spikes
+every millisecond:
+
+1. PC input for (k, k+1] = the replayed input (L1/L4/L5/L6, LGN, background; it does not depend
+   on the circuit, so `prepare` computes it once) plus the PC and interneuron spikes arriving in
+   that millisecond, through the fixed synaptic layer (Allen alpha PSCs at 0.25 ms, averaged over
+   the millisecond).
+2. One Standard step for all PCs (`pc_layer.BatchedStandard`). PC spikes are stamped at k+1.
+3. PC spikes become spike-generator times in NEST, which then advances the interneurons from k to
+   k+1. Their spikes go to the PCs' synaptic layer with each edge's NEST delay.
+
+Every edge keeps its Allen weight, delay and receptor port. A spike always reaches its target at
+least 0.25 ms (PC → PC) or 1.25 ms (interneuron → PC) after it is fired, so it lands in a later
+millisecond than the one that produced it.
+
+**Gain.** `--gain a` multiplies every synapse onto a PC (excitatory and inhibitory, replayed and
+recurrent) and every synapse from a PC by the same factor, so each cell's E/I ratio is unchanged.
+`tune` searches a on 1.5 s runs until the mean PC rate matches the GLIF network.
+
+**Checks.**
+- Loop check: replaying the GLIF network's own PC spikes through the loop (`run --replay-pc`)
+  reproduces all 120,075 interneuron spikes of the GLIF network exactly. The PC input current
+  matches NEST's `I_syn` of the same PCs to under 0.01 pA per millisecond (refractory bins masked).
+- `tests/test_pc_layer.py`: the batched per-step layer gives exactly the spikes of `StandardCell.simulate`
+  (needs `STANDARD_DIR`). `tests/test_hybrid_bank.py`: the PCs' synaptic layer against the closed form.
+
+**Results** (gratings 315°, trial 0, 3 s; `results/hybrid_ann_pcs/`):
+
+| | GLIF network | ANN PCs, gain 1 (0–1.5 s) | ANN PCs, gain 0.82 |
+|---|---|---|---|
+| L2/3 E (Hz) | 1.38 | 2.17 (GLIF 1.13) | 1.28 |
+| Pvalb (Hz) | 5.70 | | 3.37 |
+| Sst (Hz) | 4.78 | | 2.98 |
+| Htr3a (Hz) | 2.73 | | 2.23 |
+| E silent during grating | 30% | | 29% |
+| E spikes fired by the top 10% | 33% | | 32% |
+
+At gain 1 the ANN PCs are hyperactive (about 2× the GLIF rate, and the interneurons follow at
+2.3×). At gain 0.82 the PC rate is within 7% of the GLIF network over 3 s (1.5 s tuning run:
+1.125 vs 1.126 Hz) and the rate distribution matches: the same silent fraction, the same top-10%
+share, and each PC's rate correlates with its GLIF-network rate at r = 0.96. Two differences remain:
+the ANN network has no PCs above about 10 Hz (the GLIF network reaches 13 Hz), and the
+interneurons fire 18–41% less, because the synchronous PC bursts that drive them are smaller.
+
+Runtime on 4 CPUs: about 0.85 s per simulated millisecond (43 min per 3 s), almost all of it the
+batched CNN-LSTM front end. NEST and spike routing add 0.03 s per ms.
+
+```bash
+H=/path/to/hybrid; STD=/path/to/Standard
+python -m circuit.hybrid prepare --config $V1/config.json --extract-dir $X --v1ext-spikes $R/streams/v1ext_spikes.h5 --out $H/prep
+python -m circuit.hybrid run --prep $H/prep --standard-dir $STD --gain 1.0 --tstop 300 --out $H/check \
+    --replay-pc $R/streams/l23_reference_spikes.h5 --probe 20      # loop check, no ANN
+python -m circuit.hybrid tune --prep $H/prep --standard-dir $STD --reference $R/streams/l23_reference_spikes.h5 --out $H/tune
+python -m circuit.hybrid run --prep $H/prep --standard-dir $STD --gain 0.82 --tstop 3000 --out $H/final
+python -m circuit.hybrid report --prep $H/prep --extract-dir $X --reference $R/streams/l23_reference_spikes.h5 \
+    --hybrid-spikes $H/final/spikes.h5 --tune-json $H/tune/tune.json --out results/hybrid_ann_pcs
 ```

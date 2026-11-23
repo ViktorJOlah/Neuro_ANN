@@ -1,0 +1,7 @@
+{
+  "interneuron_spikes_ref": 120075,
+  "interneuron_spikes_hybrid_replay": 120075,
+  "exact_matches": 120075,
+  "pc_input_current_mean_abs_error_pa": 0.02,
+  "note": "GLIF PC spikes replayed through the hybrid loop; current compared on 20 PCs, refractory bins masked"
+}

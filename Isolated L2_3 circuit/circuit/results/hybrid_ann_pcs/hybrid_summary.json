@@ -1,0 +1,37 @@
+{
+  "gain": 0.8214255688396241,
+  "per_class_rates_0_tstop": {
+    "L2/3 E": {
+      "glif_hz": 1.3759625619161449,
+      "hybrid_hz": 1.280827253212504
+    },
+    "L2/3 Pvalb": {
+      "glif_hz": 5.696276050563717,
+      "hybrid_hz": 3.3730782371028356
+    },
+    "L2/3 Sst": {
+      "glif_hz": 4.7809748427672965,
+      "hybrid_hz": 2.9817610062893083
+    },
+    "L2/3 Htr3a": {
+      "glif_hz": 2.727210182318542,
+      "hybrid_hz": 2.2339181286549703
+    }
+  },
+  "distribution_grating": {
+    "GLIF network": {
+      "mean_rate_E_hz": 1.5816972010632038,
+      "silent_fraction_E": 0.295074656153558,
+      "top10_share_E": 0.327817452619517,
+      "median_rate_E_hz": 1.2
+    },
+    "ANN PCs (gain 0.82)": {
+      "mean_rate_E_hz": 1.4989742583441854,
+      "silent_fraction_E": 0.29486058832973583,
+      "top10_share_E": 0.3166753939163136,
+      "median_rate_E_hz": 1.2
+    }
+  },
+  "pc_rate_correlation_pearson": 0.9635999058183707,
+  "pc_rate_correlation_spearman": 0.9715958614527669
+}

@@ -33,7 +33,7 @@ def top_share(rates, frac=0.1):
     return float(r[:k].sum() / r.sum()) if r.sum() > 0 else float("nan")
 
 
-def overview(extract_dir, runs, out_png, tstop=3000.0, gray_until=500.0, bin_ms=20.0):
+def overview(extract_dir, runs, out_png, tstop=3000.0, gray_until=500.0, bin_ms=20.0, raster_run=0):
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
@@ -84,13 +84,13 @@ def overview(extract_dir, runs, out_png, tstop=3000.0, gray_until=500.0, bin_ms=
     ax.set_xscale("log")
     ax.set_yscale("log")
     ax.set(xlabel="L2/3 E rate during grating (Hz)", ylabel="fraction of E cells at or above rate",
-           title="L2/3 E rate distribution (500-3000 ms)")
+           title=f"L2/3 E rate distribution ({gray_until:.0f}-{tstop:.0f} ms)")
     ax.title.set_fontsize(10)
     ax.spines[["top", "right"]].set_visible(False)
     ax.text(0.02, 0.03, "\n".join(lines), transform=ax.transAxes, va="bottom", ha="left", fontsize=8)
 
     ax = fig.add_subplot(gs[1, 2:])
-    ids, ts = data[0][1], data[0][2]
+    ids, ts = data[raster_run][1], data[raster_run][2]
     rng = np.random.default_rng(0)
     shown = []
     y0 = 0
@@ -106,7 +106,7 @@ def overview(extract_dir, runs, out_png, tstop=3000.0, gray_until=500.0, bin_ms=
         y0 += len(pick) + 8
     ax.set_yticks([p for p, _ in shown], [c for _, c in shown], fontsize=8)
     ax.axvspan(0, gray_until, color="0.92", lw=0, zorder=-1)
-    ax.set(xlim=(0, tstop), xlabel="time (ms)", title=f"{data[0][0]}: random L2/3 cells")
+    ax.set(xlim=(0, tstop), xlabel="time (ms)", title=f"{data[raster_run][0]}: random L2/3 cells")
     ax.title.set_fontsize(10)
     ax.spines[["top", "right"]].set_visible(False)
 
