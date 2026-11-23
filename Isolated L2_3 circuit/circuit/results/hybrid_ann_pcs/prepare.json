@@ -1,0 +1,14 @@
+{
+  "pc_to_pc_edges": 10434976,
+  "in_to_pc_edges": 2092179,
+  "min_offset_pc_to_pc": 7,
+  "min_offset_in_to_pc": 5,
+  "v1ext_l23_edges_onto_pc": 11894186,
+  "lgn_l23_edges_onto_pc": 720565,
+  "bkg_l23_edges_onto_pc": 56057,
+  "n_pc": 56057,
+  "n_in": 9892,
+  "tstop": 3000.0,
+  "mean_external_current_pa": 80.44047546386719,
+  "prepare_s": 58.01982235908508
+}

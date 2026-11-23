@@ -11,10 +11,7 @@ folder is named `L2_3` because `/` can't be used in a folder name.)
 | `simulations/` | 3000 NEURON simulations of the Allen L2/3 PC model 488462783 (square, ramp, noise), with the code that generated them. A copy of `simulations/allen_L23_PC_protocols/`. |
 | `training/` | The ANN training pipeline (CNN-LSTM models, curriculum and two-stage training). A copy of the repo-level `training/`. |
 | `experiments/izhikevich_subthreshold/` | Izhikevich layer alone fitted to the spike-free simulations (current in, Vm out): code, metrics and plots for two variants. |
-| `experiments/dense3_izhikevich_subthreshold/` | 3 dense layers (32 units) as a learned current map in front of the Izhikevich layer, same data and evaluation. |
-| `experiments/cnnlstm_izhikevich_subthreshold/` | CNN-LSTM → Izhikevich and dense + CNN-LSTM → Izhikevich (`--arch`), same data and evaluation. |
-| `experiments/compare_architectures/` | Side-by-side comparison of the four models: one-step and continuous traces, RMSE bar plots. |
-| `experiments/expanded_subthreshold/` | All four models trained further with the ramp's spike-free start added (square + noise + ramp), and the comparison plots redone. |
+| `circuit/` | Step 5: the L2/3 circuit cut out of the Allen V1 point network, with the other layers, LGN and background replayed as fixed spike streams. See `circuit/README.md`. |
 | `izhikevich/` | A batched, differentiable Izhikevich (2003) top layer, checked to be bit-identical to the published model. See `izhikevich/README.md`. |
 
 The repo-level `simulations/` and `training/` folders are unchanged, so old paths and Colab

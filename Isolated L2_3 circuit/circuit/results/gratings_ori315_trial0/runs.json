@@ -1,0 +1,26 @@
+{
+  "timing_4core_16GB": {
+    "full": {
+      "wall_s": 243.07139897346497,
+      "tstop_ms": 3000.0,
+      "wall_s_per_sim_s": 81.02379965782166
+    },
+    "isolated": {
+      "wall_s": 197.52378487586975,
+      "tstop_ms": 3000.0,
+      "wall_s_per_sim_s": 65.84126162528992
+    },
+    "isolated_poisson": {
+      "wall_s": 203.72970032691956,
+      "tstop_ms": 3000.0,
+      "wall_s_per_sim_s": 67.90990010897319
+    }
+  },
+  "streams": {
+    "source_spikes": "full/spikes.h5",
+    "v1ext_spikes": 666554,
+    "l23_reference_spikes": 351504,
+    "n_v1ext": 101792,
+    "n_l23": 65949
+  }
+}
