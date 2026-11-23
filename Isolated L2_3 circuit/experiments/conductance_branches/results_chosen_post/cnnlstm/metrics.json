@@ -1,0 +1,208 @@
+{
+  "model": "cnnlstm",
+  "base": "/home/user/neuro_ann/Isolated L2_3 circuit/experiments/conductance_branches/results_fast_k",
+  "trained": {
+    "ln_s_kv": -1.2177475079930642,
+    "b_kv": 0.0,
+    "ln_s_bk": -2.9302609762462573,
+    "b_bk": 0.0,
+    "ln_s_kp": -1.975398689388007,
+    "b_kp": 0.0,
+    "ln_s_im": -2.8538923000526633,
+    "b_im": 0.0,
+    "ln_s_ih": -25.695490582086837,
+    "b_ih": 0.0,
+    "V_th": -30.961348466475997,
+    "c_mV": -33.964102374884746,
+    "d": -3.117078366459311,
+    "ln_s_na": -27.631021115928547,
+    "b_na": -1.4808582009792222,
+    "b_sk": 0.0,
+    "ln_s_ca": 0.23071100165427955,
+    "ln_s_sk": -0.2523246446520896
+  },
+  "frozen": {
+    "a": 3.0143768787384033,
+    "b": 0.02230210229754448,
+    "c": -65.0,
+    "d": 8.0,
+    "time_scale": 0.015217888168990612,
+    "g": 0.18562011420726776,
+    "I0": 6.787137508392334,
+    "V0": 207.45823669433594,
+    "Vs": 3.616441011428833,
+    "dt": 1.0,
+    "n_substeps": 2
+  },
+  "ls_solution": [
+    1.320080155973429e-35,
+    0.7769924506754596,
+    0.29589592003551096,
+    0.05338310460486131,
+    0.13870600060711186,
+    0.05761961102442846,
+    6.927718469685543e-12,
+    4.701826119539425,
+    -3.117078366459311
+  ],
+  "ls_val_rms": {
+    "base": 12.399465989701119,
+    "ls": 7.902664967807852
+  },
+  "loss_norm_stage1": [
+    7.1374101638793945,
+    0.0848955363035202,
+    31.94140625
+  ],
+  "train_spike_loss": 2.501607312987739,
+  "spike_free_cont_rmse_mV": {
+    "square": 0.802661657333374,
+    "noise": 1.1796966791152954
+  },
+  "sk_block": {
+    "square": {
+      "n": 69,
+      "neuron_count_control": 10.159420289855072,
+      "neuron_count_block": 39.53623188405797,
+      "model_count_control": 6.507246376811594,
+      "model_count_block": 28.36231884057971,
+      "delta_count_corr": 0.9895592851558047,
+      "gamma_block": 0.16763325789265984,
+      "gamma_control": 0.0022677905309295577
+    },
+    "noise": {
+      "n": 138,
+      "neuron_count_control": 15.166666666666666,
+      "neuron_count_block": 42.231884057971016,
+      "model_count_control": 6.260869565217392,
+      "model_count_block": 12.5,
+      "delta_count_corr": 0.8977509177878173,
+      "gamma_block": 0.06232313769688395,
+      "gamma_control": 0.07419823167055122
+    },
+    "ramp": {
+      "n": 150,
+      "neuron_count_control": 12.646666666666667,
+      "neuron_count_block": 29.046666666666667,
+      "model_count_control": 4.273333333333333,
+      "model_count_block": 8.333333333333334,
+      "delta_count_corr": 0.9567570140872822,
+      "gamma_block": 0.04599790935229075,
+      "gamma_control": 0.028671474755618855
+    }
+  },
+  "kv3_block": {
+    "square": {
+      "n": 69,
+      "neuron_count_control": 10.159420289855072,
+      "neuron_count_block": 2.289855072463768,
+      "model_count_control": 6.507246376811594,
+      "model_count_block": 6.6521739130434785,
+      "delta_count_corr": 0.36690965916142515,
+      "gamma_block": -0.007838117425592187,
+      "gamma_control": 0.0022677905309295577
+    },
+    "noise": {
+      "n": 138,
+      "neuron_count_control": 15.166666666666666,
+      "neuron_count_block": 7.521739130434782,
+      "model_count_control": 6.260869565217392,
+      "model_count_block": 7.413043478260869,
+      "delta_count_corr": -0.36497075732836054,
+      "gamma_block": 0.004627796990261281,
+      "gamma_control": 0.07419823167055122
+    },
+    "ramp": {
+      "n": 150,
+      "neuron_count_control": 12.646666666666667,
+      "neuron_count_block": 1.16,
+      "model_count_control": 4.273333333333333,
+      "model_count_block": 5.713333333333333,
+      "delta_count_corr": -0.6393533073443266,
+      "gamma_block": -0.0013115542719357423,
+      "gamma_control": 0.028671474755618855
+    }
+  },
+  "bk_block": {
+    "square": {
+      "model_count_control": 2.9539473056793213,
+      "model_count_bk_block": 2.9210526943206787,
+      "gt_count": 4.611842155456543
+    },
+    "noise": {
+      "model_count_control": 5.684210300445557,
+      "model_count_bk_block": 5.7302632331848145,
+      "gt_count": 13.769737243652344
+    },
+    "ramp": {
+      "model_count_control": 4.273333549499512,
+      "model_count_bk_block": 4.3466668128967285,
+      "gt_count": 12.646666526794434
+    }
+  },
+  "fixed": {
+    "ln_s_sk": 0.0
+  },
+  "eval": {
+    "square": {
+      "one": {
+        "vm_rmse_clipped_mV": 0.2247498631477356,
+        "gamma": 0.2291394682289226,
+        "ev": 0.13450865822268354,
+        "count_abs_err": 3.9342105263157894,
+        "count_bias": -3.9342105263157894,
+        "n_true": 701,
+        "n_model": 103
+      },
+      "cont": {
+        "vm_rmse_clipped_mV": 3.794649362564087,
+        "gamma": 0.0022677905309295577,
+        "ev": -0.20034337808799596,
+        "count_abs_err": 1.6578947368421053,
+        "count_bias": -1.6578947368421053,
+        "n_true": 701,
+        "n_model": 449
+      }
+    },
+    "noise": {
+      "one": {
+        "vm_rmse_clipped_mV": 0.2605172395706177,
+        "gamma": 0.25157152777739356,
+        "ev": 0.12964459596795375,
+        "count_abs_err": 11.782894736842104,
+        "count_bias": -11.782894736842104,
+        "n_true": 2093,
+        "n_model": 302
+      },
+      "cont": {
+        "vm_rmse_clipped_mV": 5.667922019958496,
+        "gamma": 0.07419823167055122,
+        "ev": 0.06766871859340384,
+        "count_abs_err": 8.085526315789474,
+        "count_bias": -8.085526315789474,
+        "n_true": 2093,
+        "n_model": 864
+      }
+    },
+    "ramp": {
+      "one": {
+        "vm_rmse_clipped_mV": 0.15466703474521637,
+        "gamma": 0.5926543621447428,
+        "ev": 0.34249330516446497,
+        "count_abs_err": 8.133333333333333,
+        "count_bias": -8.133333333333333,
+        "n_true": 1897,
+        "n_model": 677
+      },
+      "cont": {
+        "vm_rmse_clipped_mV": 3.0921499729156494,
+        "gamma": 0.028671474755618855,
+        "ev": -0.0806880309706639,
+        "count_abs_err": 8.373333333333333,
+        "count_bias": -8.373333333333333,
+        "n_true": 1897,
+        "n_model": 641
+      }
+    }
+  }
+}

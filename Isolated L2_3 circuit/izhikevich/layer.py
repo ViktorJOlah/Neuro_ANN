@@ -175,10 +175,11 @@ class IzhikevichLayer(keras.layers.Layer):
         self.input_gain = self.add_weight(name="input_gain", shape=(self.n_cells,), initializer="ones",
                                           trainable=self.input_gain_trainable)
 
-    def call(self, I, training=False):
+    def call(self, I, initial_state=None, training=False):
+        """initial_state: optional [v0, u0], each (batch, n_cells), e.g. to start mid-trace."""
         I = tf.convert_to_tensor(I, self.compute_dtype)
         if I.shape.rank == 2:  # (batch, time) -> one cell
             I = I[..., None]
-        out = self.rnn(I * tf.cast(self.input_gain, I.dtype), training=training)
+        out = self.rnn(I * tf.cast(self.input_gain, I.dtype), initial_state=initial_state, training=training)
         v, s = out[..., : self.n_cells], out[..., self.n_cells:]
         return {"v": v, "spikes": s}.get(self.output_mode, (v, s))

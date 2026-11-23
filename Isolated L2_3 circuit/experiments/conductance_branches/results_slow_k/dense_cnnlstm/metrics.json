@@ -1,0 +1,208 @@
+{
+  "model": "dense_cnnlstm",
+  "base": "/home/user/neuro_ann/Isolated L2_3 circuit/experiments/conductance_branches/results_fast_k",
+  "trained": {
+    "ln_s_kv": -2.089098787104831,
+    "b_kv": 0.0,
+    "ln_s_bk": -3.9235004504913484,
+    "b_bk": 0.0,
+    "ln_s_kp": -1.8194250754317107,
+    "b_kp": 0.0,
+    "ln_s_im": -1.146131935431736,
+    "b_im": 0.0,
+    "ln_s_ih": -24.327013358945397,
+    "b_ih": 0.0,
+    "V_th": -30.772271521907683,
+    "c_mV": -40.667120286480674,
+    "d": 1.6948206562032135,
+    "ln_s_na": -0.17405968733472113,
+    "b_na": 0.835798898267338,
+    "b_sk": 0.0,
+    "ln_s_ca": 0.08168796185130206,
+    "ln_s_sk": 0.09556780022010153
+  },
+  "frozen": {
+    "a": 2.810046911239624,
+    "b": 0.02230210229754448,
+    "c": -65.0,
+    "d": 8.0,
+    "time_scale": 0.016013944521546364,
+    "g": 0.18639640510082245,
+    "I0": 6.699865341186523,
+    "V0": 203.83486938476562,
+    "Vs": 3.649118661880493,
+    "dt": 1.0,
+    "n_substeps": 2
+  },
+  "ls_solution": [
+    0.8402467440730176,
+    1.1002834189630424,
+    0.12379865450271081,
+    0.01977176339080276,
+    0.1621189303017755,
+    0.3178639126523708,
+    2.7221517822978898e-11,
+    1.0979424133156026,
+    1.6948206562032135
+  ],
+  "ls_val_rms": {
+    "base": 1.7039032885475598,
+    "ls": 1.3107227685890757
+  },
+  "loss_norm_stage1": [
+    7.38107967376709,
+    0.09275156259536743,
+    39.53515625
+  ],
+  "train_spike_loss": 1.0254660889553169,
+  "spike_free_cont_rmse_mV": {
+    "square": 0.5980870723724365,
+    "noise": 0.7190825343132019
+  },
+  "sk_block": {
+    "square": {
+      "n": 69,
+      "neuron_count_control": 10.159420289855072,
+      "neuron_count_block": 39.53623188405797,
+      "model_count_control": 8.565217391304348,
+      "model_count_block": 51.31884057971015,
+      "delta_count_corr": 0.994086286548496,
+      "gamma_block": 0.2524080343989913,
+      "gamma_control": 0.0839783647965797
+    },
+    "noise": {
+      "n": 138,
+      "neuron_count_control": 15.166666666666666,
+      "neuron_count_block": 42.231884057971016,
+      "model_count_control": 14.384057971014492,
+      "model_count_block": 47.61594202898551,
+      "delta_count_corr": 0.9973487415126541,
+      "gamma_block": 0.27058105507523145,
+      "gamma_control": 0.18049041300555674
+    },
+    "ramp": {
+      "n": 150,
+      "neuron_count_control": 12.646666666666667,
+      "neuron_count_block": 29.046666666666667,
+      "model_count_control": 12.186666666666667,
+      "model_count_block": 32.14,
+      "delta_count_corr": 0.9984796128389958,
+      "gamma_block": 0.06793722829922283,
+      "gamma_control": 0.06120464750277888
+    }
+  },
+  "kv3_block": {
+    "square": {
+      "n": 69,
+      "neuron_count_control": 10.159420289855072,
+      "neuron_count_block": 2.289855072463768,
+      "model_count_control": 8.565217391304348,
+      "model_count_block": 7.086956521739131,
+      "delta_count_corr": 0.41025634045735493,
+      "gamma_block": 0.1879852454004217,
+      "gamma_control": 0.0839783647965797
+    },
+    "noise": {
+      "n": 138,
+      "neuron_count_control": 15.166666666666666,
+      "neuron_count_block": 7.521739130434782,
+      "model_count_control": 14.384057971014492,
+      "model_count_block": 14.826086956521738,
+      "delta_count_corr": 0.5268362203353356,
+      "gamma_block": 0.06381301338770519,
+      "gamma_control": 0.18049041300555674
+    },
+    "ramp": {
+      "n": 150,
+      "neuron_count_control": 12.646666666666667,
+      "neuron_count_block": 1.16,
+      "model_count_control": 12.186666666666667,
+      "model_count_block": 13.406666666666666,
+      "delta_count_corr": -0.024371839365888805,
+      "gamma_block": -0.00021071603759328982,
+      "gamma_control": 0.06120464750277888
+    }
+  },
+  "bk_block": {
+    "square": {
+      "model_count_control": 3.8947367668151855,
+      "model_count_bk_block": 3.5592105388641357,
+      "gt_count": 4.611842155456543
+    },
+    "noise": {
+      "model_count_control": 13.085526466369629,
+      "model_count_bk_block": 13.111842155456543,
+      "gt_count": 13.769737243652344
+    },
+    "ramp": {
+      "model_count_control": 12.186666488647461,
+      "model_count_bk_block": 12.25333309173584,
+      "gt_count": 12.646666526794434
+    }
+  },
+  "fixed": {
+    "ln_s_sk": 0.0
+  },
+  "eval": {
+    "square": {
+      "one": {
+        "vm_rmse_clipped_mV": 0.22708389163017273,
+        "gamma": 0.5790517420206482,
+        "ev": 0.4119621732304184,
+        "count_abs_err": 2.598684210526316,
+        "count_bias": -2.598684210526316,
+        "n_true": 701,
+        "n_model": 306
+      },
+      "cont": {
+        "vm_rmse_clipped_mV": 3.092785596847534,
+        "gamma": 0.0827786738709143,
+        "ev": -0.36297486337031537,
+        "count_abs_err": 0.743421052631579,
+        "count_bias": -0.7171052631578947,
+        "n_true": 701,
+        "n_model": 592
+      }
+    },
+    "noise": {
+      "one": {
+        "vm_rmse_clipped_mV": 0.2380196452140808,
+        "gamma": 0.5334999280223988,
+        "ev": 0.3507213179164579,
+        "count_abs_err": 8.552631578947368,
+        "count_bias": -8.552631578947368,
+        "n_true": 2093,
+        "n_model": 793
+      },
+      "cont": {
+        "vm_rmse_clipped_mV": 3.1023473739624023,
+        "gamma": 0.17665019145224703,
+        "ev": 0.03487177109538431,
+        "count_abs_err": 1.0657894736842106,
+        "count_bias": -0.6842105263157895,
+        "n_true": 2093,
+        "n_model": 1989
+      }
+    },
+    "ramp": {
+      "one": {
+        "vm_rmse_clipped_mV": 0.17762744426727295,
+        "gamma": 0.7014155136713592,
+        "ev": 0.46721620725022994,
+        "count_abs_err": 6.54,
+        "count_bias": -6.54,
+        "n_true": 1897,
+        "n_model": 916
+      },
+      "cont": {
+        "vm_rmse_clipped_mV": 2.0501515865325928,
+        "gamma": 0.06120464750277888,
+        "ev": -0.6106412927601574,
+        "count_abs_err": 0.4866666666666667,
+        "count_bias": -0.46,
+        "n_true": 1897,
+        "n_model": 1828
+      }
+    }
+  }
+}
