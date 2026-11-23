@@ -27,6 +27,8 @@ the cells you swap in, not from the isolation.
 | `simulate.py isolated` | writes and runs the isolated config: L2/3 + replayed `v1ext` + the full run's LGN and bkg spike files |
 | `compare_rates.py` | 5a check: rates per class, per-cell correlation, KS distance, fraction of matched spikes, and a plot |
 | `plot_overview.py` | population rates over time, the L2/3 E rate distribution (with the top-10% spike share) and a raster |
+| `synaptic_layer.py` | the fixed synaptic layer for model cells: presynaptic spikes → summed alpha PSC current (pA), exactly as Allen's `glif_psc` cells do it. Closed-form (`alpha_current`, `binned_current`) and stateful per-step (`AlphaPSC`) forms. |
+| `demo_two_cells.py` | two-cell demo: a GLIF pair with a NEST synapse next to a pair of Standard ANN cells joined by the synaptic layer |
 | `toy_network.py` | a 350-cell Billeh-like network with the same file layout, used by the tests |
 | `sonata_io.py` | small h5py readers and writers for SONATA nodes, edges and spikes |
 
@@ -86,3 +88,34 @@ The Poisson control keeps each replayed source's mean rate but removes its timin
 correlations. E rates barely change, but Pvalb and Sst drop by 31% and 22%, so the
 interneurons depend on synchronous L4 input. That makes the replay, not Poisson drive, the right
 input for steps 5b and 6.
+
+## Synaptic input to model cells (step 5b)
+
+The Standard cell model was trained on injected current only. In the Allen point network,
+synapses are current based: a spike arriving after the edge delay adds
+I(t) = w · (t/τ) · e^(1 − t/τ) to the soma, peaking at the weight w (pA) at t = τ, with
+τ = 5.5 / 8.5 / 2.8 / 5.8 ms for ports 1–4 (E→E, I→E, E→I, I→I). A cell sums these linearly.
+`synaptic_layer.py` implements exactly that as a fixed, parameter-free layer in front of the
+ANN, so the ANN's trained weights are never touched: synaptic input becomes an injected current,
+binned to the ANN's 1 ms steps.
+
+Checks:
+- It matches NEST's own `I_syn` of a `glif_psc` cell to 1e-7 pA (`tests/test_synaptic_layer.py`).
+  NEST rounds the delay to its 0.25 ms grid and starts the current one step later, so a 1.6 ms edge
+  acts as 1.75 ms. `nest_effective_delay` reproduces this.
+- The stateful form agrees with the closed form to 1e-7 pA.
+
+`demo_two_cells.py` (`results/two_cell_demo/`) runs a GLIF pair and a Standard ANN pair under the
+same drive. Both pairs use one E→E synapse (w = 60 pA, about 3.5 of Allen's strongest L2/3 E→E
+synapse, so the effect shows on a single connection) and both use the Allen GLIF model of the same
+L2/3 PC (node type 487661754) that the Standard model was fitted to. In both pairs B fires more
+(GLIF 1.2 → 3.0 Hz, ANN 3.2 → 3.8 Hz), and B's spikes cluster after A's: 5–20 ms for GLIF and
+10–30 ms for the ANN. In the GLIF pair, driving an unconnected B with the layer's current
+reproduces the synapse-driven B's spikes within 2 ms (92% of spikes). The ANN pair is
+feed-forward, so A is simulated first. A recurrent circuit steps `AlphaPSC` together with the
+cells.
+
+```bash
+python -m circuit.demo_two_cells --glif-dir $V1/components/cell_models/nest_models \
+    --standard-dir Standard --out results/two_cell_demo
+```
