@@ -1,4 +1,5 @@
 """Summary figure for the evoked-synaptic feasibility test -> ../results/summary.png"""
+SET = ('_' + __import__('os').environ['EVOKED_SET']) if __import__('os').environ.get('EVOKED_SET') else ''   # e.g. EVOKED_SET=ampa -> data_ampa/, results_ampa/
 import json, os
 import numpy as np
 import matplotlib
@@ -6,8 +7,8 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-R = os.path.join(HERE, "..", "results")
-D = os.path.join(HERE, "..", "data")
+R = os.path.join(HERE, "..", "results" + SET)
+D = os.path.join(HERE, "..", "data" + SET)
 A, B = "521409057", "513531471"
 C1, C2, GREY, INK = "#2a6fdb", "#e07b39", "#9a9a9a", "#222222"
 plt.rcParams.update({"font.size": 9, "axes.spines.top": False, "axes.spines.right": False})

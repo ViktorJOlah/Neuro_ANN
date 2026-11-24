@@ -5,6 +5,7 @@ frozen S to reproduce the recorded evoked Vm. Whatever error is left is S's own 
 the gap between this and a trained D is what D still misses.
     python oracle_current.py --cell 521409057 [--n 6 --iters 300]   ->  ../results/<cell>/oracle/metrics.json
 """
+SET = ('_' + __import__('os').environ['EVOKED_SET']) if __import__('os').environ.get('EVOKED_SET') else ''   # e.g. EVOKED_SET=ampa -> data_ampa/, results_ampa/
 import argparse, json, os, sys, time
 import numpy as np
 _th = int(sys.argv[sys.argv.index("--threads") + 1]) if "--threads" in sys.argv else 2
@@ -52,7 +53,7 @@ for it in range(a.iters):
 vm = F.simulate(S, lambda s, training=False: u[:, :, None], stim, dc, V)
 res = F.score(vm, V, stim)
 print(json.dumps({k: round(v, 3) for k, v in res.items() if isinstance(v, float)}))
-out = os.path.join(F.HERE, "..", "results", a.cell, "oracle" if not a.somatic else f"oracle_S{a.somatic}")
+out = os.path.join(F.HERE, "..", "results" + SET, a.cell, "oracle" if not a.somatic else f"oracle_S{a.somatic}")
 os.makedirs(out, exist_ok=True)
 json.dump(dict(cell=a.cell, somatic=a.somatic or a.cell, traces=[int(i) for i in idx], eval=res, iters=a.iters),
           open(os.path.join(out, "metrics.json"), "w"), indent=1)

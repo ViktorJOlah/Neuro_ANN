@@ -5,10 +5,11 @@ average the somatic response per pathway in intensity bins, with and without NMD
 peak, time to peak, time back to 20 % / 10 % of peak, and the fraction of the response area beyond 64 ms.
     python response_kinetics.py   ->  ../results/response_kinetics.json
 """
+SET = ('_' + __import__('os').environ['EVOKED_SET']) if __import__('os').environ.get('EVOKED_SET') else ''   # e.g. EVOKED_SET=ampa -> data_ampa/, results_ampa/
 import json, os
 import numpy as np
 HERE = os.path.dirname(os.path.abspath(__file__))
-DATA = os.path.join(HERE, "..", "data")
+DATA = os.path.join(HERE, "..", "data" + SET)
 
 
 def responses(V, stim, rows, pre=20, post=400):
@@ -57,5 +58,5 @@ for cell in ("521409057", "513531471"):
             d["nmda_blocked_same_pulses"] = stats([r for _, r in Rb[j]])
             d["n_ctrl"] = len(Rc[j])
         res[cell][p] = d
-json.dump(res, open(os.path.join(HERE, "..", "results", "response_kinetics.json"), "w"), indent=1)
+json.dump(res, open(os.path.join(HERE, "..", "results" + SET, "response_kinetics.json"), "w"), indent=1)
 print(json.dumps(res, indent=1))

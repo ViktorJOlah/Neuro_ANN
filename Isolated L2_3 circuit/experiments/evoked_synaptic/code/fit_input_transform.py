@@ -21,6 +21,7 @@ Results: ../results/<cell>/<model>_<minutes>min/ (weights, metrics.json, test pr
 """
 from __future__ import annotations
 
+SET = ('_' + __import__('os').environ['EVOKED_SET']) if __import__('os').environ.get('EVOKED_SET') else ''   # e.g. EVOKED_SET=ampa -> data_ampa/, results_ampa/
 import argparse
 import json
 import os
@@ -39,7 +40,7 @@ if "--no-grappler" in sys.argv:   # some graphs (cnnlstm64) hit a grappler AddN 
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", "..", ".."))
-DATA = os.path.join(HERE, "..", "data")
+DATA = os.path.join(HERE, "..", "data" + SET)
 BUDGET = os.path.join(ROOT, "experiments", "data_budget", "results")
 sys.path.insert(0, os.path.join(ROOT, "Standard"))
 import standard_model as sm  # noqa: E402
@@ -93,6 +94,8 @@ def build_D(kind):
 
 
 def load_somatic(cell, budget="full"):
+    if cell == "487661754":          # the Standard's own cell: S is the Standard model itself
+        return sm.load()
     d = os.path.join(BUDGET, cell, budget)
     m = json.load(open(os.path.join(d, "metrics.json")))
     c = sm.load()
@@ -200,12 +203,14 @@ def main():
     ap.add_argument("--iters", type=int, default=400)
     ap.add_argument("--lr", type=float, default=5e-4)
     ap.add_argument("--no-grappler", action="store_true")
+    ap.add_argument("--sub-frac", type=float, default=0.0, help="share of each batch drawn from spike-free segments (small EPSPs otherwise drown in spike-timing error)")
+    ap.add_argument("--tag", default="", help="suffix for the results folder")
     ap.add_argument("--threads", type=int, default=2)
-    ap.add_argument("--out", default=os.path.join(HERE, "..", "results"))
+    ap.add_argument("--out", default=os.path.join(HERE, "..", "results" + SET))
     args = ap.parse_args()
     tf.keras.utils.set_random_seed(0)
     t0 = time.time()
-    tagm = f"{args.model}_{'all' if not args.minutes else f'{args.minutes:g}min'}"
+    tagm = f"{args.model}_{'all' if not args.minutes else f'{args.minutes:g}min'}{args.tag}"
     out = os.path.join(args.out, args.cell, tagm)
     os.makedirs(out, exist_ok=True)
     log = lambda *a: print(f"[{args.cell} {tagm} {time.time()-t0:5.0f}s]", *a, flush=True)
@@ -240,6 +245,11 @@ def main():
     for it in range(args.iters):
         tr = rng.choice(train, BATCH)
         st = rng.integers(CTX, T - SEG, BATCH)
+        for b in range(int(round(args.sub_frac * BATCH))):   # resample until the segment holds no recorded spike
+            for _ in range(50):
+                if not (V[tr[b], st[b]:st[b] + SEG] > -20).any():
+                    break
+                tr[b] = rng.choice(train); st[b] = rng.integers(CTX, T - SEG)
         s = np.stack([stim[i, a - CTX:a + SEG] for i, a in zip(tr, st)])
         Vg = np.stack([V[i, a:a + SEG] for i, a in zip(tr, st)])
         Sm, M = sm.gt_masks(Vg)

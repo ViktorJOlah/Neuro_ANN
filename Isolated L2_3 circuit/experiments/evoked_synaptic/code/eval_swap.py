@@ -10,6 +10,7 @@ Writes ../results/swap_<model>.json
 """
 from __future__ import annotations
 
+SET = ('_' + __import__('os').environ['EVOKED_SET']) if __import__('os').environ.get('EVOKED_SET') else ''   # e.g. EVOKED_SET=ampa -> data_ampa/, results_ampa/
 import argparse
 import json
 import os
@@ -24,7 +25,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 
 def load_D(cell, model):
     D = F.build_D(model)
-    D.load_weights(os.path.join(HERE, "..", "results", cell, f"{model}_all", "D.weights.h5"))
+    D.load_weights(os.path.join(HERE, "..", "results" + SET, cell, f"{model}_all", "D.weights.h5"))
     return D
 
 
@@ -54,7 +55,7 @@ def main():
         out[tag] = dict(dendrites_from=dend, soma_from=soma, n_traces=int(len(V)), scores=res,
                         expected_best=f"D{'A' if dend == args.a else 'B'}_S{'A' if soma == args.a else 'B'}")
     json.dump(dict(A=args.a, B=args.b, model=args.model, chimeras=out),
-              open(os.path.join(HERE, "..", "results", f"swap_{args.model}.json"), "w"), indent=1)
+              open(os.path.join(HERE, "..", "results" + SET, f"swap_{args.model}.json"), "w"), indent=1)
 
 
 if __name__ == "__main__":

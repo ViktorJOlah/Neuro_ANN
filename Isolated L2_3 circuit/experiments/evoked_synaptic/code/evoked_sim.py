@@ -12,6 +12,7 @@ single pulse gives a CAL_MV (15 mV) somatic EPSP at rest (like setting the stimu
 A per-trace somatic DC current (0, or 0.4-1.1 x rheobase) sets the baseline, so some traces spike.
 
 Run:  python evoked_sim.py --cell 521409057 --n 150 --out ../data            (4 workers)
+      python evoked_sim.py --cell 521409057 --nmda-ratio 0 --out ../data_ampa  (AMPA only, as in the Billeh V1 model)
       python evoked_sim.py --cell 521409057 --chimera-soma 513531471 ...     (A's morphology and dendrites, B's soma+axon)
 Output: <out>/<tag>/evoked.npz with stim (n, T, 2) intensity per ms, dc (n,), V (n, T) somatic Vm at 1 ms
 (recording convention), plus, for the first --controls traces, an NMDA-blocked run and a repeat with new release draws; meta.json.
@@ -38,7 +39,10 @@ N_SYN, TUFT_FRAC, NMDA_RATIO = 40, 0.6, 1.0
 P0, U, TAU_REC, LATENCY = 0.8, 0.4, 300.0, 2.0
 CAL_MV = 15.0
 T_MS, QUIET_MS, DT = 4000, 300, 0.025
-RHEO = {"521409057": 207.0, "513531471": 144.0, "318808427": 114.0, "502359001": 144.0, "486262299": 490.0}
+PERI = {"487661754": os.environ.get("ALLEN_PERI", "/tmp/allen_peri")}   # the Standard's own cell: Allen perisomatic model
+# 488462783 (multicompartmental models/L2_3 PC/NEURON/orig_file + modfiles + NMDA_JS.mod, compiled with nrnivmodl in that folder)
+G_MAX = None                 # optional cap on the calibrated AMPA conductance per synapse (uS)
+RHEO = {"487661754": 83.8, "521409057": 207.0, "513531471": 144.0, "318808427": 114.0, "502359001": 144.0, "486262299": 490.0}
 
 _cell = None
 
@@ -59,9 +63,14 @@ def merged_dir(cell, soma_from):
 class EvokedCell:
     def __init__(self, cell_dir, seed):
         from neuron import h
-        import allactive_cell as ac
         self.h = h
-        self.run_ = ac.Runner(cell_dir, MECH, dt=DT)
+        if cell_dir in PERI.values():
+            sys.path.insert(0, os.path.join(ROOT, "simulations", "code"))
+            import allen_cell as pc
+            self.run_ = pc.Runner(cell_dir, dt=DT)
+        else:
+            import allactive_cell as ac
+            self.run_ = ac.Runner(cell_dir, MECH, dt=DT)
         rng = np.random.default_rng(seed)
         h.distance(0, 0.5, sec=h.soma[0])
         segs = {"apic": [], "dend": []}
@@ -131,6 +140,8 @@ class EvokedCell:
                 v = self.run(ev, 0.0)
                 amp = v[QUIET_MS:QUIET_MS + 200].max() - v[QUIET_MS - 10:QUIET_MS].mean()
                 g *= (CAL_MV / max(amp, 0.05)) ** 0.8
+                if G_MAX:
+                    g = min(g, G_MAX)
             self.g_ampa[name] = g
         return dict(self.g_ampa)
 
@@ -194,8 +205,9 @@ def stim_array(pulses):
     return s
 
 
-def _init(cell_dir, g_ampa, seed):
-    global _cell
+def _init(cell_dir, g_ampa, seed, nmda_ratio=1.0):
+    global _cell, NMDA_RATIO
+    NMDA_RATIO = nmda_ratio
     _cell = EvokedCell(cell_dir, seed)
     _cell.g_ampa = dict(g_ampa)
 
@@ -214,6 +226,7 @@ def _work(args):
 
 
 def main():
+    global NMDA_RATIO, G_MAX, CAL_MV
     ap = argparse.ArgumentParser()
     ap.add_argument("--cell", required=True)
     ap.add_argument("--chimera-soma", default=None)
@@ -222,9 +235,15 @@ def main():
     ap.add_argument("--out", default=os.path.join(HERE, "..", "data"))
     ap.add_argument("--controls", type=int, default=20, help="first N traces also run with NMDA blocked and with a second release draw")
     ap.add_argument("--seed", type=int, default=1)
+    ap.add_argument("--nmda-ratio", type=float, default=NMDA_RATIO, help="NMDA/AMPA peak conductance (0 = AMPA only)")
+    ap.add_argument("--g-max", type=float, default=None, help="cap per-synapse AMPA conductance (uS) during calibration")
+    ap.add_argument("--cal-mv", type=float, default=None, help="target EPSP of a full-intensity pulse (mV)")
     ap.add_argument("--g-json", default=None, help="json {L1: uS, L23: uS}: skip the calibration")
     args = ap.parse_args()
-    cell_dir = os.path.join(MODELS, args.cell) if not args.chimera_soma else merged_dir(args.cell, args.chimera_soma)
+    NMDA_RATIO = args.nmda_ratio
+    G_MAX = args.g_max
+    CAL_MV = args.cal_mv or CAL_MV
+    cell_dir = PERI[args.cell] if args.cell in PERI else os.path.join(MODELS, args.cell) if not args.chimera_soma else merged_dir(args.cell, args.chimera_soma)
     tag = args.cell if not args.chimera_soma else f"{args.cell}_soma{args.chimera_soma}"
     out = os.path.join(args.out, tag); os.makedirs(out, exist_ok=True)
     t0 = time.time()
@@ -249,7 +268,7 @@ def main():
         dc = float(rng.choice([0.0, rng.uniform(0.4, 1.1)], p=[0.3, 0.7]) * rheo)
         jobs.append((i, args.seed * 100000 + i, kind, dc, i < args.controls))
     del c      # workers are fresh processes (spawn): NEURON state must not be inherited from this one
-    with mp.get_context("spawn").Pool(args.workers, initializer=_init, initargs=(cell_dir, g, syn_seed)) as pool:
+    with mp.get_context("spawn").Pool(args.workers, initializer=_init, initargs=(cell_dir, g, syn_seed, NMDA_RATIO)) as pool:
         res = []
         for r in pool.imap_unordered(_work, jobs):
             res.append(r)
@@ -265,7 +284,7 @@ def main():
                         V_repeat=np.stack([r["V_repeat"] for r in ctrl]) if ctrl else np.zeros((0, T_MS)))
     json.dump(dict(cell=args.cell, chimera_soma=args.chimera_soma, g_ampa_uS=g, n=args.n, T_ms=T_MS, dt=DT,
                    n_syn=N_SYN, tuft_frac=TUFT_FRAC, nmda_ratio=NMDA_RATIO, p0=P0, U=U, tau_rec=TAU_REC,
-                   latency=LATENCY, cal_mV=CAL_MV, rheobase_pA=rheo, apical_max_um=dmax,
+                   latency=LATENCY, cal_mV=CAL_MV, g_max_uS=G_MAX, rheobase_pA=rheo, apical_max_um=dmax,
                    site_dist_um=sites, wall_s=time.time() - t0), open(os.path.join(out, "meta.json"), "w"), indent=1)
     print(tag, "done", f"{time.time()-t0:.0f}s")
 

@@ -1,5 +1,46 @@
 # Evoked synaptic input: can the Standard model's front end learn it? (feasibility test)
 
+## Update 2026-11-24: AMPA-only rerun (supersedes the window conclusion below)
+
+Viktor pointed out that the first-round events were far too slow: his recorded L1 and L4-L2/3 evoked events
+(Olah & Rowan, eLife) peak much faster. The slowness came from strong NMDA (ratio 1.0, 50 ms decay) plus the
+all-active fits' large apical cm (3–6.6 µF/cm²). The Billeh V1 model has no NMDA either, so the rerun uses
+AMPA only (`evoked_sim.py --nmda-ratio 0`), everything else as before.
+
+- Cells: the Standard's own perisomatic cell 487661754 ("754", g ≤ 0.5 nS per synapse, L2/3 calibrated to a
+  10 mV full-intensity EPSP; L1 saturates near 4.5 mV), and all-active 521409057 ("057"). 471 was dropped
+  (with AMPA only its calibration needed ~1.5 µS per tuft synapse).
+- Held-out mean EPSPs (NEURON): 754 L2/3 peaks at 9 ms, L1 at 30 ms; 057 L2/3 at 8 ms, L1 at 16 ms.
+- Training fix: with fast, small events the loss was dominated by spike-timing error in spiking segments and
+  D learned almost nothing (L2/3 EPSP 0.5 vs 4.2 mV). Drawing 75 % of each batch from spike-free segments
+  (`--sub-frac 0.75`, lr 1e-3) fixes most of it. S itself reproduces fast EPSC-shaped currents
+  (100 pA, τ 2 ms: 4.5 mV peak at 9 ms vs NEURON 4.8 mV at 6 ms), so the limit is D's training, not S.
+
+![AMPA-only](results_ampa/summary_ampa.png)
+
+| Cell | D | away from spikes | after L1 | after L2/3 |
+|---|---|---|---|---|
+| 754 | none (DC only) | 1.68 | 1.45 | 1.70 |
+| 754 | linear 256 ms (old sampling) | 1.38 | 1.32 | 1.64 |
+| 754 | CNN 64 ms | 0.69 | 0.52 | 0.85 |
+| 754 | CNN 256 ms | 0.64 | 0.46 | 0.73 |
+| 057 | none (DC only) | 3.43 | 3.87 | 2.14 |
+| 057 | CNN 64 ms | 1.66 | 2.01 | 1.52 |
+| 057 | CNN 256 ms | 1.70 | 2.31 | 1.56 |
+
+Release-noise ceiling: 0.21 mV (754), 0.29 mV (057). Spike counts: |Δn| 0.05 per trace (754).
+
+**Conclusion:** with AMPA-only kinetics a 64 ms window does as well as 256 ms (within 0.05 mV on both cells).
+So the Standard's 64 ms convention can be kept for D; recommendation 2 below changes accordingly. Remaining
+gap: the fast L2/3 EPSP peak is still underestimated by 35–50 % (2.2–2.8 vs 4.2 mV on 754; 4.3 vs 6.4 mV on 057)
+while L1 is matched; that is a training issue (more steps or an event-weighted loss), not the window.
+If real recordings show an NMDA component in trains (Viktor's eLife data show pathway-specific NMDA/HCN
+amplification), a 64 ms D will need an extra slow state or a longer window for those pathways only.
+
+---
+
+## First round (2026-11-23, AMPA + strong NMDA; events too slow, kept for the record)
+
 Question (Viktor, 2026-11-23): if we record ~10 L2/3 PCs with a stimulating electrode in L1 and one in L2/3
 (as in Olah & Rowan, eLife), can the model learn each cell's input processing, separately from its somatic
 transform, so the in vivo firing-rate tail can be split into a somatic and an input-processing share?
@@ -84,7 +125,8 @@ somatic channels alone. The D/S split is therefore an operational split: "respon
 ## Recommendation
 1. Keep each cell's S (somatic injection, ~5 min) and add a separate per-cell D, trained through the frozen S
    on evoked Vm. Input = the stimulus trains of both electrodes (time × intensity), output = somatic-equivalent current.
-2. For D use a causal dilated CNN with a ≥ 256 ms receptive field, not the 64 ms CNN-LSTM window.
+2. ~~For D use a ≥ 256 ms receptive field.~~ Superseded by the AMPA-only rerun: a 64 ms causal CNN is enough for
+   realistic AMPA kinetics. Sample spike-free segments for most of each batch when training.
 3. Evoked protocol per cell (~10 min): intensity series on each pathway, 5-pulse trains at 10–100 Hz, paired
    L1 + L2/3 pulses at −20..+20 ms offsets, and irregular (Poisson) stimulation on top of a few somatic DC levels.
    Optional: APV and gabazine conditions to label the NMDA and feed-forward inhibition parts.
