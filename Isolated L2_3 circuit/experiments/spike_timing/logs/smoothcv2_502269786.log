@@ -1,0 +1,7 @@
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795545130.834131    4813 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795545132.151259    4813 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+[502269786 smoothc_from_v2    36s] start: train Γ 0.098; val Γ 0.150 (47 -> 83 spikes)
+[502269786 smoothc_from_v2   221s] end: train Γ 0.094 count err 0.430; val Γ 0.281 (47 -> 48 spikes) {'V_th': -26.544, 'c_mV': -50.08, 'd': -0.237, 'b_na': -0.594, 'ln_s_na': 1.477, 'ln_s_sk': -0.639}
+[502269786 smoothc_from_v2   279s] done; Noise 2 Γ 0.209
