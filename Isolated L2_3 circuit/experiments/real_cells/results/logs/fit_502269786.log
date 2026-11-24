@@ -1,0 +1,68 @@
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795416195.853416    1643 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795416195.889639    1643 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX512F AVX512_VNNI AVX512_BF16 AVX512_FP16 AVX_VNNI AMX_TILE AMX_INT8 AMX_BF16 FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795416197.011839    1643 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+[502269786 standard     0s] train 39 sweeps (2.93 min), test 16 sweeps
+[502269786 standard     0s] input rescaling k = 0.364 (rheobase 230 pA)
+W0000 00:00:1795416205.373031    1643 type_inference.cc:340] Type inference failed. This indicates an invalid graph that escaped type checking. Error message: INVALID_ARGUMENT: expected compatible input types, but input 1:
+goo.gle/debugproto    
+type_id: TFT_OPTIONAL
+args {
+  type_id: TFT_PRODUCT
+  args {
+    type_id: TFT_TENSOR
+    args {
+      type_id: TFT_FLOAT
+    }
+  }
+}
+ is neither a subtype nor a supertype of the combined inputs preceding it:
+goo.gle/debugproto    
+type_id: TFT_OPTIONAL
+args {
+  type_id: TFT_PRODUCT
+  args {
+    type_id: TFT_TENSOR
+    args {
+      type_id: TFT_INT32
+    }
+  }
+}
+
+	for Tuple type infernce function 0
+	while inferring type of node 'StatefulPartitionedCall/while_517/body/_1728/while/cond_1/output/_10266'
+[502269786 standard    22s] stage 1 it   0  train Vm RMSE 4.368 mV
+[502269786 standard   162s] stage 1 it  20  train Vm RMSE 5.275 mV
+[502269786 standard   300s] stage 1 it  40  train Vm RMSE 5.516 mV
+[502269786 standard   442s] stage 1 it  60  train Vm RMSE 5.264 mV
+[502269786 standard   578s] stage 1 it  80  train Vm RMSE 5.493 mV
+[502269786 standard   718s] stage 1 it 100  train Vm RMSE 7.027 mV
+[502269786 standard   857s] stage 1 it 120  train Vm RMSE 5.746 mV
+[502269786 standard   998s] stage 1 it 140  train Vm RMSE 5.588 mV
+[502269786 standard  1144s] stage 1 it 160  train Vm RMSE 4.927 mV
+[502269786 standard  1298s] stage 1 it 180  train Vm RMSE 5.068 mV
+[502269786 standard  1445s] stage 1 it 200  train Vm RMSE 4.447 mV
+[502269786 standard  1587s] stage 1 it 220  train Vm RMSE 5.128 mV
+[502269786 standard  1726s] stage 1 it 240  train Vm RMSE 5.401 mV
+[502269786 standard  1790s] stage 1 it 249  train Vm RMSE 4.829 mV
+[502269786 standard  1803s] stage 2 start loss 2.1
+[502269786 standard  1864s] stage 2 loss 1.8204 {'V_th': -26.933, 'c_mV': -49.534, 'd': -0.075, 'b_na': -0.507, 'ln_s_sk': 0.486}
+[502269786 standard  1868s] test sweep 6 (Ramp, 800 pA): spikes 17 -> 6
+[502269786 standard  1870s] test sweep 34 (Long Square, -90 pA): spikes 0 -> 0
+[502269786 standard  1871s] test sweep 37 (Long Square, -30 pA): spikes 0 -> 0
+[502269786 standard  1872s] test sweep 40 (Long Square, 30 pA): spikes 0 -> 0
+[502269786 standard  1873s] test sweep 43 (Long Square, 90 pA): spikes 0 -> 0
+[502269786 standard  1874s] test sweep 46 (Long Square, 150 pA): spikes 0 -> 0
+[502269786 standard  1876s] test sweep 49 (Long Square, 210 pA): spikes 0 -> 4
+[502269786 standard  1877s] test sweep 53 (Long Square, 290 pA): spikes 10 -> 9
+[502269786 standard  1878s] test sweep 56 (Long Square, 350 pA): spikes 22 -> 12
+[502269786 standard  1879s] test sweep 59 (Long Square, 230 pA): spikes 0 -> 7
+[502269786 standard  1880s] test sweep 61 (Long Square, 250 pA): spikes 1 -> 6
+[502269786 standard  1889s] test sweep 65 (Noise 2, 589 pA): spikes 61 -> 54
+[502269786 standard  1898s] test sweep 67 (Noise 2, 589 pA): spikes 60 -> 54
+[502269786 standard  1906s] test sweep 69 (Noise 2, 589 pA): spikes 52 -> 54
+[502269786 standard  1915s] test sweep 71 (Noise 2, 589 pA): spikes 53 -> 54
+[502269786 standard  1916s] test sweep 97 (Long Square, 260 pA): spikes 0 -> 7
+[502269786 standard  1916s] done

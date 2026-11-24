@@ -1,0 +1,25 @@
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795541474.965562     982 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795541477.218784     982 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+[502269786     8s] stage A start: spike-forced val RMSE 5.520 mV
+[502269786    43s] stage A it   0  train 6.400  val 5.303 mV
+[502269786   130s] stage A it  10  train 6.949  val 5.211 mV
+[502269786   216s] stage A it  20  train 4.916  val 4.979 mV
+[502269786   300s] stage A it  30  train 4.910  val 5.021 mV
+[502269786   384s] stage A it  40  train 7.321  val 4.969 mV
+[502269786   469s] stage A it  50  train 5.569  val 5.110 mV
+[502269786   550s] stage A it  60  train 4.960  val 5.263 mV
+[502269786   633s] stage A it  70  train 5.839  val 5.262 mV
+[502269786   718s] stage A it  80  train 5.749  val 5.177 mV
+[502269786   801s] stage A it  90  train 5.333  val 5.090 mV
+[502269786   885s] stage A it 100  train 5.443  val 5.081 mV
+[502269786   969s] stage A it 110  train 4.322  val 5.128 mV
+[502269786  1052s] stage A it 120  train 5.449  val 5.189 mV
+[502269786  1135s] stage A it 130  train 4.229  val 5.211 mV
+[502269786  1218s] stage A it 140  train 4.381  val 5.222 mV
+[502269786  1294s] stage A it 149  train 4.802  val 5.184 mV
+[502269786  1348s] stage A done; Noise 2 Γ 0.178
+[502269786  1362s] stage B start loss 1.6
+[502269786  1467s] stage B loss 1.3739 {'V_th': -20.524, 'c_mV': -66.837, 'd': 0.239, 'b_na': -8.698, 'ln_s_na': 0.359, 'ln_s_sk': 0.241}
+[502269786  1511s] done; Noise 2 Γ 0.134 (PR 11 fit: see results/metrics_summary.csv)

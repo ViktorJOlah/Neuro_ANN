@@ -309,6 +309,8 @@ class NestInterneurons:
     """The GLIF interneurons in NEST (built by BMTK from the prepared config), stepped 1 ms at a time."""
 
     def __init__(self, config_path, gain, threads=1):
+        """``gain``: factor on every PC -> interneuron synapse, a float or {class: factor}
+        (class as in ``extract_l23.classify``, e.g. "L2/3 Pvalb")."""
         from .simulate import patch_bmtk_gid_lookup
         patch_bmtk_gid_lookup()
         from bmtk.simulator import pointnet
@@ -326,11 +328,22 @@ class NestInterneurons:
         self.pc_gens = np.array([vmap[i] for i in range(n_pc)], np.int64)
         self.pc_nc = nest.NodeCollection(sorted(self.pc_gens.tolist()))
         nest.SetStatus(self.pc_nc, {"spike_times": []})
-        if gain != 1.0:
-            conns = nest.GetConnections(source=self.pc_nc)
-            conns.set(weight=np.asarray(conns.get("weight"), float) * gain)
-        in_nest = net.gid_map.get_nestids("l23i", np.arange(len(net.get_nodes_df("l23i"))))
+        in_df = net.get_nodes_df("l23i")
+        in_nest = net.gid_map.get_nestids("l23i", np.arange(len(in_df)))
         self.in_nest = np.asarray(in_nest, np.int64)
+        if not isinstance(gain, dict):
+            gain = {None: float(gain)}
+        if any(g != 1.0 for g in gain.values()):
+            conns = nest.GetConnections(source=self.pc_nc)
+            w = np.asarray(conns.get("weight"), float)
+            if None in gain:
+                fac = np.full(len(w), gain[None])
+            else:
+                in_cls = in_df.sort_index()["pop_name"].map(classify).to_numpy()
+                lut = np.ones(int(self.in_nest.max()) + 1)
+                lut[self.in_nest] = [gain.get(c, 1.0) for c in in_cls]
+                fac = lut[np.asarray(conns.get("target"), np.int64)]
+            conns.set(weight=w * fac)
         self.nest_to_in = np.full(int(max(self.in_nest.max(), self.pc_gens.max())) + 1, -1, np.int64)
         self.nest_to_in[self.in_nest] = np.arange(len(self.in_nest))
         self.rec = nest.Create("spike_recorder")
@@ -364,8 +377,10 @@ class NestInterneurons:
         self.nest.Cleanup()
 
 
-def run(prep, standard_dir, gain, tstop, out, threads=1, log_every=100, replay_pc=None, probe=0):
-    """Run the hybrid circuit. ``replay_pc``: an l23 spikes file whose PC spikes replace the ANN (a
+def run(prep, standard_dir, gain, tstop, out, threads=1, log_every=100, replay_pc=None, probe=0,
+        pc_to_in_gain=None):
+    """Run the hybrid circuit. ``gain`` multiplies every synapse onto a PC; ``pc_to_in_gain`` every
+    PC -> interneuron synapse (float or {class: factor}; None = the same as ``gain``, the PR 9 rule). ``replay_pc``: an l23 spikes file whose PC spikes replace the ANN (a
     check of the loop: with the GLIF network's own PC spikes, the interneurons must reproduce it).
     ``probe``: record the synaptic current of the first ``probe`` PCs at 1 ms."""
     sys.path.insert(0, os.path.abspath(standard_dir))
@@ -382,7 +397,9 @@ def run(prep, standard_dir, gain, tstop, out, threads=1, log_every=100, replay_p
     with h5py.File(os.path.join(prep, "ids.h5")) as f:
         pc_to_l23, in_to_l23 = f["pc_to_l23"][()], f["in_to_l23"][()]
 
-    nest_part = NestInterneurons(os.path.join(prep, "config_nest_part.json"), gain, threads)
+    if pc_to_in_gain is None:
+        pc_to_in_gain = gain
+    nest_part = NestInterneurons(os.path.join(prep, "config_nest_part.json"), pc_to_in_gain, threads)
     bank = PSCBank(n_pc)
     if replay_pc:
         rid, rts = _read_spikes(replay_pc, "l23")
@@ -438,7 +455,7 @@ def run(prep, standard_dir, gain, tstop, out, threads=1, log_every=100, replay_p
     np.save(os.path.join(out, "pc_mean_input_current.npy"), I_mean)
     if probe:
         np.save(os.path.join(out, "probe_current.npy"), probe_I)
-    info = {"gain": gain, "tstop": tstop, "wall_s": time.time() - t_start, "timers_s": timers,
+    info = {"gain": gain, "pc_to_in_gain": pc_to_in_gain, "tstop": tstop, "wall_s": time.time() - t_start, "timers_s": timers,
             "pc_rate_hz": len(P) / n_pc / (T / 1000), "interneuron_rate_hz": len(Q) / n_in / (T / 1000),
             "pc_spikes": int(len(P)), "interneuron_spikes": int(len(Q))}
     with open(os.path.join(out, "run.json"), "w") as f:
@@ -447,13 +464,34 @@ def run(prep, standard_dir, gain, tstop, out, threads=1, log_every=100, replay_p
     return info
 
 
-def _run_subprocess(prep, standard_dir, gain, tstop, out, threads):
+def parse_gain(text):
+    """"0.9" -> 0.9; "Pvalb=1.1,Sst=1.0,Htr3a=0.9" -> {"L2/3 Pvalb": 1.1, ...}; None -> None."""
+    if text is None or isinstance(text, (int, float, dict)):
+        return text
+    if "=" not in text:
+        return float(text)
+    out = {}
+    for part in text.split(","):
+        k, v = part.split("=")
+        k = k.strip()
+        out[k if k.startswith("L2/3 ") else f"L2/3 {k}"] = float(v)
+    return out
+
+
+def format_gain(g):
+    if g is None or not isinstance(g, dict):
+        return None if g is None else str(g)
+    return ",".join(f"{k.replace('L2/3 ', '')}={v}" for k, v in g.items())
+
+
+def _run_subprocess(prep, standard_dir, gain, tstop, out, threads, pc_to_in_gain=None):
     """One run per process: NEST can only be built once per process."""
     import subprocess
     here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     env = dict(os.environ); env["PYTHONPATH"] = here + os.pathsep + env.get("PYTHONPATH", "")
     subprocess.run([sys.executable, "-m", "circuit.hybrid", "run", "--prep", prep, "--standard-dir", standard_dir,
-                    "--gain", str(gain), "--tstop", str(tstop), "--out", out, "--threads", str(threads)],
+                    "--gain", str(gain), "--tstop", str(tstop), "--out", out, "--threads", str(threads)]
+                   + (["--pc-to-in-gain", format_gain(pc_to_in_gain)] if pc_to_in_gain is not None else []),
                    check=True, env=env)
     return json.load(open(os.path.join(out, "run.json")))
 
@@ -467,8 +505,10 @@ def reference_rate(reference, prep, t0=0.0, t1=3000.0):
     return m.sum() / len(pc_to_l23) / ((t1 - t0) / 1000)
 
 
-def tune(prep, standard_dir, reference, out, tstop=1500.0, gains=(1.0,), max_iter=6, tol=0.1, threads=1):
-    """Search the common gain until the PC rate over 0..tstop is within ``tol`` of the GLIF network's.
+def tune(prep, standard_dir, reference, out, tstop=1500.0, gains=(1.0,), max_iter=6, tol=0.1, threads=1,
+         pc_to_in_gain=None):
+    """Search the gain onto PCs until the PC rate over 0..tstop is within ``tol`` of the GLIF network's.
+    ``pc_to_in_gain`` stays fixed during the search (None = equal to the searched gain, the PR 9 rule).
 
     Brackets the target, then bisects in log(gain)."""
     os.makedirs(out, exist_ok=True)
@@ -500,7 +540,7 @@ def tune(prep, standard_dir, reference, out, tstop=1500.0, gains=(1.0,), max_ite
                 g = h["gain"] * float(np.clip((target / max(h["pc_rate_hz"], 1e-3)) ** 0.3, 0.7, 1.4))
         if round(g, 4) in done:
             continue
-        r = _run_subprocess(prep, standard_dir, g, tstop, os.path.join(out, f"gain_{g:.4f}"), threads)
+        r = _run_subprocess(prep, standard_dir, g, tstop, os.path.join(out, f"gain_{g:.4f}"), threads, pc_to_in_gain)
         hist.append({"gain": g, "pc_rate_hz": r["pc_rate_hz"], "interneuron_rate_hz": r["interneuron_rate_hz"]})
         json.dump({"target_pc_rate_hz": target, "tstop": tstop, "history": hist}, open(path, "w"), indent=2)
         print(f"[tune] gain {g:.4f}: PC {r['pc_rate_hz']:.3f} Hz (target {target:.3f})", flush=True)
@@ -514,32 +554,51 @@ def tune(prep, standard_dir, reference, out, tstop=1500.0, gains=(1.0,), max_ite
 # ============================================================================================
 # report
 # ============================================================================================
-def report(prep, extract_dir, reference, hybrid_spikes, out, tune_json=None, tstop=3000.0, gray_until=500.0):
+def _gain_label(run_json):
+    g, gi = run_json["gain"], run_json.get("pc_to_in_gain", run_json["gain"])
+    if isinstance(gi, dict):
+        gi = "/".join(f"{v:.2f}" for v in gi.values())
+    elif gi is not None and abs(float(gi) - g) > 1e-9:
+        gi = f"{float(gi):.2f}"
+    else:
+        return f"gain {g:.2f}"
+    return f"gain {g:.2f}, PC→IN {gi}"
+
+
+def report(prep, extract_dir, reference, hybrid_spikes, out, tune_json=None, tstop=3000.0, gray_until=500.0,
+           previous_spikes=None):
     """Overview figure (rates per class, E rate distribution, raster) plus a summary figure:
-    the gain search and each PC's rate in the hybrid vs the GLIF network."""
+    the gain search and each PC's rate in the hybrid vs the GLIF network. ``previous_spikes``: an
+    earlier hybrid run (with its run.json next to it) shown as a third run for comparison."""
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
     from .plot_overview import overview, CLASSES, CLASS_COLORS
     os.makedirs(out, exist_ok=True)
-    gain = json.load(open(os.path.join(os.path.dirname(hybrid_spikes), "run.json")))["gain"]
-    stats = overview(extract_dir, [("GLIF network", reference), (f"ANN PCs (gain {gain:.2f})", hybrid_spikes)],
-                     os.path.join(out, "overview.png"), tstop, gray_until, raster_run=1)
+    rj = json.load(open(os.path.join(os.path.dirname(hybrid_spikes), "run.json")))
+    gain = rj["gain"]
+    label = f"ANN PCs ({_gain_label(rj)})"
+    runs = [("GLIF network", reference, "glif")]
+    if previous_spikes:
+        pj = json.load(open(os.path.join(os.path.dirname(previous_spikes), "run.json")))
+        runs.append((f"ANN PCs, PR 9 ({_gain_label(pj)})", previous_spikes, "previous"))
+    runs.append((label, hybrid_spikes, "hybrid"))
+    stats = overview(extract_dir, [(lb, p) for lb, p, _ in runs], os.path.join(out, "overview.png"), tstop, gray_until,
+                     raster_run=len(runs) - 1)
     net = os.path.join(extract_dir, "network")
     nodes = sio.read_nodes(os.path.join(net, "l23_nodes.h5"), os.path.join(net, "l23_node_types.csv"), "l23")
     nodes = nodes.sort_values("node_id").reset_index(drop=True)
     cls = nodes["pop_name"].map(classify).to_numpy()
     n = len(nodes)
     rates = {}
-    for label, path in (("glif", reference), ("hybrid", hybrid_spikes)):
+    for _, path, key in runs:
         ids, ts = _read_spikes(path, "l23")
         m = ts < tstop
         r_all = np.bincount(ids[m], minlength=n)[:n] / (tstop / 1000)
         g = (ts >= gray_until) & m
         r_gr = np.bincount(ids[g], minlength=n)[:n] / ((tstop - gray_until) / 1000)
-        rates[label] = (r_all, r_gr)
-    per_class = {c: {"glif_hz": float(rates["glif"][0][cls == c].mean()), "hybrid_hz": float(rates["hybrid"][0][cls == c].mean())}
-                 for c in CLASSES}
+        rates[key] = (r_all, r_gr)
+    per_class = {c: {f"{k}_hz": float(rates[k][0][cls == c].mean()) for _, _, k in runs} for c in CLASSES}
     e = cls == "L2/3 E"
     a, b = rates["glif"][1][e], rates["hybrid"][1][e]
     r_pc = float(np.corrcoef(a, b)[0, 1])
@@ -554,17 +613,29 @@ def report(prep, extract_dir, reference, hybrid_spikes, out, tune_json=None, tst
         ax.plot([x["gain"] for x in h], [x["pc_rate_hz"] for x in h], "o-", color=CLASS_COLORS["L2/3 E"], label="ANN PCs")
         ax.plot([x["gain"] for x in h], [x["interneuron_rate_hz"] for x in h], "s--", color="#eb6834", label="GLIF interneurons")
         ax.axhline(tj["target_pc_rate_hz"], color="#222222", lw=1, ls=":", label="GLIF network PCs")
-        ax.set(xlabel="gain on synapses onto and from PCs", ylabel=f"mean rate 0-{tj['tstop']:.0f} ms (Hz)",
-               title="Gain search")
+        fixed = rj.get("pc_to_in_gain")
+        xl = ("gain on synapses onto and from PCs" if fixed is None or fixed == gain
+              else f"gain on synapses onto PCs (PC→IN fixed at {fixed})")
+        ax.set(xlabel=xl, ylabel=f"mean rate 0-{tj['tstop']:.0f} ms (Hz)", title="Gain search")
         ax.legend(frameon=False, fontsize=8)
     ax = axs[1]
     x = np.arange(len(CLASSES))
-    ax.bar(x - 0.2, [per_class[c]["glif_hz"] for c in CLASSES], 0.4, color="#222222", label="GLIF network")
-    ax.bar(x + 0.2, [per_class[c]["hybrid_hz"] for c in CLASSES], 0.4, color=[CLASS_COLORS[c] for c in CLASSES],
-           label=f"ANN PCs (gain {gain:.2f})")
+    wd = 0.8 / len(runs)
+    for j, (lb, _, k) in enumerate(runs):
+        xs = x + (j - (len(runs) - 1) / 2) * wd
+        vals = [per_class[c][f"{k}_hz"] for c in CLASSES]
+        if k == "glif":
+            ax.bar(xs, vals, wd, color="#222222", label=lb)
+        elif k == "previous":
+            ax.bar(xs, vals, wd, color="white", edgecolor=[CLASS_COLORS[c] for c in CLASSES], hatch="///", lw=0.8, label=lb)
+        else:
+            ax.bar(xs, vals, wd, color=[CLASS_COLORS[c] for c in CLASSES], label=lb)
+        if k != "glif":
+            for xi, v, c in zip(xs, vals, CLASSES):
+                ax.text(xi, v, f"{100 * (v / per_class[c]['glif_hz'] - 1):+.0f}%", ha="center", va="bottom", fontsize=6.5)
     ax.set_xticks(x, [c.replace("L2/3 ", "") for c in CLASSES])
     ax.set(ylabel=f"mean rate 0-{tstop:.0f} ms (Hz)", title="Rates per class")
-    ax.legend(frameon=False, fontsize=8)
+    ax.legend(frameon=False, fontsize=7.5, loc="upper center", bbox_to_anchor=(0.5, -0.12), ncol=1)
     ax = axs[2]
     jit = np.random.default_rng(0).uniform(-0.15, 0.15, (2, e.sum())) / ((tstop - gray_until) / 1000)
     ax.scatter(a + 0.1 + jit[0], b + 0.1 + jit[1], s=1, alpha=0.15, color=CLASS_COLORS["L2/3 E"], lw=0)
@@ -577,7 +648,7 @@ def report(prep, extract_dir, reference, hybrid_spikes, out, tune_json=None, tst
         ax.title.set_fontsize(10)
     fig.savefig(os.path.join(out, "hybrid_summary.png"), dpi=150, bbox_inches="tight")
     plt.close(fig)
-    res = {"gain": gain, "per_class_rates_0_tstop": per_class, "distribution_grating": stats,
+    res = {"gain": gain, "pc_to_in_gain": rj.get("pc_to_in_gain", gain), "per_class_rates_0_tstop": per_class, "distribution_grating": stats,
            "pc_rate_correlation_pearson": r_pc, "pc_rate_correlation_spearman": rho}
     with open(os.path.join(out, "hybrid_summary.json"), "w") as f:
         json.dump(res, f, indent=2)
@@ -598,6 +669,8 @@ def main(argv=None):
     b.add_argument("--out", required=True); b.add_argument("--threads", type=int, default=1)
     b.add_argument("--replay-pc", help="l23 spikes file whose PC spikes replace the ANN (loop check)")
     b.add_argument("--probe", type=int, default=0, help="record the input current of the first N PCs")
+    b.add_argument("--pc-to-in-gain", help="factor on PC -> interneuron synapses: a number or Pvalb=..,Sst=..,Htr3a=.. "
+                   "(default: same as --gain)")
     c = sp.add_parser("tune")
     c.add_argument("--prep", required=True); c.add_argument("--standard-dir", required=True)
     c.add_argument("--reference", required=True); c.add_argument("--out", required=True)
@@ -605,21 +678,25 @@ def main(argv=None):
     c.add_argument("--gains", type=float, nargs="+", default=[1.0])
     c.add_argument("--max-iter", type=int, default=6); c.add_argument("--tol", type=float, default=0.1)
     c.add_argument("--threads", type=int, default=1)
+    c.add_argument("--pc-to-in-gain", help="fixed factor on PC -> interneuron synapses (default: same as the searched gain)")
     d = sp.add_parser("report")
     d.add_argument("--prep", required=True); d.add_argument("--extract-dir", required=True)
     d.add_argument("--reference", required=True); d.add_argument("--hybrid-spikes", required=True)
     d.add_argument("--out", required=True); d.add_argument("--tune-json")
     d.add_argument("--tstop", type=float, default=3000.0)
+    d.add_argument("--previous-spikes", help="an earlier hybrid run's spikes.h5 to show alongside")
     x = p.parse_args(argv)
     if x.cmd == "prepare":
         prepare(x.config, x.extract_dir, x.v1ext_spikes, x.out, x.tstop)
     elif x.cmd == "run":
-        run(x.prep, x.standard_dir, x.gain, x.tstop, x.out, x.threads, replay_pc=x.replay_pc, probe=x.probe)
+        run(x.prep, x.standard_dir, x.gain, x.tstop, x.out, x.threads, replay_pc=x.replay_pc, probe=x.probe,
+            pc_to_in_gain=parse_gain(x.pc_to_in_gain))
     elif x.cmd == "report":
-        report(x.prep, x.extract_dir, x.reference, x.hybrid_spikes, x.out, x.tune_json, x.tstop)
+        report(x.prep, x.extract_dir, x.reference, x.hybrid_spikes, x.out, x.tune_json, x.tstop,
+               previous_spikes=x.previous_spikes)
     else:
         print(json.dumps(tune(x.prep, x.standard_dir, x.reference, x.out, x.tstop, x.gains, x.max_iter, x.tol,
-                              x.threads), indent=2))
+                              x.threads, parse_gain(x.pc_to_in_gain)), indent=2))
 
 
 if __name__ == "__main__":

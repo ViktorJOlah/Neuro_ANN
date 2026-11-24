@@ -1,0 +1,11 @@
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795544112.216778    3879 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795544113.480789    3879 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+[382982932     6s] stage A start: spike-forced val RMSE 4.000 mV
+[382982932    30s] stage A it   0  train 4.485  val 4.117 mV
+[382982932   111s] stage A it  10  train 3.951  val 4.042 mV
+[382982932   195s] stage A it  20  train 4.229  val 3.940 mV
+[382982932   273s] stage A it  30  train 4.352  val 3.796 mV
+[382982932   355s] stage A it  40  train 5.518  val 4.078 mV
+[382982932   437s] stage A it  50  train 3.083  val 4.266 mV

@@ -1,0 +1,18 @@
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795420065.426542    2427 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795420065.464279    2427 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX512F AVX512_VNNI AVX512_BF16 AVX512_FP16 AVX_VNNI AMX_TILE AMX_INT8 AMX_BF16 FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795420066.540895    2427 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+[318808427 standard_unfitted     0s] train 26 sweeps (2.04 min), test 10 sweeps
+[318808427 standard_unfitted     5s] test sweep 6 (Ramp, 800 pA): spikes 10 -> 27
+[318808427 standard_unfitted     7s] test sweep 27 (Long Square, -70 pA): spikes 0 -> 0
+[318808427 standard_unfitted     8s] test sweep 31 (Long Square, 10 pA): spikes 0 -> 0
+[318808427 standard_unfitted     9s] test sweep 34 (Long Square, 70 pA): spikes 0 -> 0
+[318808427 standard_unfitted    10s] test sweep 37 (Long Square, 130 pA): spikes 1 -> 9
+[318808427 standard_unfitted    11s] test sweep 39 (Long Square, 170 pA): spikes 13 -> 12
+[318808427 standard_unfitted    12s] test sweep 42 (Long Square, 230 pA): spikes 22 -> 16
+[318808427 standard_unfitted    22s] test sweep 48 (Noise 2, 306 pA): spikes 56 -> 66
+[318808427 standard_unfitted    29s] test sweep 50 (Noise 2, 306 pA): spikes 56 -> 66
+[318808427 standard_unfitted    36s] test sweep 52 (Noise 2, 306 pA): spikes 55 -> 66
+[318808427 standard_unfitted    36s] done

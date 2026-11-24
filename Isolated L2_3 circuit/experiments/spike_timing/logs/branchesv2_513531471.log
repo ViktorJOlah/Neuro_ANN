@@ -1,0 +1,7 @@
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795544570.832206    4043 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795544572.693606    4043 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+[513531471 branches_v2    15s] start: forced RMSE 4.990 mV, model spikes/segment 6.53
+[513531471 branches_v2   236s] end: forced RMSE 3.608 mV, model spikes/segment 12.30 {'ln_s_sk': -1.918, 'ln_s_ca': 0.313, 'ln_s_kp': -0.213, 'd': 0.011, 'ln_s_im': -3.411, 'ln_s_kv': -2.146, 'ln_s_na': 0.625, 'b_sk': -0.051, 'I0': 11.143}
+[513531471 branches_v2   288s] done; Noise 2 Γ 0.079 (spike parameters not refit yet)
