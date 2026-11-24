@@ -47,12 +47,14 @@ WIN = 4.0
 SIG = 10.0
 CLIP = -20.0
 MODELS = ("standard", "allactive", "glif1_LIF", "glif2_LIF-R", "glif3_LIF-ASC", "glif4_LIF-R-ASC",
-          "glif5_LIF-R-ASC-A", "standard_unfitted")
-MAIN = ("standard", "allactive", "glif_best", "glif3_LIF-ASC")
+          "glif5_LIF-R-ASC-A", "standard_unfitted", "standard_timing", "standard_branches", "branches_v2")
+MAIN = ("standard", "standard_timing", "allactive", "glif_best", "glif3_LIF-ASC")
 LABEL = {"standard": "Standard ANN (fitted)", "allactive": "Allen all-active NEURON", "glif_best": "Allen GLIF (best level)",
-         "glif3_LIF-ASC": "Allen GLIF3 (LIF-ASC)", "standard_unfitted": "Standard ANN (not fitted)"}
+         "glif3_LIF-ASC": "Allen GLIF3 (LIF-ASC)", "standard_unfitted": "Standard ANN (not fitted)",
+         "standard_timing": "Standard ANN (timing refit)", "standard_branches": "Standard ANN (branch refit only)",
+         "branches_v2": "Standard ANN (branch refit v2)"}
 COL = {"standard": "#d95f02", "allactive": "#1b9e77", "glif_best": "#7570b3", "glif3_LIF-ASC": "#a6a2d6",
-       "standard_unfitted": "#bbbbbb", "data": "k"}
+       "standard_unfitted": "#bbbbbb", "standard_timing": "#e7298a", "standard_branches": "#f4a6cf", "branches_v2": "#c994c7", "data": "k"}
 
 
 # ------------------------------------------------------------------ metrics
@@ -288,7 +290,7 @@ def plots(agg, per_sweep, intr, fig_dir):
             A.axhline(np.nanmedian(rep), color="k", ls="--", lw=0.8, label="cell's own repeat Γ")
             A.legend(fontsize=7)
         A.set_xticks(range(len(MAIN)))
-        A.set_xticklabels(["Standard", "all-active", "GLIF best", "GLIF3"], fontsize=8)
+        A.set_xticklabels(["Standard\n(PR 11)", "Standard\n(timing)", "all-active", "GLIF best", "GLIF3"], fontsize=7)
         A.set_title(title + ("  (higher = better)" if higher else "  (lower = better)"), fontsize=9)
     fig.suptitle("Held-out Allen recordings, 6 VISp L2/3 pyramidal cells: fitted Standard ANN vs Allen all-active NEURON and GLIF "
                  "(bars = median, dots = cells, grey lines join a cell)", fontsize=11)
@@ -301,7 +303,7 @@ def plots(agg, per_sweep, intr, fig_dir):
         meta, test, data, preds = load_cell(cell)
         show = [m for m in ("standard", "allactive", "glif_best") if m in preds or m == "glif_best"]
         best = next((a.get("glif_level") for a in agg if a["cell"] == cell and a["model"] == "glif_best"), None)
-        mods = [("standard", "standard"), ("allactive", "allactive"), (best, "glif_best")]
+        mods = [("standard", "standard"), ("standard_timing", "standard_timing"), ("allactive", "allactive"), (best, "glif_best")]
         mods = [(m, lab) for m, lab in mods if m in preds]
         ls = [r for r in test if r["stimulus"] == "Long Square" and r["n_spikes"] > 0]
         ls = ls[len(ls) // 2] if ls else None
@@ -342,7 +344,7 @@ def plots(agg, per_sweep, intr, fig_dir):
             A.vlines(data[r["sweep"]]["spk"] / 1000, y, y + 0.8, color="k", lw=0.6)
             y += 1
             labels.append(f"recording {i+1}")
-        for m, lab, name in (("standard", "standard", "Standard"), ("allactive", "allactive", "all-active"),
+        for m, lab, name in (("standard", "standard", "Standard"), ("standard_timing", "standard_timing", "Standard timing"), ("allactive", "allactive", "all-active"),
                              (best, "glif_best", f"GLIF ({(best or '')[:5]})")):
             if m in preds and rows:
                 A.vlines(preds[m][rows[0]["sweep"]]["spk"] / 1000, y, y + 0.8, color=COL[lab], lw=0.6)
@@ -362,7 +364,7 @@ def plots(agg, per_sweep, intr, fig_dir):
         best = next((a.get("glif_level") for a in agg if a["cell"] == cell and a["model"] == "glif_best"), None)
         rr = sorted([x for x in per_sweep if x["cell"] == cell and x["stimulus"] == "Long Square" and x["model"] == "standard"], key=lambda x: x["amp_pA"])
         A.plot([x["amp_pA"] for x in rr], [x["n_data"] for x in rr], "k-o", ms=3, label="recording")
-        for m, lab in (("standard", "standard"), ("allactive", "allactive"), (best, "glif_best")):
+        for m, lab in (("standard", "standard"), ("standard_timing", "standard_timing"), ("allactive", "allactive"), (best, "glif_best")):
             q = sorted([x for x in per_sweep if x["cell"] == cell and x["stimulus"] == "Long Square" and x["model"] == m], key=lambda x: x["amp_pA"])
             A.plot([x["amp_pA"] for x in q], [x["n_model"] for x in q], "-o", ms=3, color=COL[lab], label=LABEL[lab] if lab != "glif_best" else "GLIF best")
         A.set_title(cell, fontsize=9)
