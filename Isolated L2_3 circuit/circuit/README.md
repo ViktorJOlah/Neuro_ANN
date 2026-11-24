@@ -143,8 +143,12 @@ least 0.25 ms (PC → PC) or 1.25 ms (interneuron → PC) after it is fired, so 
 millisecond than the one that produced it.
 
 **Gain.** `--gain a` multiplies every synapse onto a PC (excitatory and inhibitory, replayed and
-recurrent) and every synapse from a PC by the same factor, so each cell's E/I ratio is unchanged.
-`tune` searches a on 1.5 s runs until the mean PC rate matches the GLIF network.
+recurrent), so each PC's E/I ratio is unchanged. `--pc-to-in-gain` sets the factor on PC →
+interneuron synapses separately: a number, or one per class (`Pvalb=1.0,Sst=1.0,Htr3a=1.0`). Left
+out, it equals `--gain` (the rule of the first version, PR 9). Use `--pc-to-in-gain 1.0`: the
+interneurons are unchanged GLIF cells, so the synapses onto them keep Allen's weights (see
+"Interneuron rates" below). `tune` searches a until the mean PC rate matches the GLIF network,
+with `--pc-to-in-gain` held fixed.
 
 **Checks.**
 - Loop check: replaying the GLIF network's own PC spikes through the loop (`run --replay-pc`)
@@ -169,7 +173,38 @@ At gain 1 the ANN PCs are hyperactive (about 2× the GLIF rate, and the interneu
 1.125 vs 1.126 Hz) and the rate distribution matches: the same silent fraction, the same top-10%
 share, and each PC's rate correlates with its GLIF-network rate at r = 0.96. Two differences remain:
 the ANN network has no PCs above about 10 Hz (the GLIF network reaches 13 Hz), and the
-interneurons fire 18–41% less, because the synchronous PC bursts that drive them are smaller.
+interneurons fire 18–41% less. The second one is fixed below.
+
+**Interneuron rates** (`results/interneuron_rate_fix/`). The interneurons were low because the
+gain of 0.82 was also applied to every PC → interneuron synapse, so the unchanged GLIF
+interneurons got 18% less excitation per PC spike than in the Allen network. Open-loop tests
+(`run --replay-pc` with fixed PC spikes, no feedback; `diagnose_interneurons.py`) separate the causes:
+
+| PC spikes fed to the interneurons | PC → IN gain | Pvalb | Sst | Htr3a |
+|---|---|---|---|---|
+| GLIF network's own | 0.82 | −36% | −32% | −12% |
+| hybrid (PR 9) | 0.82 | −41% | −38% | −18% |
+| hybrid (PR 9) | 1.0 | −8% | −10% | −7% |
+| hybrid, each spike moved 0–0.75 ms earlier | 1.0 | −8% | −9% | −7% |
+
+So the gain explains most of the gap, the rest follows the 7% lower PC rate, and the 1 ms
+spike grid of the ANN PCs does not matter. With PC → interneuron synapses at Allen weights,
+the gain onto PCs has to rise a little (more inhibition comes back). The 1.5 s `tune` gave
+0.827, but over 3 s that leaves PCs 11% low (the second half of the grating is more
+inhibited), so the gain was set on 3 s runs: 0.848.
+
+| 0–3 s, Hz | GLIF network | PR 9 (gain 0.82 onto and from PCs) | gain 0.827 onto PCs, PC → IN 1.0 | **gain 0.848 onto PCs, PC → IN 1.0** |
+|---|---|---|---|---|
+| L2/3 E | 1.38 | 1.28 (−7%) | 1.23 (−11%) | **1.36 (−1%)** |
+| Pvalb | 5.70 | 3.37 (−41%) | 4.82 (−15%) | **5.66 (−1%)** |
+| Sst | 4.78 | 2.98 (−38%) | 4.03 (−16%) | **4.69 (−2%)** |
+| Htr3a | 2.73 | 2.23 (−18%) | 2.50 (−8%) | **2.66 (−3%)** |
+
+With gain 0.848 every class is within 3% of the GLIF network, so no per-class factor is needed.
+During the grating 28% of PCs are silent (GLIF 30%), the top 10% fire 30% of PC spikes (GLIF 33%),
+and each PC's rate correlates with its GLIF-network rate at r = 0.97 (Spearman 0.98). The short
+PC upper tail (no PCs above about 10 Hz) is unchanged, and the largest synchronous interneuron
+peaks are still somewhat smaller than in the GLIF network.
 
 Runtime on 4 CPUs: about 0.85 s per simulated millisecond (43 min per 3 s), almost all of it the
 batched CNN-LSTM front end. NEST and spike routing add 0.03 s per ms.
@@ -179,8 +214,10 @@ H=/path/to/hybrid; STD=/path/to/Standard
 python -m circuit.hybrid prepare --config $V1/config.json --extract-dir $X --v1ext-spikes $R/streams/v1ext_spikes.h5 --out $H/prep
 python -m circuit.hybrid run --prep $H/prep --standard-dir $STD --gain 1.0 --tstop 300 --out $H/check \
     --replay-pc $R/streams/l23_reference_spikes.h5 --probe 20      # loop check, no ANN
-python -m circuit.hybrid tune --prep $H/prep --standard-dir $STD --reference $R/streams/l23_reference_spikes.h5 --out $H/tune
-python -m circuit.hybrid run --prep $H/prep --standard-dir $STD --gain 0.82 --tstop 3000 --out $H/final
+python -m circuit.hybrid tune --prep $H/prep --standard-dir $STD --reference $R/streams/l23_reference_spikes.h5 \
+    --pc-to-in-gain 1.0 --gains 0.86 --tstop 3000 --tol 0.03 --out $H/tune
+python -m circuit.hybrid run --prep $H/prep --standard-dir $STD --gain 0.848 --pc-to-in-gain 1.0 --tstop 3000 --out $H/final
 python -m circuit.hybrid report --prep $H/prep --extract-dir $X --reference $R/streams/l23_reference_spikes.h5 \
-    --hybrid-spikes $H/final/spikes.h5 --tune-json $H/tune/tune.json --out results/hybrid_ann_pcs
+    --hybrid-spikes $H/final/spikes.h5 --tune-json $H/tune/tune.json --out results/interneuron_rate_fix \
+    --previous-spikes $H/pr9_gain0.82/spikes.h5
 ```
