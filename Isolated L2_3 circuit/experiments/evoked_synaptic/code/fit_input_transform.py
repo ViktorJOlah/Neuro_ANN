@@ -53,19 +53,41 @@ OUT_SCALE = 100.0             # D output in units of 100 pA
 
 
 # ------------------------------------------------------------------ models
-def build_D(kind):
+def build_D(kind, width=32):
     inp = keras.Input((None, 2))
     if kind == "linear":
         y = keras.layers.Conv1D(1, 256, padding="causal", use_bias=True, kernel_initializer="zeros")(inp)
     elif kind in ("tcn64", "tcn256"):
         dil = [1, 2, 4, 8, 16, 32] + ([64, 128] if kind == "tcn256" else [])
-        x = keras.layers.Conv1D(32, 1)(inp)
+        x = keras.layers.Conv1D(width, 1)(inp)
         for d in dil:
-            r = keras.layers.Conv1D(32, 2, dilation_rate=d, padding="causal", activation="relu")(x)
-            r = keras.layers.Conv1D(32, 1)(r)
+            r = keras.layers.Conv1D(width, 2, dilation_rate=d, padding="causal", activation="relu")(x)
+            r = keras.layers.Conv1D(width, 1)(r)
             x = keras.layers.Add()([x, r])
         x = keras.layers.Activation("relu")(x)
         y = keras.layers.Conv1D(1, 1, kernel_initializer="zeros")(x)
+    elif kind in ("tcn64k", "tcn256k"):
+        # TCN that sets each pulse's gain from the stimulus history (depression, summation), plus a learnable
+        # per-pathway 64 ms current kernel started fast (2 ms latency, 2 ms decay). The kernel path gives D a
+        # direct way to make brief, EPSC-shaped currents, which the plain TCN learns only slowly (late, broad peaks).
+        dil = [1, 2, 4, 8, 16, 32] + ([64, 128] if kind == "tcn256k" else [])
+        x = keras.layers.Conv1D(width, 1)(inp)
+        for d in dil:
+            r = keras.layers.Conv1D(width, 2, dilation_rate=d, padding="causal", activation="relu")(x)
+            r = keras.layers.Conv1D(width, 1)(r)
+            x = keras.layers.Add()([x, r])
+        x = keras.layers.Activation("relu")(x)
+        gain = keras.layers.Conv1D(2, 1, kernel_initializer="zeros")(x)            # log-gain per pathway
+        drive = keras.layers.Lambda(lambda z: z[0] * tf.exp(z[1]))([inp, gain])   # pulse intensity x gain
+        t = np.arange(64.0)
+        k0 = np.where(t >= 2, np.exp(-(t - 2) / 2.0) - np.exp(-(t - 2) / 0.5), 0.0)
+        k0 = (k0 / k0.max())[::-1]                                                  # conv kernel is time-reversed
+        kern = np.stack([k0, k0], 1)[:, :, None].astype(np.float32)                # (64, 2, 1)
+        fast = keras.layers.DepthwiseConv1D(64, use_bias=False,
+                                            depthwise_initializer=keras.initializers.Constant(kern))(
+            keras.layers.ZeroPadding1D((63, 0))(drive))
+        fast = keras.layers.Lambda(lambda z: tf.reduce_sum(z, -1, keepdims=True))(fast)
+        y = keras.layers.Add()([fast, keras.layers.Conv1D(1, 1, kernel_initializer="zeros")(x)])
     elif kind == "gru":
         x = keras.layers.GRU(32, return_sequences=True)(inp)
         y = keras.layers.Conv1D(1, 1, kernel_initializer="zeros")(x)
@@ -194,6 +216,7 @@ def simulate(S, D, stim, dc, V, seed_ms=EVAL_SEED, chunk=10):
 
 # ------------------------------------------------------------------ main
 def main():
+    global OUT_SCALE
     ap = argparse.ArgumentParser()
     ap.add_argument("--cell", required=True, help="evoked dataset tag (cell id)")
     ap.add_argument("--somatic", default=None, help="cell whose fitted somatic model S to use (default: --cell)")
@@ -204,6 +227,14 @@ def main():
     ap.add_argument("--lr", type=float, default=5e-4)
     ap.add_argument("--no-grappler", action="store_true")
     ap.add_argument("--sub-frac", type=float, default=0.0, help="share of each batch drawn from spike-free segments (small EPSPs otherwise drown in spike-timing error)")
+    ap.add_argument("--event-weight", type=float, default=0.0, help="extra loss weight on the --event-win ms after each pulse (fast EPSP peaks are a small share of the time points)")
+    ap.add_argument("--event-win", type=int, default=25)
+    ap.add_argument("--deriv-weight", type=float, default=0.0, help="extra loss on dVm/dt (mV/ms)^2; emphasises fast rises")
+    ap.add_argument("--one-step-iters", type=int, default=0, help="first N iterations use the one-step (teacher-forced) loss: S's Vm is reset to the recording every ms, so the error at t reflects D's current at t directly instead of through the membrane low-pass (fast current features learn much faster)")
+    ap.add_argument("--one-step-gain", type=float, default=100.0, help="scales the one-step loss (its errors are ~10x smaller)")
+    ap.add_argument("--width", type=int, default=32, help="TCN channels")
+    ap.add_argument("--out-scale", type=float, default=OUT_SCALE, help="D output unit (pA)")
+    ap.add_argument("--init", default="", help="start D from these weights (results folder)")
     ap.add_argument("--tag", default="", help="suffix for the results folder")
     ap.add_argument("--threads", type=int, default=2)
     ap.add_argument("--out", default=os.path.join(HERE, "..", "results" + SET))
@@ -222,19 +253,29 @@ def main():
         train = train[:max(1, int(round(args.minutes * 60000 / T)))]
     log(f"train {len(train)} traces ({len(train)*T/60000:.1f} min), test {len(test)}")
     S = load_somatic(args.somatic or args.cell, args.somatic_budget)
-    D = build_D(args.model)
+    OUT_SCALE = args.out_scale
+    D = build_D(args.model, args.width)
+    if args.init:
+        D.load_weights(os.path.join(args.init, "D.weights.h5"))
     stim, dc, V = data["stim"].astype(np.float32), data["dc"].astype(np.float32), data["V"].astype(np.float32)
     opt = keras.optimizers.Adam(keras.optimizers.schedules.CosineDecay(args.lr, args.iters, alpha=0.05))
     rng = np.random.default_rng(1)
 
     @tf.function(reduce_retracing=True)
-    def step(s, d, Vg, Sm, M):
+    def step(s, d, Vg, Sm, M, W, one_step=False):
         with tf.GradientTape() as tape:
             I = OUT_SCALE * D(s, training=True)[..., 0] + d[:, None]
             x = front_current(S, I[:, CTX - 63:])
-            vm, _ = type(S).run.python_function(S, x, Vg, Sm, M, tf.constant(SEED_MS), False)   # inlined: a nested tf.function hits AlreadyExists on the 2nd step
+            vm, _ = type(S).run.python_function(S, x, Vg, Sm, M, tf.constant(SEED_MS), one_step)   # inlined: a nested tf.function hits AlreadyExists on the 2nd step
             e = tf.minimum(vm[:, SEED_MS:], TRAIN_CLIP) - tf.minimum(Vg[:, SEED_MS:], TRAIN_CLIP)
-            loss = tf.reduce_mean(tf.square(e))
+            if one_step:     # leave out recorded spikes and the ms after them (reset dynamics, not D's job)
+                keep = 1.0 - tf.minimum(M[:, SEED_MS:] + tf.concat([M[:, SEED_MS - 1:-1]], 1), 1.0)
+                e = e * keep * tf.sqrt(args.one_step_gain)
+            loss = tf.reduce_mean(W[:, SEED_MS:] * tf.square(e)) / tf.reduce_mean(W[:, SEED_MS:])
+            if args.deriv_weight:
+                vc, gc = tf.minimum(vm[:, SEED_MS:], TRAIN_CLIP), tf.minimum(Vg[:, SEED_MS:], TRAIN_CLIP)
+                de = (vc[:, 1:] - vc[:, :-1]) - (gc[:, 1:] - gc[:, :-1])
+                loss += args.deriv_weight * tf.reduce_mean(tf.square(de))
         g = tape.gradient(loss, D.trainable_variables)
         g = [tf.where(tf.math.is_finite(x), x, tf.zeros_like(x)) for x in g]
         g, _ = tf.clip_by_global_norm(g, 1.0)
@@ -253,7 +294,14 @@ def main():
         s = np.stack([stim[i, a - CTX:a + SEG] for i, a in zip(tr, st)])
         Vg = np.stack([V[i, a:a + SEG] for i, a in zip(tr, st)])
         Sm, M = sm.gt_masks(Vg)
-        loss = float(step(tf.constant(s), tf.constant(dc[tr]), tf.constant(Vg), tf.constant(Sm), tf.constant(M)))
+        W = np.ones_like(Vg)
+        if args.event_weight:
+            pul = (s[:, CTX - args.event_win:, :].sum(-1) > 0).astype(np.float32)      # pulses up to event_win ms before the segment
+            box = np.ones(args.event_win, np.float32)
+            hit = np.stack([np.convolve(p, box)[args.event_win:args.event_win + SEG] for p in pul]) > 0   # pulse in (t-win, t]
+            W += args.event_weight * hit
+        loss = float(step(tf.constant(s), tf.constant(dc[tr]), tf.constant(Vg), tf.constant(Sm), tf.constant(M), tf.constant(W),
+                          it < args.one_step_iters))
         hist.append(loss)
         if it % 25 == 0 or it == args.iters - 1:
             log(f"it {it} loss {loss:.3f} (mean last 25: {np.mean(hist[-25:]):.3f})")
@@ -269,11 +317,14 @@ def main():
         Vr = np.stack([data["V_repeat"][ctrl.index(test[k])] for k in rep])
         res["repeat_ceiling"] = score(Vr, V[test][rep], stim[test][rep])
         res["model_on_repeat_subset"] = score(vm[rep], V[test][rep], stim[test][rep])
+    import peak_metrics as PM
+    res["peaks"] = PM.summarize(PM.events(V, stim, vm, test))
+    log(json.dumps(res["peaks"]))
     log(json.dumps({k: (round(v, 3) if isinstance(v, float) else v) for k, v in res.items() if not isinstance(v, dict)}))
     D.save_weights(os.path.join(out, "D.weights.h5"))
     np.savez_compressed(os.path.join(out, "test_predictions.npz"), vm=vm.astype(np.float32), test=test)
     json.dump(dict(cell=args.cell, somatic=args.somatic or args.cell, somatic_budget=args.somatic_budget,
-                   model=args.model, train_traces=[int(i) for i in train], train_minutes=len(train) * T / 60000,
+                   model=args.model, args=vars(args), train_traces=[int(i) for i in train], train_minutes=len(train) * T / 60000,
                    test_traces=[int(i) for i in test], eval=res, loss_history=hist, iters=args.iters,
                    n_params=int(sum(np.prod(v.shape) for v in D.trainable_variables)), wall_s=time.time() - t0),
               open(os.path.join(out, "metrics.json"), "w"), indent=1)
