@@ -1,0 +1,76 @@
+{
+ "specimen": {
+  "cell_prep_sample_id": null,
+  "cell_reporter_id": 491913822,
+  "cortex_layer_id": null,
+  "data": null,
+  "donor_id": 480773229,
+  "ephys_result_id": 484509438,
+  "external_specimen_name": null,
+  "failed_facet": 734881840,
+  "hemisphere": "left",
+  "id": 484509440,
+  "is_cell_specimen": true,
+  "is_ish": false,
+  "name": "Cux2-CreERT2;Ai14-198019.03.01.01",
+  "parent_id": 484505354,
+  "parent_x_coord": 0,
+  "parent_y_coord": 0,
+  "parent_z_coord": 1,
+  "pinned_radius": null,
+  "rna_integrity_number": null,
+  "specimen_id_path": "/480773231/484501939/484505354/484509440/",
+  "sphinx_id": 640367,
+  "structure_id": 821,
+  "tissue_ph": null,
+  "treatment_id": 680087734,
+  "weight": 9000,
+  "structure": {
+   "acronym": "VISp2/3",
+   "atlas_id": 951,
+   "color_hex_triplet": "08858C",
+   "depth": 8,
+   "failed": false,
+   "failed_facet": 734881840,
+   "graph_id": 1,
+   "graph_order": 187,
+   "hemisphere_id": 3,
+   "id": 821,
+   "name": "Primary visual area, layer 2/3",
+   "neuro_name_structure_id": null,
+   "neuro_name_structure_id_path": null,
+   "ontology_id": 1,
+   "parent_structure_id": 385,
+   "safe_name": "Primary visual area layer 2/3",
+   "sphinx_id": 188,
+   "st_level": 11,
+   "structure_id_path": "/997/8/567/688/695/315/669/385/821/",
+   "structure_name_facet": 2317291160,
+   "weight": 8690
+  }
+ },
+ "models": [
+  {
+   "id": 485590968,
+   "name": "1 Leaky Integrate and Fire (LIF)",
+   "runs": [
+    {
+     "id": 500929743,
+     "ev": 0.723915382655296,
+     "rms": null
+    }
+   ]
+  },
+  {
+   "id": 485590972,
+   "name": "3 LIF + Afterspike Currents (LIF-ASC)",
+   "runs": [
+    {
+     "id": 500941206,
+     "ev": 0.726284492656119,
+     "rms": null
+    }
+   ]
+  }
+ ]
+}
