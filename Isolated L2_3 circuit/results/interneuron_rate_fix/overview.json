@@ -1,0 +1,20 @@
+{
+  "GLIF network": {
+    "mean_rate_E_hz": 1.5816972010632038,
+    "silent_fraction_E": 0.295074656153558,
+    "top10_share_E": 0.327817452619517,
+    "median_rate_E_hz": 1.2
+  },
+  "ANN PCs, PR 9 (gain 0.82)": {
+    "mean_rate_E_hz": 1.4989742583441854,
+    "silent_fraction_E": 0.29486058832973583,
+    "top10_share_E": 0.3166753939163136,
+    "median_rate_E_hz": 1.2
+  },
+  "ANN PCs (gain 0.85, PC\u2192IN 1.00)": {
+    "mean_rate_E_hz": 1.5755463189253793,
+    "silent_fraction_E": 0.27810978111565016,
+    "top10_share_E": 0.30387543534676026,
+    "median_rate_E_hz": 1.2
+  }
+}
