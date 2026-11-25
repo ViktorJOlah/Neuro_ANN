@@ -80,6 +80,9 @@ def main():
             rate = float(g["starting_time"].attrs["rate"])
             I = g["data"][()] * float(g["data"].attrs.get("conversion", 1.0)) * 1e12          # pA
             V = r["data"][()] * float(r["data"].attrs.get("conversion", 1.0)) * 1e3           # mV
+            if np.median(np.abs(V)) < 1.0:     # older Allen NWBs store SI values (A, V) with a wrong conversion attr
+                V = r["data"][()] * 1e3
+                I = g["data"][()] * 1e12
             valid = np.flatnonzero(V != 0)
             if len(valid) < rate:
                 continue

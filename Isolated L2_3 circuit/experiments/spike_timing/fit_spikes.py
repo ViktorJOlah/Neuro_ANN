@@ -63,7 +63,10 @@ def main():
     train = [s for s in sweeps if s["split"] == "train"]
     test = [s for s in sweeps if s["split"] == "test"]
     n1 = [s for s in train if s["stimulus"] == "Noise 1"]
-    val = n1[-1]
+    if n1:
+        val = n1[-1]
+    else:                                # no Noise 1 (some older Allen cells): hold out the longest spiking sweep
+        val = max([s for s in train if s["n_spikes"] > 0], key=lambda s: len(s["I"]))
     fit_pool = [s for s in train if s is not val]
 
     Ie, V = ft.draw(fit_pool, np.random.default_rng(2), N, L, 0.75)

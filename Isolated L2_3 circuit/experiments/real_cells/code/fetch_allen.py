@@ -47,6 +47,7 @@ def download(url, out):
 
 def fetch(cell, nwb_dir, nandi):
     o = os.path.join(DATA, cell)
+    os.makedirs(o, exist_ok=True)
     sp = query(f"model::Specimen,rma::criteria,[id$eq{cell}],rma::include,structure,"
                "ephys_result(well_known_files(well_known_file_type)),"
                "neuron_reconstructions(well_known_files(well_known_file_type))")[0]

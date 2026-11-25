@@ -1,0 +1,88 @@
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795581288.266699    3325 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795581288.304154    3325 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX512F AVX512_VNNI AVX512_BF16 AVX512_FP16 AVX_VNNI AMX_TILE AMX_INT8 AMX_BF16 FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795581289.453509    3325 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+[486262299 standard     0s] train 33 sweeps (2.01 min), test 18 sweeps
+[486262299 standard     0s] input rescaling k = 0.171 (rheobase 490 pA)
+W0000 00:00:1795581297.066448    3325 type_inference.cc:340] Type inference failed. This indicates an invalid graph that escaped type checking. Error message: INVALID_ARGUMENT: expected compatible input types, but input 1:
+goo.gle/debugproto    
+type_id: TFT_OPTIONAL
+args {
+  type_id: TFT_PRODUCT
+  args {
+    type_id: TFT_TENSOR
+    args {
+      type_id: TFT_FLOAT
+    }
+  }
+}
+ is neither a subtype nor a supertype of the combined inputs preceding it:
+goo.gle/debugproto    
+type_id: TFT_OPTIONAL
+args {
+  type_id: TFT_PRODUCT
+  args {
+    type_id: TFT_TENSOR
+    args {
+      type_id: TFT_INT32
+    }
+  }
+}
+
+	for Tuple type infernce function 0
+	while inferring type of node 'StatefulPartitionedCall/while_517/body/_1728/while/cond_1/output/_10266'
+[486262299 standard    19s] stage 1 it   0  train Vm RMSE 3.843 mV
+[486262299 standard   136s] stage 1 it  20  train Vm RMSE 1.975 mV
+[486262299 standard   254s] stage 1 it  40  train Vm RMSE 1.415 mV
+[486262299 standard   368s] stage 1 it  60  train Vm RMSE 1.307 mV
+[486262299 standard   482s] stage 1 it  80  train Vm RMSE 1.429 mV
+[486262299 standard   597s] stage 1 it 100  train Vm RMSE 1.596 mV
+[486262299 standard   713s] stage 1 it 120  train Vm RMSE 1.375 mV
+[486262299 standard   830s] stage 1 it 140  train Vm RMSE 1.276 mV
+[486262299 standard   948s] stage 1 it 160  train Vm RMSE 0.902 mV
+[486262299 standard  1070s] stage 1 it 180  train Vm RMSE 1.387 mV
+[486262299 standard  1194s] stage 1 it 200  train Vm RMSE 1.447 mV
+[486262299 standard  1313s] stage 1 it 220  train Vm RMSE 1.357 mV
+[486262299 standard  1427s] stage 1 it 240  train Vm RMSE 1.168 mV
+[486262299 standard  1476s] stage 1 it 249  train Vm RMSE 1.011 mV
+[486262299 standard  1486s] stage 2 start loss 2.1
+[486262299 standard  1543s] stage 2 loss 1.265 {'V_th': -31.482, 'c_mV': -44.767, 'd': -0.125, 'b_na': -0.573, 'ln_s_sk': 1.804}
+[486262299 standard  1549s] test sweep 5 (Ramp, 800 pA): spikes 10 -> 0
+[486262299 standard  1551s] test sweep 35 (Long Square, -90 pA): spikes 0 -> 0
+[486262299 standard  1552s] test sweep 41 (Long Square, 50 pA): spikes 0 -> 0
+[486262299 standard  1553s] test sweep 44 (Long Square, 110 pA): spikes 0 -> 0
+[486262299 standard  1553s] test sweep 47 (Long Square, 170 pA): spikes 0 -> 0
+[486262299 standard  1554s] test sweep 50 (Long Square, 230 pA): spikes 0 -> 0
+[486262299 standard  1555s] test sweep 53 (Long Square, 290 pA): spikes 0 -> 0
+[486262299 standard  1556s] test sweep 56 (Long Square, 350 pA): spikes 0 -> 0
+[486262299 standard  1557s] test sweep 59 (Long Square, 410 pA): spikes 0 -> 0
+[486262299 standard  1558s] test sweep 62 (Long Square, 470 pA): spikes 0 -> 2
+[486262299 standard  1559s] test sweep 67 (Long Square, 570 pA): spikes 1 -> 6
+[486262299 standard  1560s] test sweep 70 (Long Square, 630 pA): spikes 7 -> 7
+[486262299 standard  1560s] test sweep 71 (Long Square, 520 pA): spikes 1 -> 5
+[486262299 standard  1561s] test sweep 74 (Long Square, 520 pA): spikes 1 -> 5
+[486262299 standard  1569s] test sweep 76 (Noise 2, 1226 pA): spikes 56 -> 42
+[486262299 standard  1576s] test sweep 78 (Noise 2, 1226 pA): spikes 58 -> 42
+[486262299 standard  1583s] test sweep 80 (Noise 2, 1226 pA): spikes 59 -> 42
+[486262299 standard  1590s] test sweep 82 (Noise 2, 1226 pA): spikes 59 -> 42
+[486262299 standard  1590s] done
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795582882.116388    3568 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795582882.152078    3568 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX512F AVX512_VNNI AVX512_BF16 AVX512_FP16 AVX_VNNI AMX_TILE AMX_INT8 AMX_BF16 FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795582883.207632    3568 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+[486262299 standard_branches     6s] start: forced RMSE 5.936 mV, model spikes/segment 1.64
+[486262299 standard_branches    58s] end: forced RMSE 2.431 mV, model spikes/segment 4.67 {'ln_s_sk': -2.762, 'ln_s_ca': 0.914, 'ln_s_kp': -0.786, 'd': 0.029, 'I0': 34.163}
+[486262299 standard_branches   104s] done; Noise 2 Γ 0.295 (spike parameters not refit yet)
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795582989.505181    3606 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795582989.543023    3606 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX512F AVX512_VNNI AVX512_BF16 AVX512_FP16 AVX_VNNI AMX_TILE AMX_INT8 AMX_BF16 FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795582990.538076    3606 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+[486262299 standard_timing    21s] start: train Γ 0.180; val Γ 0.268 (62 -> 198 spikes)
+[486262299 standard_timing   121s] end: train Γ 0.240 count err 0.528; val Γ 0.267 (62 -> 133 spikes) {'V_th': -28.996, 'c_mV': -50.529, 'd': 0.211, 'b_na': -0.158, 'ln_s_na': -0.637}
+[486262299 standard_timing   169s] done; Noise 2 Γ 0.310

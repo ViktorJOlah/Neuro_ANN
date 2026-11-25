@@ -1,0 +1,109 @@
+{
+ "specimen": {
+  "cell_prep_sample_id": null,
+  "cell_reporter_id": 491913822,
+  "cortex_layer_id": null,
+  "data": null,
+  "donor_id": 475849752,
+  "ephys_result_id": 476178903,
+  "external_specimen_name": null,
+  "failed_facet": 734881840,
+  "hemisphere": "left",
+  "id": 476178907,
+  "is_cell_specimen": true,
+  "is_ish": false,
+  "name": "Scnn1a-Tg3-Cre;Ai14-187850.04.01.01",
+  "parent_id": 476127498,
+  "parent_x_coord": 0,
+  "parent_y_coord": 0,
+  "parent_z_coord": 1,
+  "pinned_radius": null,
+  "rna_integrity_number": null,
+  "specimen_id_path": "/475849754/476126726/476127498/476178907/",
+  "sphinx_id": 639728,
+  "structure_id": 821,
+  "tissue_ph": null,
+  "treatment_id": 680087734,
+  "weight": 9000,
+  "structure": {
+   "acronym": "VISp2/3",
+   "atlas_id": 951,
+   "color_hex_triplet": "08858C",
+   "depth": 8,
+   "failed": false,
+   "failed_facet": 734881840,
+   "graph_id": 1,
+   "graph_order": 187,
+   "hemisphere_id": 3,
+   "id": 821,
+   "name": "Primary visual area, layer 2/3",
+   "neuro_name_structure_id": null,
+   "neuro_name_structure_id_path": null,
+   "ontology_id": 1,
+   "parent_structure_id": 385,
+   "safe_name": "Primary visual area layer 2/3",
+   "sphinx_id": 188,
+   "st_level": 11,
+   "structure_id_path": "/997/8/567/688/695/315/669/385/821/",
+   "structure_name_facet": 2317291160,
+   "weight": 8690
+  }
+ },
+ "models": [
+  {
+   "id": 566312142,
+   "name": "3 LIF + Afterspike Currents (LIF-ASC)",
+   "runs": [
+    {
+     "id": 566328520,
+     "ev": 0.577618382969348,
+     "rms": null
+    }
+   ]
+  },
+  {
+   "id": 566312135,
+   "name": "1 Leaky Integrate and Fire (LIF)",
+   "runs": [
+    {
+     "id": 566328553,
+     "ev": 0.657871839523932,
+     "rms": null
+    }
+   ]
+  },
+  {
+   "id": 566312144,
+   "name": "4 LIF-R + Afterspike Currents (LIF-R-ASC)",
+   "runs": [
+    {
+     "id": 566328803,
+     "ev": 0.64722507207765,
+     "rms": null
+    }
+   ]
+  },
+  {
+   "id": 566312138,
+   "name": "2 LIF + Reset Rules (LIF-R)",
+   "runs": [
+    {
+     "id": 566328678,
+     "ev": 0.677748503392804,
+     "rms": null
+    }
+   ]
+  },
+  {
+   "id": 566312147,
+   "name": "5 LIF-R-ASC + Threshold Adaptation (LIF-R-ASC-A)",
+   "runs": [
+    {
+     "id": 566329181,
+     "ev": 0.64487018083728,
+     "rms": null
+    }
+   ]
+  }
+ ]
+}

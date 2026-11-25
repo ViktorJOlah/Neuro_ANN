@@ -1,0 +1,16 @@
+323452245 {'train_square': (23, 0.77, 9), 'train_noise': (3, 1.0, 151), 'train_ramp': (2, 1.1, 0), 'test_square': (12, 0.4, 5), 'test_noise': (3, 1.0, 160), 'test_ramp': (1, 0.55, 0)}
+323788096 {'train_square': (11, 0.37, 169), 'train_noise': (3, 1.0, 173), 'train_ramp': (2, 0.2, 146), 'test_square': (5, 0.17, 60), 'test_noise': (2, 0.67, 121), 'test_ramp': (1, 0.09, 58)}
+324532703 {'train_square': (26, 1.02, 73), 'train_noise': (2, 0.67, 158), 'train_ramp': (1, 0.09, 11), 'test_square': (9, 0.3, 19), 'test_noise': (1, 0.33, 87), 'test_ramp': (1, 0.23, 29)}
+397345294 {'train_square': (28, 1.12, 212), 'train_noise': (2, 0.67, 88), 'train_ramp': (2, 0.27, 51), 'test_square': (9, 0.3, 44), 'test_noise': (1, 0.33, 43), 'test_ramp': (1, 0.18, 33)}
+473611755 {'train_square': (21, 0.7, 13), 'train_noise': (0, 0.0, 0), 'train_ramp': (2, 0.32, 39), 'test_square': (11, 0.37, 8), 'test_noise': (0, 0.0, 0), 'test_ramp': (1, 0.19, 38)}
+477129850 {'train_square': (25, 0.97, 44), 'train_noise': (1, 0.33, 107), 'train_ramp': (1, 0.09, 27), 'test_square': (9, 0.3, 10), 'test_noise': (3, 1.0, 305), 'test_ramp': (1, 0.14, 63)}
+480798873 {'train_square': (28, 1.12, 187), 'train_noise': (2, 0.67, 67), 'train_ramp': (2, 0.19, 46), 'test_square': (9, 0.3, 33), 'test_noise': (3, 1.0, 100), 'test_ramp': (1, 0.09, 15)}
+486510127 {'train_square': (28, 1.1, 77), 'train_noise': (3, 1.0, 195), 'train_ramp': (1, 0.08, 6), 'test_square': (9, 0.3, 45), 'test_noise': (3, 1.0, 181), 'test_ramp': (1, 0.08, 7)}
+489751692 {'train_square': (15, 0.5, 80), 'train_noise': (2, 0.67, 125), 'train_ramp': (2, 0.11, 30), 'test_square': (7, 0.23, 29), 'test_noise': (4, 1.33, 254), 'test_ramp': (1, 0.06, 14)}
+490376252 {'train_square': (26, 1.07, 671), 'train_noise': (4, 1.33, 412), 'train_ramp': (2, 0.23, 98), 'test_square': (7, 0.23, 48), 'test_noise': (4, 1.33, 435), 'test_ramp': (1, 0.11, 47)}
+502100978 {'train_square': (20, 0.8, 272), 'train_noise': (2, 0.67, 82), 'train_ramp': (2, 0.16, 29), 'test_square': (6, 0.2, 45), 'test_noise': (1, 0.33, 44), 'test_ramp': (1, 0.08, 13)}
+505500191 {'train_square': (22, 0.92, 276), 'train_noise': (1, 0.33, 101), 'train_ramp': (2, 0.85, 300), 'test_square': (5, 0.17, 24), 'test_noise': (1, 0.33, 93), 'test_ramp': (1, 0.55, 224)}
+513579447 {'train_square': (11, 0.37, 152), 'train_noise': (0, 0.0, 0), 'train_ramp': (1, 0.11, 117), 'test_square': (5, 0.17, 57), 'test_noise': (0, 0.0, 0), 'test_ramp': (1, 0.07, 34)}
+513591094 {'train_square': (25, 0.83, 80), 'train_noise': (3, 1.0, 132), 'train_ramp': (2, 0.43, 19), 'test_square': (12, 0.4, 26), 'test_noise': (3, 1.0, 109), 'test_ramp': (1, 0.21, 8)}
+517319635 {'train_square': (27, 0.9, 57), 'train_noise': (4, 1.33, 42), 'train_ramp': (2, 0.19, 18), 'test_square': (13, 0.43, 25), 'test_noise': (4, 1.33, 31), 'test_ramp': (1, 0.1, 11)}
+517974394 {'train_square': (24, 0.95, 125), 'train_noise': (4, 1.33, 96), 'train_ramp': (2, 0.2, 26), 'test_square': (8, 0.27, 40), 'test_noise': (3, 1.0, 73), 'test_ramp': (1, 0.1, 12)}

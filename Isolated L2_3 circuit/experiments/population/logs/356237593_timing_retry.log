@@ -1,0 +1,9 @@
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795570747.288915    1114 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795570747.329896    1114 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX512F AVX512_VNNI AVX512_BF16 AVX512_FP16 AVX_VNNI AMX_TILE AMX_INT8 AMX_BF16 FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795570748.504314    1114 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+[356237593 standard_timing    19s] start: train Γ 0.061; val Γ -0.004 (7 -> 1 spikes)
+[356237593 standard_timing   133s] end: train Γ 0.142 count err 0.242; val Γ 0.000 (7 -> 0 spikes) {'V_th': -24.843, 'c_mV': -40.814, 'd': 0.11, 'b_na': -0.736, 'ln_s_na': -0.426}
+[356237593 standard_timing   144s] done; Noise 2 Γ nan
