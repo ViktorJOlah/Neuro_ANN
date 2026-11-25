@@ -1,0 +1,13 @@
+{
+  "note": "The 8 fitted Standard models with a unique Allen specimen. Real-recording fits (PR 11) are used where a specimen has one; 486262299 and 502359001 only have fits to their simulated all-active model (PR 10); 487661754 is the Standard itself. 485468180 is left out (its fit fails). Depths: Allen Cell Types csl__normalized_depth (0 = pia, 1 = white matter).",
+  "models": [
+    {"name": "487661754", "dir": "../../Standard", "source": "Standard (simulated perisomatic model)", "normalized_depth": 0.1732, "allen_rheobase_pa": 70},
+    {"name": "513531471", "dir": "../real_cells/results/513531471/standard", "source": "real recording", "normalized_depth": 0.1133, "allen_rheobase_pa": 150},
+    {"name": "521409057", "dir": "../real_cells/results/521409057/standard", "source": "real recording", "normalized_depth": 0.1379, "allen_rheobase_pa": 210},
+    {"name": "486262299", "dir": "../data_budget/results/486262299/full", "source": "simulated all-active", "normalized_depth": 0.2107, "allen_rheobase_pa": 490},
+    {"name": "502359001", "dir": "../data_budget/results/502359001/full", "source": "simulated all-active", "normalized_depth": 0.2586, "allen_rheobase_pa": 150},
+    {"name": "318808427", "dir": "../real_cells/results/318808427/standard", "source": "real recording", "normalized_depth": 0.3361, "allen_rheobase_pa": 130},
+    {"name": "382982932", "dir": "../real_cells/results/382982932/standard", "source": "real recording", "normalized_depth": 0.3596, "allen_rheobase_pa": 130},
+    {"name": "502269786", "dir": "../real_cells/results/502269786/standard", "source": "real recording", "normalized_depth": 0.3667, "allen_rheobase_pa": 230}
+  ]
+}

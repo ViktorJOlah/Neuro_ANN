@@ -1,0 +1,37 @@
+{
+ "models": [
+  {
+   "name": "487661754",
+   "dir": "../../../Standard"
+  },
+  {
+   "name": "513531471",
+   "dir": "../../real_cells/results/513531471/standard"
+  },
+  {
+   "name": "521409057",
+   "dir": "../../real_cells/results/521409057/standard"
+  },
+  {
+   "name": "486262299",
+   "dir": "../../data_budget/results/486262299/full"
+  },
+  {
+   "name": "502359001",
+   "dir": "../../data_budget/results/502359001/full"
+  },
+  {
+   "name": "318808427",
+   "dir": "../../real_cells/results/318808427/standard"
+  },
+  {
+   "name": "382982932",
+   "dir": "../../real_cells/results/382982932/standard"
+  },
+  {
+   "name": "502269786",
+   "dir": "../../real_cells/results/502269786/standard"
+  }
+ ],
+ "assignment": "assign_depth.npy"
+}

@@ -378,11 +378,13 @@ class NestInterneurons:
 
 
 def run(prep, standard_dir, gain, tstop, out, threads=1, log_every=100, replay_pc=None, probe=0,
-        pc_to_in_gain=None):
+        pc_to_in_gain=None, population=None):
     """Run the hybrid circuit. ``gain`` multiplies every synapse onto a PC; ``pc_to_in_gain`` every
     PC -> interneuron synapse (float or {class: factor}; None = the same as ``gain``, the PR 9 rule). ``replay_pc``: an l23 spikes file whose PC spikes replace the ANN (a
     check of the loop: with the GLIF network's own PC spikes, the interneurons must reproduce it).
-    ``probe``: record the synaptic current of the first ``probe`` PCs at 1 ms."""
+    ``probe``: record the synaptic current of the first ``probe`` PCs at 1 ms.
+    ``population``: a population JSON (``population.py``) giving each PC its own fitted model and,
+    optionally, its own input scale; without it every PC is the Standard."""
     sys.path.insert(0, os.path.abspath(standard_dir))
     import standard_model as sm
     from .pc_layer import BatchedStandard
@@ -407,7 +409,14 @@ def run(prep, standard_dir, gain, tstop, out, threads=1, log_every=100, replay_p
         m = l23_to_pc[rid] >= 0
         rid, rts = l23_to_pc[rid[m]], rts[m]
         o = np.argsort(rts, kind="stable"); rid, rts = rid[o], rts[o]
-    else:
+    in_scale = None
+    if population and not replay_pc:
+        from .population import MixedStandard, read_population
+        models, assign, in_scale = read_population(population)
+        assert len(assign) == n_pc, "population assignment must cover every PC of the prep"
+        I0 = gain * np.asarray(I_ext[0], np.float32) * (1.0 if in_scale is None else in_scale)
+        cells = MixedStandard(models, assign, standard_dir, I_first=I0)
+    elif not replay_pc:
         cells = BatchedStandard(sm.load(standard_dir), n_pc, I_first=gain * np.asarray(I_ext[0], np.float32))
     probe_I = np.zeros((T, probe), np.float32)
     pc_spk, in_spk = [], []
@@ -416,6 +425,8 @@ def run(prep, standard_dir, gain, tstop, out, threads=1, log_every=100, replay_p
     for k in range(T):
         t0 = time.time()
         I_k = gain * (np.asarray(I_ext[k], np.float64) + bank.advance_ms())
+        if in_scale is not None:
+            I_k = I_k * in_scale
         I_mean[k] = I_k.mean()
         probe_I[k] = I_k[:probe]
         if replay_pc:
@@ -455,7 +466,8 @@ def run(prep, standard_dir, gain, tstop, out, threads=1, log_every=100, replay_p
     np.save(os.path.join(out, "pc_mean_input_current.npy"), I_mean)
     if probe:
         np.save(os.path.join(out, "probe_current.npy"), probe_I)
-    info = {"gain": gain, "pc_to_in_gain": pc_to_in_gain, "tstop": tstop, "wall_s": time.time() - t_start, "timers_s": timers,
+    info = {"gain": gain, "pc_to_in_gain": pc_to_in_gain, "tstop": tstop,
+            "population": os.path.abspath(population) if population else None, "wall_s": time.time() - t_start, "timers_s": timers,
             "pc_rate_hz": len(P) / n_pc / (T / 1000), "interneuron_rate_hz": len(Q) / n_in / (T / 1000),
             "pc_spikes": int(len(P)), "interneuron_spikes": int(len(Q))}
     with open(os.path.join(out, "run.json"), "w") as f:
@@ -484,14 +496,15 @@ def format_gain(g):
     return ",".join(f"{k.replace('L2/3 ', '')}={v}" for k, v in g.items())
 
 
-def _run_subprocess(prep, standard_dir, gain, tstop, out, threads, pc_to_in_gain=None):
+def _run_subprocess(prep, standard_dir, gain, tstop, out, threads, pc_to_in_gain=None, population=None):
     """One run per process: NEST can only be built once per process."""
     import subprocess
     here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     env = dict(os.environ); env["PYTHONPATH"] = here + os.pathsep + env.get("PYTHONPATH", "")
     subprocess.run([sys.executable, "-m", "circuit.hybrid", "run", "--prep", prep, "--standard-dir", standard_dir,
                     "--gain", str(gain), "--tstop", str(tstop), "--out", out, "--threads", str(threads)]
-                   + (["--pc-to-in-gain", format_gain(pc_to_in_gain)] if pc_to_in_gain is not None else []),
+                   + (["--pc-to-in-gain", format_gain(pc_to_in_gain)] if pc_to_in_gain is not None else [])
+                   + (["--population", population] if population else []),
                    check=True, env=env)
     return json.load(open(os.path.join(out, "run.json")))
 
@@ -506,13 +519,14 @@ def reference_rate(reference, prep, t0=0.0, t1=3000.0):
 
 
 def tune(prep, standard_dir, reference, out, tstop=1500.0, gains=(1.0,), max_iter=6, tol=0.1, threads=1,
-         pc_to_in_gain=None):
+         pc_to_in_gain=None, population=None, target=None):
     """Search the gain onto PCs until the PC rate over 0..tstop is within ``tol`` of the GLIF network's.
     ``pc_to_in_gain`` stays fixed during the search (None = equal to the searched gain, the PR 9 rule).
 
     Brackets the target, then bisects in log(gain)."""
     os.makedirs(out, exist_ok=True)
-    target = reference_rate(reference, prep, 0.0, tstop)
+    if target is None:  # default: the GLIF network's PC rate
+        target = reference_rate(reference, prep, 0.0, tstop)
     hist = []
     path = os.path.join(out, "tune.json")
     if os.path.exists(path):
@@ -540,7 +554,8 @@ def tune(prep, standard_dir, reference, out, tstop=1500.0, gains=(1.0,), max_ite
                 g = h["gain"] * float(np.clip((target / max(h["pc_rate_hz"], 1e-3)) ** 0.3, 0.7, 1.4))
         if round(g, 4) in done:
             continue
-        r = _run_subprocess(prep, standard_dir, g, tstop, os.path.join(out, f"gain_{g:.4f}"), threads, pc_to_in_gain)
+        r = _run_subprocess(prep, standard_dir, g, tstop, os.path.join(out, f"gain_{g:.4f}"), threads, pc_to_in_gain,
+                            population)
         hist.append({"gain": g, "pc_rate_hz": r["pc_rate_hz"], "interneuron_rate_hz": r["interneuron_rate_hz"]})
         json.dump({"target_pc_rate_hz": target, "tstop": tstop, "history": hist}, open(path, "w"), indent=2)
         print(f"[tune] gain {g:.4f}: PC {r['pc_rate_hz']:.3f} Hz (target {target:.3f})", flush=True)
@@ -671,6 +686,7 @@ def main(argv=None):
     b.add_argument("--probe", type=int, default=0, help="record the input current of the first N PCs")
     b.add_argument("--pc-to-in-gain", help="factor on PC -> interneuron synapses: a number or Pvalb=..,Sst=..,Htr3a=.. "
                    "(default: same as --gain)")
+    b.add_argument("--population", help="population JSON: a fitted model (and input scale) per PC")
     c = sp.add_parser("tune")
     c.add_argument("--prep", required=True); c.add_argument("--standard-dir", required=True)
     c.add_argument("--reference", required=True); c.add_argument("--out", required=True)
@@ -679,6 +695,8 @@ def main(argv=None):
     c.add_argument("--max-iter", type=int, default=6); c.add_argument("--tol", type=float, default=0.1)
     c.add_argument("--threads", type=int, default=1)
     c.add_argument("--pc-to-in-gain", help="fixed factor on PC -> interneuron synapses (default: same as the searched gain)")
+    c.add_argument("--population", help="population JSON: a fitted model (and input scale) per PC")
+    c.add_argument("--target", type=float, help="target mean PC rate (Hz) instead of the GLIF network's")
     d = sp.add_parser("report")
     d.add_argument("--prep", required=True); d.add_argument("--extract-dir", required=True)
     d.add_argument("--reference", required=True); d.add_argument("--hybrid-spikes", required=True)
@@ -690,13 +708,13 @@ def main(argv=None):
         prepare(x.config, x.extract_dir, x.v1ext_spikes, x.out, x.tstop)
     elif x.cmd == "run":
         run(x.prep, x.standard_dir, x.gain, x.tstop, x.out, x.threads, replay_pc=x.replay_pc, probe=x.probe,
-            pc_to_in_gain=parse_gain(x.pc_to_in_gain))
+            pc_to_in_gain=parse_gain(x.pc_to_in_gain), population=x.population)
     elif x.cmd == "report":
         report(x.prep, x.extract_dir, x.reference, x.hybrid_spikes, x.out, x.tune_json, x.tstop,
                previous_spikes=x.previous_spikes)
     else:
         print(json.dumps(tune(x.prep, x.standard_dir, x.reference, x.out, x.tstop, x.gains, x.max_iter, x.tol,
-                              x.threads, parse_gain(x.pc_to_in_gain)), indent=2))
+                              x.threads, parse_gain(x.pc_to_in_gain), x.population, x.target), indent=2))
 
 
 if __name__ == "__main__":
