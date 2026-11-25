@@ -269,6 +269,48 @@
    },
    "KS_shape_active_vs_invivo": 0.21817498510265626,
    "interneuron_rate_hz_grating": 2.7023453295592397
+  },
+  "heterogeneous, rheobase-matched": {
+   "n": 56057,
+   "mean": 1.6045239666767754,
+   "median": 0.8,
+   "frac_silent": 0.34588008634068895,
+   "p90": 4.4,
+   "p99": 7.2,
+   "max": 16.8,
+   "top10_share": 0.35065506844197764,
+   "top1_share": 0.052988054895891694,
+   "sd_log10_active": 0.3725905361336643,
+   "skew_log10_active": -0.40141244060963766,
+   "at_invivo_n": {
+    "top10_share": [
+     0.32799598735259333,
+     0.3527743225169615,
+     0.3804732628083208
+    ],
+    "p99": [
+     6.4,
+     7.2,
+     8.4
+    ],
+    "max": [
+     7.6,
+     10.0,
+     14.4
+    ],
+    "frac_silent": [
+     0.30756302521008405,
+     0.346218487394958,
+     0.38487394957983195
+    ],
+    "mean": [
+     1.4587899159663864,
+     1.6020168067226892,
+     1.7479327731092436
+    ]
+   },
+   "KS_shape_active_vs_invivo": 0.18787277700833893,
+   "interneuron_rate_hz_grating": 4.603113627173474
   }
  },
  "rank_test": {
@@ -520,6 +562,89 @@
    "r2_both": 0.796107178970336,
    "top10_cells_homog_percentile_median": 0.8436858911465116,
    "spearman_rate_vs_depth": -0.0034100815544618013
+  },
+  "heterogeneous, rheobase-matched": {
+   "per_model": [
+    {
+     "model": "487661754",
+     "n": 7007,
+     "mean_hz": 1.8450121307264165,
+     "frac_silent": 0.2301983730555159,
+     "share_of_top10_cells": 0.12057773450178513,
+     "share_of_spikes": 0.1437326004393806,
+     "rheobase_pa": 90.0
+    },
+    {
+     "model": "513531471",
+     "n": 7008,
+     "mean_hz": 1.0456050228310503,
+     "frac_silent": 0.4838755707762557,
+     "share_of_top10_cells": 0.06767283349561831,
+     "share_of_spikes": 0.08146774466116996,
+     "rheobase_pa": 150.0
+    },
+    {
+     "model": "521409057",
+     "n": 7007,
+     "mean_hz": 1.5793349507635221,
+     "frac_silent": 0.3557870700727844,
+     "share_of_top10_cells": 0.13696851671535215,
+     "share_of_spikes": 0.12303546174987325,
+     "rheobase_pa": 220.0
+    },
+    {
+     "model": "486262299",
+     "n": 7007,
+     "mean_hz": 2.866790352504638,
+     "frac_silent": 0.1211645497359783,
+     "share_of_top10_cells": 0.25592340149302173,
+     "share_of_spikes": 0.2233325328423655,
+     "rheobase_pa": 500.0
+    },
+    {
+     "model": "502359001",
+     "n": 7007,
+     "mean_hz": 1.450834879406308,
+     "frac_silent": 0.40131297274154415,
+     "share_of_top10_cells": 0.12593313859136643,
+     "share_of_spikes": 0.11302487748041021,
+     "rheobase_pa": 160.0
+    },
+    {
+     "model": "318808427",
+     "n": 7007,
+     "mean_hz": 1.9553589267874982,
+     "frac_silent": 0.23990295418866847,
+     "share_of_top10_cells": 0.164719246997728,
+     "share_of_spikes": 0.152328983999075,
+     "rheobase_pa": 120.0
+    },
+    {
+     "model": "382982932",
+     "n": 7007,
+     "mean_hz": 1.3459112316255173,
+     "frac_silent": 0.39931497074354216,
+     "share_of_top10_cells": 0.10110353781239857,
+     "share_of_spikes": 0.10485097526482909,
+     "rheobase_pa": 120.0
+    },
+    {
+     "model": "502269786",
+     "n": 7007,
+     "mean_hz": 0.7474240045668619,
+     "frac_silent": 0.5354645354645354,
+     "share_of_top10_cells": 0.027101590392729632,
+     "share_of_spikes": 0.05822682356289636,
+     "rheobase_pa": 200.0
+    }
+   ],
+   "spearman_rate_vs_minus_rheobase": -0.0381944072260392,
+   "r2_model_identity": 0.11584714690533993,
+   "spearman_rate_vs_homogeneous_rate": 0.8764938369435897,
+   "r2_input_drive": 0.7286734750721826,
+   "r2_both": 0.8458244722042909,
+   "top10_cells_homog_percentile_median": 0.9394277253509821,
+   "spearman_rate_vs_depth": 0.0010397310769524823
   }
  },
  "depth_vs_input": {
@@ -556,6 +681,11 @@
    "Pvalb": 5.261769730099078,
    "Sst": 5.315471698113207,
    "Htr3a": 0.012714138286893705
+  },
+  "heterogeneous, rheobase-matched": {
+   "Pvalb": 6.525862658011616,
+   "Sst": 5.55377358490566,
+   "Htr3a": 3.0255521155830754
   }
  }
 }

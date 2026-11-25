@@ -5,5 +5,5 @@
  "heterogeneous, depth-placed": {"spikes": "/home/user/data/runs/final_depth/spikes.h5", "population": "depth", "interneurons": "diverse", "gain": 1.2837},
  "homogeneous, homogeneous interneurons": {"spikes": "/home/user/data/runs/tune3_homog_in/gain_0.8480/spikes.h5", "population": "homogeneous", "interneurons": "homogeneous", "gain": 0.848},
  "heterogeneous, homogeneous interneurons": {"spikes": "/home/user/data/runs/final_shuffled_homog_in/spikes.h5", "population": "shuffled", "interneurons": "homogeneous", "gain": 1.2837},
- "heterogeneous, rheobase-matched": {"spikes": "/home/user/data/runs/tune3_rheo/best/spikes.h5", "population": "rheo_matched", "interneurons": "diverse", "gain": null}
+ "heterogeneous, rheobase-matched": {"spikes": "/home/user/data/runs/tune3_rheo/gain_0.8784/spikes.h5", "population": "rheo_matched", "interneurons": "diverse", "gain": 0.8784}
 }

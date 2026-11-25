@@ -38,8 +38,8 @@ fluctuating input (`characterize_models.py`).
   condition.
 - **Gain:** `--gain` scales only the synapses onto PCs. It is tuned per condition on 3 s runs, so that the
   mean PC rate over 0–3 s matches the homogeneous network at gain 0.848 (1.36 Hz).
-- **Tuned gains:** heterogeneous 1.284 (1.34 Hz). Homogeneous PCs with homogeneous interneurons 0.848
-  (1.32 Hz).
+- **Tuned gains:** heterogeneous 1.284 (1.34 Hz). Rheobase-matched 0.878 (1.39 Hz). Homogeneous PCs with
+  homogeneous interneurons 0.848 (1.32 Hz).
 - **Excitability confound:** the Standard is the most excitable of the 8 models, so a heterogeneous network
   needs more input gain to reach the same mean.
 - **Rate window:** rates are measured over the grating window (0.5–3 s), as in the earlier in vivo comparison.
@@ -54,6 +54,7 @@ fluctuating input (`characterize_models.py`).
 | homogeneous ANN PCs | 1.58 | 0.28 | 0.30 | 6.0 | 10.4 |
 | heterogeneous, shuffled | 1.40 | 0.59 | **0.45** (0.41–0.50) | **7.6** (6.8–8.0) | 17.2 |
 | heterogeneous, depth-placed | 1.40 | 0.59 | 0.45 | 7.6 | 13.2 |
+| heterogeneous, rheobase-matched | 1.61 | 0.35 | 0.35 (0.33–0.38) | 7.2 (6.4–8.4) | 16.8 |
 | homogeneous PCs, homogeneous IN | 1.53 | 0.28 | 0.31 | 5.6 | 10.0 |
 | heterogeneous PCs, homogeneous IN | 1.37 | 0.60 | 0.45 | 7.2 | 17.2 |
 
@@ -72,6 +73,15 @@ explain 80%. The most excitable model (lowest rheobase) supplies 62% of the top-
 gives Spearman 0.76. The top-10% cells still sit at the 84th percentile of input drive, so both factors
 matter (`fig2_rank_test.png`). With 8 discrete models, this test can only resolve between-model effects. The
 R21 library of 60–80 cells is what makes it a real test.
+
+**Rheobase-matched control: most of the effect is rheobase.** Each PC's input is scaled by its model's
+rheobase / 90 pA, which equalizes threshold while keeping each model's gain, adaptation and spike timing.
+The top-10% share then falls from 0.45 to 0.35, against 0.30 homogeneous. The silent fraction returns to
+35%, close to in vivo. The rank test flips: input drive explains 73% of log rate and model identity 12%.
+Rate vs −rheobase gives Spearman −0.04, and the top-10% cells sit at the 94th percentile of input drive. So
+in these 8 fits, threshold differences produce most of the skew, and the remaining f-I differences add a
+little (0.30 → 0.35, with p99 6.0 → 7.2 Hz). For the R21, the rheobase spread of the real library is the
+quantity to measure and report.
 
 **(c) Depth placement is null by construction.** In the Allen V1 model, the input from outside L2/3 does not
 depend on depth (external current vs depth, Spearman 0.0001; homogeneous rate vs depth, 0.0005). Depth-placed
@@ -94,8 +104,8 @@ changed PC spike pattern. The R21 runs should report interneuron rates for every
 - The pipeline runs end to end: populations from fitted cells, tuning, rate statistics at the in vivo
   sample size, the rank test, and depth and interneuron controls. A 3 s run takes about 1 h on 4 CPUs.
 - The question is well posed. Intrinsic heterogeneity of fitted cells changes the share of the top 10%
-  strongly (0.30 → 0.45). Whether it also makes the long upper tail is open, and that depends on the spread
-  of the real library.
+  strongly (0.30 → 0.45), and rheobase carries most of that. Whether it also makes the long upper tail is
+  open, and that depends on the spread of the real library.
 - The depth and interneuron controls need changes before they mean anything: depth-dependent inputs, and
   rate-matched homogeneous interneurons.
 
@@ -124,5 +134,4 @@ python experiments/aim2_controls/plot_results.py --analysis experiments/aim2_con
 
 `runs.json` lists the spike files used. They live outside git and are copied to the project files under
 `aim2_controls/`. The rheobase-matched control (`populations/rheo_matched.json`) gives each PC an input scale of
-its model's rheobase / 90 pA, which removes the mean excitability difference. It is still running and will be
-added to this folder when done.
+its model's rheobase / 90 pA, which removes the threshold difference (results above).

@@ -67,7 +67,9 @@ def main():
             lo, md, hi = C[c]["at_invivo_n"][key]
             ax.bar(i, C[c][key], 0.6, color=COL[c])
             ax.errorbar(i, md, yerr=[[md - lo], [hi - md]], color=INK, capsize=3, lw=1)
-        ax.set_xticks(xs, ["in vivo"] + [c.replace("heterogeneous, ", "het.,\n") for c in main_conds], fontsize=7.5)
+        ax.set_xticks(xs, ["in vivo"] + [{"homogeneous": "homog.", "heterogeneous, shuffled": "het.\nshuffled",
+                                         "heterogeneous, depth-placed": "het.\ndepth", "heterogeneous, rheobase-matched": "het.\nrheo-\nmatched"}.get(c, c)
+                                        for c in main_conds], fontsize=7.5)
         ax.set(ylabel=lab)
     axs[1].set_title("B  Top-10% spike share")
     axs[2].set_title("C  99th percentile")
