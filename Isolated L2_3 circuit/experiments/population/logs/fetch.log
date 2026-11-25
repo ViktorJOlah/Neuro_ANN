@@ -1,0 +1,303 @@
+314857059 []
+318808427 ['Biophysical - all active', '3 LIF + Afterspike Currents (LIF-ASC)', 'Biophysical - perisomatic', '1 Leaky Integrate and Fire (LIF)']
+323452245 ['1 Leaky Integrate and Fire (LIF)', '3 LIF + Afterspike Currents (LIF-ASC)']
+323788096 []
+324532703 []
+356237593 []
+382982932 ['1 Leaky Integrate and Fire (LIF)', 'Biophysical - perisomatic', 'Biophysical - all active', '3 LIF + Afterspike Currents (LIF-ASC)']
+397345294 []
+473611755 []
+   476086391_ephys.nwb
+   reconstruction.swc
+476086391 []
+   476087653_ephys.nwb
+   reconstruction.swc
+476087653 ['Biophysical - perisomatic']
+   476178907_ephys.nwb
+   model_3_566312142_neuron_config.json
+   model_1_566312135_neuron_config.json
+   model_4_566312144_neuron_config.json
+   model_2_566312138_neuron_config.json
+   model_5_566312147_neuron_config.json
+476178907 ['3 LIF + Afterspike Currents (LIF-ASC)', '1 Leaky Integrate and Fire (LIF)', '4 LIF-R + Afterspike Currents (LIF-R-ASC)', '2 LIF + Reset Rules (LIF-R)', '5 LIF-R-ASC + Threshold Adaptation (LIF-R-ASC-A)']
+   477127614_ephys.nwb
+   reconstruction.swc
+   model_1_566320092_neuron_config.json
+   model_3_566320096_neuron_config.json
+477127614 ['1 Leaky Integrate and Fire (LIF)', 'Biophysical - perisomatic', 'Biophysical - all active', '3 LIF + Afterspike Currents (LIF-ASC)']
+   477129850_ephys.nwb
+477129850 []
+   479013100_ephys.nwb
+   reconstruction.swc
+479013100 []
+   480643417_ephys.nwb
+   model_2_483147621_neuron_config.json
+   model_4_483147625_neuron_config.json
+   model_3_483147623_neuron_config.json
+   model_1_483147619_neuron_config.json
+   model_5_483147627_neuron_config.json
+480643417 ['2 LIF + Reset Rules (LIF-R)', '4 LIF-R + Afterspike Currents (LIF-R-ASC)', '3 LIF + Afterspike Currents (LIF-ASC)', '1 Leaky Integrate and Fire (LIF)', '5 LIF-R-ASC + Threshold Adaptation (LIF-R-ASC-A)']
+   480798873_ephys.nwb
+   model_1_485472229_neuron_config.json
+   model_3_485472233_neuron_config.json
+480798873 ['1 Leaky Integrate and Fire (LIF)', '3 LIF + Afterspike Currents (LIF-ASC)']
+   482905575_ephys.nwb
+482905575 []
+   483027960_ephys.nwb
+   model_1_485510575_neuron_config.json
+   model_3_485510579_neuron_config.json
+483027960 ['1 Leaky Integrate and Fire (LIF)', '3 LIF + Afterspike Currents (LIF-ASC)']
+   484509440_ephys.nwb
+   model_1_485590968_neuron_config.json
+   model_3_485590972_neuron_config.json
+484509440 ['1 Leaky Integrate and Fire (LIF)', '3 LIF + Afterspike Currents (LIF-ASC)']
+485468180 ['3 LIF + Afterspike Currents (LIF-ASC)', '1 Leaky Integrate and Fire (LIF)', '5 LIF-R-ASC + Threshold Adaptation (LIF-R-ASC-A)', '2 LIF + Reset Rules (LIF-R)', 'Biophysical - perisomatic', '4 LIF-R + Afterspike Currents (LIF-R-ASC)']
+   485570372_ephys.nwb
+   model_1_486052338_neuron_config.json
+   model_3_486052342_neuron_config.json
+   model_2_486052340_neuron_config.json
+   model_4_486052344_neuron_config.json
+   model_5_486052346_neuron_config.json
+485570372 ['1 Leaky Integrate and Fire (LIF)', '3 LIF + Afterspike Currents (LIF-ASC)', '2 LIF + Reset Rules (LIF-R)', '4 LIF-R + Afterspike Currents (LIF-R-ASC)', '5 LIF-R-ASC + Threshold Adaptation (LIF-R-ASC-A)']
+   485887209_ephys.nwb
+485887209 []
+   486175203_ephys.nwb
+   model_1_486557295_neuron_config.json
+   model_3_486557299_neuron_config.json
+486175203 ['1 Leaky Integrate and Fire (LIF)', '3 LIF + Afterspike Currents (LIF-ASC)']
+   486262299_ephys.nwb
+   reconstruction.swc
+   model_1_486559171_neuron_config.json
+   model_3_486559175_neuron_config.json
+486262299 ['1 Leaky Integrate and Fire (LIF)', '3 LIF + Afterspike Currents (LIF-ASC)', 'Biophysical - all active']
+   486510127_ephys.nwb
+   model_1_486909637_neuron_config.json
+   model_3_486909641_neuron_config.json
+486510127 ['1 Leaky Integrate and Fire (LIF)', '3 LIF + Afterspike Currents (LIF-ASC)']
+   486753754_ephys.nwb
+   model_1_487245216_neuron_config.json
+   model_3_487245220_neuron_config.json
+486753754 ['1 Leaky Integrate and Fire (LIF)', '3 LIF + Afterspike Currents (LIF-ASC)']
+   486776965_ephys.nwb
+486776965 []
+   487661754_ephys.nwb
+   reconstruction.swc
+   model_1_488462763_neuron_config.json
+   model_3_488462767_neuron_config.json
+487661754 ['1 Leaky Integrate and Fire (LIF)', '3 LIF + Afterspike Currents (LIF-ASC)', 'Biophysical - perisomatic']
+   489751692_ephys.nwb
+   model_1_491524046_neuron_config.json
+   model_3_491524050_neuron_config.json
+489751692 ['1 Leaky Integrate and Fire (LIF)', '3 LIF + Afterspike Currents (LIF-ASC)']
+   489888847_ephys.nwb
+   model_1_491546907_neuron_config.json
+   model_3_491546911_neuron_config.json
+489888847 ['1 Leaky Integrate and Fire (LIF)', '3 LIF + Afterspike Currents (LIF-ASC)']
+   489923501_ephys.nwb
+489923501 []
+   490376252_ephys.nwb
+   model_2_491620132_neuron_config.json
+   model_1_491620130_neuron_config.json
+   model_3_491620135_neuron_config.json
+   model_5_491620140_neuron_config.json
+   model_4_491620138_neuron_config.json
+490376252 ['2 LIF + Reset Rules (LIF-R)', '1 Leaky Integrate and Fire (LIF)', '3 LIF + Afterspike Currents (LIF-ASC)', '5 LIF-R-ASC + Threshold Adaptation (LIF-R-ASC-A)', '4 LIF-R + Afterspike Currents (LIF-R-ASC)']
+   490982660_ephys.nwb
+   model_1_491765397_neuron_config.json
+   model_2_491765399_neuron_config.json
+   model_5_491765405_neuron_config.json
+   model_3_491765401_neuron_config.json
+   model_4_491765403_neuron_config.json
+490982660 ['1 Leaky Integrate and Fire (LIF)', '2 LIF + Reset Rules (LIF-R)', '5 LIF-R-ASC + Threshold Adaptation (LIF-R-ASC-A)', '3 LIF + Afterspike Currents (LIF-ASC)', '4 LIF-R + Afterspike Currents (LIF-R-ASC)']
+   500955426_ephys.nwb
+500955426 []
+   501022658_ephys.nwb
+501022658 []
+   502100978_ephys.nwb
+502100978 []
+   502120615_ephys.nwb
+   model_1_511852710_neuron_config.json
+   model_3_511852714_neuron_config.json
+502120615 ['1 Leaky Integrate and Fire (LIF)', '3 LIF + Afterspike Currents (LIF-ASC)']
+502269786 ['1 Leaky Integrate and Fire (LIF)', '3 LIF + Afterspike Currents (LIF-ASC)', '4 LIF-R + Afterspike Currents (LIF-R-ASC)', '5 LIF-R-ASC + Threshold Adaptation (LIF-R-ASC-A)', '2 LIF + Reset Rules (LIF-R)']
+   502359001_ephys.nwb
+   reconstruction.swc
+502359001 []
+   505500191_ephys.nwb
+505500191 []
+   505512874_ephys.nwb
+   model_1_511598255_neuron_config.json
+   model_3_511598259_neuron_config.json
+505512874 ['1 Leaky Integrate and Fire (LIF)', '3 LIF + Afterspike Currents (LIF-ASC)']
+   513510227_ephys.nwb
+   reconstruction.swc
+   model_1_515020637_neuron_config.json
+   model_3_515020641_neuron_config.json
+513510227 ['1 Leaky Integrate and Fire (LIF)', '3 LIF + Afterspike Currents (LIF-ASC)']
+513531471 ['4 LIF-R + Afterspike Currents (LIF-R-ASC)', '2 LIF + Reset Rules (LIF-R)', '5 LIF-R-ASC + Threshold Adaptation (LIF-R-ASC-A)', '3 LIF + Afterspike Currents (LIF-ASC)', '1 Leaky Integrate and Fire (LIF)']
+   513579447_ephys.nwb
+513579447 []
+   513591094_ephys.nwb
+513591094 []
+   513593674_ephys.nwb
+   model_2_515020096_neuron_config.json
+   model_3_515020098_neuron_config.json
+   model_4_515020100_neuron_config.json
+   model_1_515020094_neuron_config.json
+   model_5_515020102_neuron_config.json
+513593674 ['2 LIF + Reset Rules (LIF-R)', '3 LIF + Afterspike Currents (LIF-ASC)', '4 LIF-R + Afterspike Currents (LIF-R-ASC)', '1 Leaky Integrate and Fire (LIF)', '5 LIF-R-ASC + Threshold Adaptation (LIF-R-ASC-A)']
+   514530024_ephys.nwb
+   model_1_515807099_neuron_config.json
+   model_3_515807109_neuron_config.json
+514530024 ['1 Leaky Integrate and Fire (LIF)', '3 LIF + Afterspike Currents (LIF-ASC)']
+   515056927_ephys.nwb
+   model_1_515804953_neuron_config.json
+   model_3_515804958_neuron_config.json
+515056927 ['1 Leaky Integrate and Fire (LIF)', '3 LIF + Afterspike Currents (LIF-ASC)']
+   516916566_ephys.nwb
+   model_1_518016671_neuron_config.json
+   model_4_518016677_neuron_config.json
+   model_5_518016679_neuron_config.json
+   model_3_518016675_neuron_config.json
+   model_2_518016673_neuron_config.json
+516916566 ['1 Leaky Integrate and Fire (LIF)', '4 LIF-R + Afterspike Currents (LIF-R-ASC)', '5 LIF-R-ASC + Threshold Adaptation (LIF-R-ASC-A)', '3 LIF + Afterspike Currents (LIF-ASC)', '2 LIF + Reset Rules (LIF-R)']
+   517319635_ephys.nwb
+   reconstruction.swc
+   model_1_517842018_neuron_config.json
+   model_3_517842022_neuron_config.json
+517319635 ['1 Leaky Integrate and Fire (LIF)', '3 LIF + Afterspike Currents (LIF-ASC)']
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.13/urllib/request.py", line 1331, in do_open
+    h.request(req.get_method(), req.selector, req.data, headers,
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+              encode_chunked=req.has_header('Transfer-encoding'))
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/http/client.py", line 1386, in request
+    self._send_request(method, url, body, headers, encode_chunked)
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/http/client.py", line 1432, in _send_request
+    self.endheaders(body, encode_chunked=encode_chunked)
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/http/client.py", line 1381, in endheaders
+    self._send_output(message_body, encode_chunked=encode_chunked)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/http/client.py", line 1141, in _send_output
+    self.send(msg)
+    ~~~~~~~~~^^^^^
+  File "/usr/local/lib/python3.13/http/client.py", line 1085, in send
+    self.connect()
+    ~~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/http/client.py", line 1527, in connect
+    self.sock = self._context.wrap_socket(self.sock,
+                ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+                                          server_hostname=server_hostname)
+                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/ssl.py", line 471, in wrap_socket
+    return self.sslsocket_class._create(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        sock=sock,
+        ^^^^^^^^^^
+    ...<5 lines>...
+        session=session
+        ^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/usr/local/lib/python3.13/ssl.py", line 1099, in _create
+    self.do_handshake()
+    ~~~~~~~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/ssl.py", line 1395, in do_handshake
+    self._sslobj.do_handshake()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~^^
+ConnectionResetError: [Errno 104] Connection reset by peer
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/user/neuro_ann/Isolated L2_3 circuit/experiments/real_cells/code/fetch_allen.py", line 100, in <module>
+    main()
+    ~~~~^^
+  File "/home/user/neuro_ann/Isolated L2_3 circuit/experiments/real_cells/code/fetch_allen.py", line 96, in main
+    fetch(c, a.nwb_dir, a.nandi)
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/neuro_ann/Isolated L2_3 circuit/experiments/real_cells/code/fetch_allen.py", line 51, in fetch
+    sp = query(f"model::Specimen,rma::criteria,[id$eq{cell}],rma::include,structure,"
+         ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+               "ephys_result(well_known_files(well_known_file_type)),"
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+               "neuron_reconstructions(well_known_files(well_known_file_type))")[0]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/neuro_ann/Isolated L2_3 circuit/experiments/real_cells/code/fetch_allen.py", line 36, in query
+    return json.load(urllib.request.urlopen(u, timeout=120))["msg"]
+                     ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/urllib/request.py", line 189, in urlopen
+    return opener.open(url, data, timeout)
+           ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/urllib/request.py", line 489, in open
+    response = self._open(req, data)
+  File "/usr/local/lib/python3.13/urllib/request.py", line 506, in _open
+    result = self._call_chain(self.handle_open, protocol, protocol +
+                              '_open', req)
+  File "/usr/local/lib/python3.13/urllib/request.py", line 466, in _call_chain
+    result = func(*args)
+  File "/usr/local/lib/python3.13/urllib/request.py", line 1379, in https_open
+    return self.do_open(http.client.HTTPSConnection, req,
+           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                        context=self._context)
+                        ^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/urllib/request.py", line 1334, in do_open
+    raise URLError(err)
+urllib.error.URLError: <urlopen error [Errno 104] Connection reset by peer>
+FAIL 517752298
+   517753911_ephys.nwb
+   model_1_519167705_neuron_config.json
+   model_3_519167709_neuron_config.json
+517753911 ['1 Leaky Integrate and Fire (LIF)', '3 LIF + Afterspike Currents (LIF-ASC)']
+   517974394_ephys.nwb
+517974394 []
+   521399472_ephys.nwb
+   model_1_522098699_neuron_config.json
+   model_3_522098703_neuron_config.json
+521399472 ['1 Leaky Integrate and Fire (LIF)', '3 LIF + Afterspike Currents (LIF-ASC)']
+521409057 ['1 Leaky Integrate and Fire (LIF)', '3 LIF + Afterspike Currents (LIF-ASC)']
+   521958756_ephys.nwb
+   model_5_524646197_neuron_config.json
+   model_4_524646195_neuron_config.json
+   model_3_524646193_neuron_config.json
+   model_1_524646189_neuron_config.json
+   model_2_524646191_neuron_config.json
+521958756 ['5 LIF-R-ASC + Threshold Adaptation (LIF-R-ASC-A)', '4 LIF-R + Afterspike Currents (LIF-R-ASC)', '3 LIF + Afterspike Currents (LIF-ASC)', '1 Leaky Integrate and Fire (LIF)', '2 LIF + Reset Rules (LIF-R)']
+   565863515_ephys.nwb
+   reconstruction.swc
+   model_1_566734957_neuron_config.json
+   model_3_566734961_neuron_config.json
+565863515 ['1 Leaky Integrate and Fire (LIF)', '3 LIF + Afterspike Currents (LIF-ASC)']
+   567431416_ephys.nwb
+   model_1_569825608_neuron_config.json
+   model_3_569825612_neuron_config.json
+567431416 ['1 Leaky Integrate and Fire (LIF)', '3 LIF + Afterspike Currents (LIF-ASC)']
+   571306690_ephys.nwb
+   reconstruction.swc
+571306690 []
+   572798509_ephys.nwb
+572798509 []
+   573680326_ephys.nwb
+   model_1_587845650_neuron_config.json
+   model_3_587845654_neuron_config.json
+573680326 ['1 Leaky Integrate and Fire (LIF)', '3 LIF + Afterspike Currents (LIF-ASC)']
+   578517537_ephys.nwb
+   model_1_587848113_neuron_config.json
+   model_3_587848120_neuron_config.json
+578517537 ['1 Leaky Integrate and Fire (LIF)', '3 LIF + Afterspike Currents (LIF-ASC)']
+   580257315_ephys.nwb
+580257315 []
+   584254833_ephys.nwb
+   reconstruction.swc
+584254833 []
+   589452470_ephys.nwb
+   model_2_593242919_neuron_config.json
+   model_4_593242923_neuron_config.json
+   model_1_593242917_neuron_config.json
+   model_5_593242925_neuron_config.json
+   model_3_593242921_neuron_config.json
+589452470 ['2 LIF + Reset Rules (LIF-R)', '4 LIF-R + Afterspike Currents (LIF-R-ASC)', '1 Leaky Integrate and Fire (LIF)', '5 LIF-R-ASC + Threshold Adaptation (LIF-R-ASC-A)', '3 LIF + Afterspike Currents (LIF-ASC)']
+FETCH_DONE
