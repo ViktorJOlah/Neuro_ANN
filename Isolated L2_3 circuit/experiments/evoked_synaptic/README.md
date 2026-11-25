@@ -1,5 +1,61 @@
 # Evoked synaptic input: can the Standard model's front end learn it? (feasibility test)
 
+## Update 2026-11-24 (2): L2/3 EPSP peak fixed by training changes (64 ms window, AMPA only)
+
+The AMPA-only rerun below under-predicted the fast L2/3 EPSP peak. Per held-out isolated pulse (no other pulse
+from -100 to +150 ms, no spike; `code/peak_metrics.py`) the model/NEURON peak ratio was 0.52 on 754 and 0.67 on 057.
+
+**S is not the limit.** A free current optimised through the frozen S on 48 isolated L2/3 events
+(`code/oracle_events.py`) reaches a peak ratio of 1.01 (peak at 8 vs 9 ms, 0.04 mV RMSE). The current it needs is a
+sharp ~100 pA pulse 2–3 ms after the stimulus with a negative undershoot, which D was not learning: D's
+current was too small and too broad, so the model EPSP peaked late (10–11 ms vs 8 ms) and low.
+
+**What worked** (all on cell 754, tcn64, 800 steps; figure panel e):
+
+| Change | L2/3 peak ratio | L1 peak ratio | Vm RMSE away from spikes (mV) |
+|---|---|---|---|
+| PR 12 recipe (75 % spike-free batches) | 0.52 | 0.96 | 0.69 |
+| + 5x loss weight 0–25 ms after each pulse (`--event-weight 5`) | 0.64 | 0.97 | 0.69 |
+| + learnable fast current kernel in D (`--model tcn64k`) | 0.53 | 0.85 | 0.69 |
+| 3x more steps (2400) | 0.60 | 1.00 | 0.67 |
+| 100 % spike-free batches + weight (`--sub-frac 1`) | 0.77 | 0.93 | 0.70 |
+| one-step (teacher-forced) warm-up, 400 steps + weight (`--one-step-iters 400`) | 0.78 | 0.86 | 0.69 |
+| **all three: spike-free batches + weight + one-step warm-up (new recipe)** | **0.84** | 0.86 | 0.67 |
+| same, 800 warm-up + 400 free steps | 0.82 | 0.87 | 0.70 |
+| same, 20x weight | 0.82 | 0.79 | 0.70 |
+| **057, PR 12 recipe → new recipe** | **0.67 → 0.94** | 0.91 → 0.96 | 1.66 → 1.68 |
+
+Model peak time with the new recipe: 9 ms on 754 (NEURON 8), 7 ms on 057 (NEURON 8). Spike counts unchanged
+(|Δn| 0.05 and 0.35 per trace).
+
+Why these help:
+- **One-step warm-up.** During the first steps S's Vm is reset to the recording every ms, so the error at t depends
+  directly on D's current at t. In free-running training the error comes through the membrane, which low-passes
+  the gradient. Brief current features then learn very slowly (3x more free steps only reached 0.60). After the
+  warm-up, the usual free-running loss finishes the fit.
+- **Spike-free batches only.** Mixed-in spiking segments keep pulling the fast peak down (a large fast EPSP near
+  threshold risks a mistimed spike in S). Spiking is S's job, so D can be trained on spike-free segments only
+  (held-out spike counts are unaffected).
+- **Event weighting.** Fast peaks are a small share of the time points; weighting the 25 ms after each pulse helps a
+  bit (0.52 → 0.64) and more in combination.
+- A dedicated fast current kernel (`tcn64k`) did not help: the kernel barely moved, the same slow-learning problem.
+
+Recipe: `python fit_input_transform.py --cell <cell> --model tcn64 --iters 800 --one-step-iters 400 --lr 1e-3 --sub-frac 1.0 --event-weight 5`
+(~30 min on 2 threads).
+
+Remaining issues: 754 is still 16 % low on L2/3 and its EPSP decays a little too fast (20–60 ms); L1 on 754 drops
+from 0.96 to 0.86. On 057 D adds a small negative dip right after the pulse (−0.4 mV L2/3, −0.7 mV L1, panel c, d)
+before the EPSP. This is part of the undershoot-shaped current D learns for the fast peak; it does not appear in
+NEURON. Both cells have only 23 (L2/3) and 27 (L1) isolated held-out events, so ratios are ±~0.05.
+
+![peak fix](results_ampa/peak_fix.png)
+
+Files: `code/peak_metrics.py` (per-event peaks -> `peaks.json` in each results folder), `code/oracle_events.py`
+(free-current ceiling on isolated events -> `results_ampa/487661754/oracle_events_p1/`), `code/plot_peakfix.py`
+(figure + `results_ampa/peak_fix.json`). New options in `code/fit_input_transform.py`: `--event-weight`,
+`--event-win`, `--one-step-iters`, `--one-step-gain`, `--deriv-weight` (not tested), `--width`, `--out-scale`, `--init`,
+`--model tcn64k`.
+
 ## Update 2026-11-24: AMPA-only rerun (supersedes the window conclusion below)
 
 Viktor pointed out that the first-round events were far too slow: his recorded L1 and L4-L2/3 evoked events
