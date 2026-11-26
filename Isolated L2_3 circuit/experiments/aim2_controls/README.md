@@ -1,8 +1,9 @@
 # Aim 2 controls in silico (feasibility)
 
 These runs exercise the full Aim 2 analysis pipeline in the hybrid L2/3 circuit before the new recordings
-exist. They ask whether the pipeline works and what kind of answer it gives. With only 8 fitted cells, the
-numbers below are **not** the R21's result.
+exist. They ask whether the pipeline works and what kind of answer it gives. They were first run with 8 fitted
+cells (below), then rerun with the 38-cell population library (see **Rerun on the population library**). Neither
+is the R21's result: the library comes from Allen slice recordings, not from the new recordings.
 
 The four controls are:
 
@@ -109,6 +110,60 @@ changed PC spike pattern. The R21 runs should report interneuron rates for every
 - The depth and interneuron controls need changes before they mean anything: depth-dependent inputs, and
   rate-matched homogeneous interneurons.
 
+## Rerun on the population library (38 cells)
+
+The library from `experiments/population/library` (PR 18) replaces the 8 fits. It uses every `use == 1` cell with
+a recorded soma depth: 38 of 41 (`models_library.json`). Each model drives about 1/38 of the PCs
+(`populations_library/`). Their rheobases span 40–350 pA (median 130 pA), and one cell (323452245) never fires up
+to 600 pA (`results_library/fig0_models.png`). The homogeneous network, the GLIF network and the in vivo data are
+the same as above. Interneuron controls (d) were not rerun.
+
+- **Tuned gains:** heterogeneous 0.810 (1.39 Hz on 0–3 s, target 1.36). Rheobase-matched 0.881 (1.36 Hz). The
+  depth-placed run uses the shuffled gain. The library has more low-rheobase cells than the 8 fits, so less gain
+  is needed than with the 8 fits (1.284).
+
+| condition | mean (Hz) | silent | top-10% share | p99 (Hz) | max (Hz) |
+|---|---|---|---|---|---|
+| in vivo, Neuropixels L2/3 RS (n = 595) | 1.44 | 0.34 | **0.50** | **12.1** | 23.3 |
+| homogeneous ANN PCs | 1.58 | 0.28 | 0.30 (0.29–0.33) | 6.0 (5.2–6.4) | 10.4 |
+| library, shuffled | 1.41 | 0.70 | **0.63** (0.57–0.70) | **12.4** (10.4–14.0) | 24.4 |
+| library, depth-placed | 1.41 | 0.70 | 0.63 | 12.4 | 24.4 |
+| library, rheobase-matched | 1.58 | 0.33 | 0.39 (0.36–0.42) | 8.4 (6.9–10.4) | 43.6 |
+
+**(a) With the library, the upper tail matches in vivo, but too many cells go silent.** The 99th percentile
+(12.4 vs 12.1 Hz) and the maximum (24.4 vs 23.3 Hz) now match the Neuropixels data, and the tail of the CCDF lies
+on the in vivo curve above about 10 Hz (`results_library/fig1_distributions.png`). The 8 fits could not do this
+(p99 7.6 Hz). The top-10% share overshoots (0.63 vs 0.50), because 70% of PCs are silent vs 34% in vivo: 20 of
+the 38 models are more than 90% silent in the network. Part of that gap may be in the data, since spike-sorted
+units under-sample silent cells. So the real spread of intrinsic properties is enough to make the in vivo tail
+at a matched mean, and if anything it makes the distribution too skewed.
+
+**(b) Rank test: intrinsic identity wins more clearly.** Model identity explains 81% of the variance in log rate,
+input drive 5%, and both 86%. Rate vs −rheobase gives Spearman 0.76. The 4 models with rheobase ≤ 50 pA fire 61% of
+all spikes and supply 83% of the top-10% cells. The top-10% cells sit at the 68th percentile of input drive
+(`results_library/fig2_rank_test.png`).
+
+**Rheobase-matched: again, rheobase carries most of it.** Scaling each PC's input by its model's rheobase / 90 pA
+brings the silent fraction to 33% and the top-10% share to 0.39. The rank test flips (input drive R² 0.82, model
+identity 0.06, rate vs −rheobase Spearman 0.05). What is left of the heterogeneity (f-I gain, adaptation) still
+lengthens the tail more than with the 8 fits: p99 8.4 vs 6.0 Hz homogeneous, and 14 cells above 20 Hz, up to
+43.6 Hz (all of model 473611755, a high-gain cell).
+
+**(c) Depth placement is still null for the distribution, but now shows a depth trend.** The library's rheobase
+falls with depth (PR 18), so depth-placed PCs fire more with depth (rate vs depth Spearman 0.27, vs −0.01 shuffled),
+in uneven steps because each model fills a contiguous depth band (`results_library/fig3_depth.png`). The
+distribution is unchanged, because the Allen inputs do not depend on depth.
+
+**Interneuron rates:** Pvalb 3.7, Sst 3.9, Htr3a 2.7 Hz with the library (6.7, 5.6, 3.0 Hz homogeneous;
+rheobase-matched 6.3, 5.4, 3.0 Hz). The drop follows the silent PCs, as with the 8 fits but larger.
+
+**What changes for the R21.** The heterogeneity hypothesis now passes a first quantitative test with real Allen
+cells: the measured spread of L2/3 PC excitability reproduces the in vivo upper tail at a matched mean, and
+rheobase is the main carrier. The open issue is the silent fraction, which the R21 should treat as a second
+target, alongside the top-10% share and the tail. A candidate explanation is that slice rheobases overstate the
+in vivo spread (in vivo depolarization and neuromodulation). The new recordings, with evoked L1 and L2/3 input,
+can test whether input processing narrows or widens that spread.
+
 ## Preview with the earlier PC→IN setting
 
 A matched pair was first run with every PC→IN synapse at 0.82, the PR 9 rule before the PR 14 fix
@@ -132,6 +187,13 @@ python experiments/aim2_controls/analyze.py --runs experiments/aim2_controls/run
 python experiments/aim2_controls/plot_results.py --analysis experiments/aim2_controls/results --out experiments/aim2_controls/results
 ```
 
-`runs.json` lists the spike files used. They live outside git and are copied to the project files under
+Library rerun, with the other arguments as above: `characterize_models.py --models models_library.json
+--out results_library/models`,
+`build_populations.py --models models_library.json --excitability results_library/models/excitability.json
+--ref-rheobase 90 --out populations_library`, then the same tune/run/analyze/plot commands with
+`populations_library/`, `--models models_library.json`, `--excitability results_library/models/excitability.json`,
+`runs_library.json` and `--out results_library` (`plot_results.py` also takes `--pops populations_library`).
+
+`runs.json` and `runs_library.json` list the spike files used. They live outside git and are copied to the project files under
 `aim2_controls/`. The rheobase-matched control (`populations/rheo_matched.json`) gives each PC an input scale of
 its model's rheobase / 90 pA, which removes the threshold difference (results above).

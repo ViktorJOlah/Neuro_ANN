@@ -41,6 +41,7 @@ def main():
     p = argparse.ArgumentParser()
     p.add_argument("--analysis", required=True); p.add_argument("--out", required=True)
     p.add_argument("--excitability", default=os.path.join(HERE, "results", "models", "excitability.json"))
+    p.add_argument("--pops", default=os.path.join(HERE, "populations"))
     a = p.parse_args()
     S = json.load(open(os.path.join(a.analysis, "summary.json")))
     R = dict(np.load(os.path.join(a.analysis, "pc_rates_grating.npz")))
@@ -91,23 +92,27 @@ def main():
         rh = [q["rheobase_pa"] for q in per]
         ax.scatter(rh, [q["mean_hz"] for q in per], s=[600 * q["share_of_top10_cells"] + 10 for q in per], color=COL[key],
                    edgecolor="white", lw=2, zorder=3)
-        for q in per:
-            if q["share_of_top10_cells"] >= 0.05:
-                ax.annotate(f"{q['model']}: {100 * q['share_of_top10_cells']:.0f}% of top 10%", (q["rheobase_pa"], q["mean_hz"]),
-                            xytext=(12, -3), textcoords="offset points", fontsize=7, color=INK)
+        big = sorted([q for q in per if q["share_of_top10_cells"] >= 0.05], key=lambda q: -q["mean_hz"])
+        ytop = max(q["mean_hz"] for q in per)
+        for i, q in enumerate(big):   # labels in a column on the right, joined to their points
+            ax.annotate(f"{q['model']}: {100 * q['share_of_top10_cells']:.0f}% of top 10%", (q["rheobase_pa"], q["mean_hz"]),
+                        xytext=(0.42, 0.93 - 0.075 * i), textcoords="axes fraction", fontsize=7, color=INK, va="center",
+                        arrowprops=dict(arrowstyle="-", color=MUTED, lw=0.5))
         low = [q for q in per if q["share_of_top10_cells"] < 0.05]
-        ax.text(0.97, 0.22, f"{len(low)} other models:\n<0.5 Hz, ≤1% of top 10%", transform=ax.transAxes, ha="right",
+        ax.text(0.97, 0.22, f"{len(low)} other models:\neach <5% of top 10%", transform=ax.transAxes, ha="right",
                 fontsize=7, color=MUTED)
         ax.set_ylim(-0.3, max(q["mean_hz"] for q in per) * 1.15)
         ax.set(xlabel="model rheobase, 1 s steps (pA)", ylabel="mean rate in the network (Hz)",
                title="A  Rate by model (area = share of top-10% cells)")
         ax = axs[1]
-        pops = np.load(os.path.join(HERE, "populations", "assign_shuffled.npy"))
+        pops = np.load(os.path.join(a.pops, "assign_shuffled.npy"))
         h, r = R["homogeneous"], R[key]
         jit = np.random.default_rng(0).uniform(-0.2, 0.2, (2, len(h)))
-        order = np.argsort(rh)
-        for lab, js, col in (("most excitable model (%s)" % per[order[0]]["model"], [order[0]], "#eb6834"),
-                             ("other models", list(order[1:]), "#9a9a9a")):
+        hi = [j for j, q in enumerate(per) if q["share_of_top10_cells"] >= 0.05]
+        lo = [j for j in range(len(per)) if j not in hi]
+        lab_hi = ("most excitable model (%s)" % per[hi[0]]["model"]) if len(hi) == 1 else \
+            "the %d models supplying ≥5%% of the top 10%%" % len(hi)
+        for lab, js, col in ((lab_hi, hi, "#eb6834"), ("other models", lo, "#9a9a9a")):
             m = np.isin(pops, js)
             ax.scatter(h[m] + 0.2 + jit[0][m], r[m] + 0.2 + jit[1][m], s=2, alpha=0.25, color=col, lw=0, label=lab)
         ax.set(xscale="log", yscale="log", xlabel="same PC in the homogeneous network + 0.2 (Hz)",
@@ -206,14 +211,23 @@ def main():
     amps = np.array(E["amps_pa"])
     mus = np.array(E["ou_mu_pa"])
     pal = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#6250d6", "#e34948"]
+    many = len(E["models"]) > len(pal)
+    if many:   # library: color by rheobase (light = high rheobase), no per-cell legend
+        rh = np.array([m["rheobase_pa"] if m["rheobase_pa"] == m["rheobase_pa"] else 600.0 for m in E["models"].values()])
+        cm = plt.get_cmap("Blues")
+        z = (rh.max() - rh) / max(rh.max() - rh.min(), 1e-9)
+        pal = [cm(0.3 + 0.7 * v) for v in z]
+    lw = 1.2 if many else 2
     for i, (n, m) in enumerate(E["models"].items()):
-        axs[0].plot(amps, m["fi_hz"], color=pal[i], lw=2, label=n)
+        axs[0].plot(amps, m["fi_hz"], color=pal[i], lw=lw, label=n)
         sg = sorted(m["ou_rates_hz"], key=float)[-1]
-        axs[1].plot(mus, m["ou_rates_hz"][sg], color=pal[i], lw=2, label=n)
-    axs[0].set(xlabel="1 s step (pA)", ylabel="rate (Hz)", title="A  f-I of the 8 fitted models")
+        axs[1].plot(mus, m["ou_rates_hz"][sg], color=pal[i], lw=lw, label=n)
+    axs[0].set(xlabel="1 s step (pA)", ylabel="rate (Hz)",
+               title="A  f-I of the %d fitted models%s" % (len(E["models"]), " (darker = lower rheobase)" if many else ""))
     axs[1].set(xlabel="mean of fluctuating input (pA), SD %s pA, τ 5 ms" % sg, ylabel="rate (Hz)",
                title="B  Rate under network-like fluctuating input")
-    axs[0].legend(frameon=False, fontsize=7.5, title="specimen", title_fontsize=8)
+    if not many:
+        axs[0].legend(frameon=False, fontsize=7.5, title="specimen", title_fontsize=8)
     for ax in axs:
         style(ax)
     fig.savefig(os.path.join(a.out, "fig0_models.png"), dpi=150, bbox_inches="tight")

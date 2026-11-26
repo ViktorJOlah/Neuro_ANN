@@ -100,7 +100,8 @@ def main():
     # ---- rank test (b) and depth (c) per heterogeneous run --------------------------------------
     ou_mu = np.array(exc["ou_mu_pa"])
     ex = exc["models"]
-    rheo = np.array([ex[n]["rheobase_pa"] for n in names])
+    rheo = np.array([ex[n]["rheobase_pa"] for n in names], float)
+    rheo = np.where(np.isnan(rheo), 600.0, rheo)   # a model that never fires up to the max step
     homog = R.get("homogeneous")
     rank = {}
     from scipy.stats import spearmanr

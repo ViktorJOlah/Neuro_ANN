@@ -43,6 +43,8 @@ def main():
     p.add_argument("--out", required=True); p.add_argument("--models", default=os.path.join(HERE, "models.json"))
     p.add_argument("--excitability", default=os.path.join(HERE, "results", "models", "excitability.json"))
     p.add_argument("--seed", type=int, default=0)
+    p.add_argument("--ref-rheobase", type=float, default=None,
+                   help="rheobase (pA) the rheo_matched scale divides by (default: model 0's, the Standard in models.json)")
     a = p.parse_args()
     os.makedirs(a.out, exist_ok=True)
     spec = json.load(open(a.models))["models"]
@@ -61,7 +63,10 @@ def main():
     rng = np.random.default_rng(a.seed)
     shuffled = rng.permutation(depth_assign)  # same counts, random place
     rheo = np.array([exc[m["name"]]["rheobase_pa"] for m in spec], float)
-    scale = (rheo / rheo[0])[shuffled].astype(np.float32)   # model 0 is the Standard
+    # a model that never fires on 0-600 pA steps gets 600 pA (the edge of the tested range)
+    rheo = np.where(np.isnan(rheo), 600.0, rheo)
+    ref = rheo[0] if a.ref_rheobase is None else a.ref_rheobase   # models.json: model 0 is the Standard (90 pA)
+    scale = (rheo / ref)[shuffled].astype(np.float32)
 
     np.save(os.path.join(a.out, "assign_homogeneous.npy"), np.zeros(n, np.int64))
     np.save(os.path.join(a.out, "assign_depth.npy"), depth_assign)
@@ -79,7 +84,7 @@ def main():
             "depth_bins": [{"model": spec[order_models[r]]["name"], "normalized_depth": spec[order_models[r]]["normalized_depth"],
                             "network_depth_um": [lo[r], hi[r]]} for r in range(K)],
             "rheobase_pa": dict(zip([m["name"] for m in spec], rheo.tolist())),
-            "rheo_input_scale": dict(zip([m["name"] for m in spec], (rheo / rheo[0]).tolist()))}
+            "rheo_input_scale": dict(zip([m["name"] for m in spec], (rheo / ref).tolist()))}
     json.dump(info, open(os.path.join(a.out, "populations.json"), "w"), indent=1)
     print(json.dumps(info, indent=1))
 
