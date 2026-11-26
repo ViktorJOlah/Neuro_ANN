@@ -1,0 +1,7 @@
+{
+ "g_scale": 3.65e-05,
+ "gi_scale": 0.0001095,
+ "cell": "82141",
+ "target": "GLIF rate of this cell in the full V1 network (1.33 Hz over 3 s)",
+ "note": "In vitro constrained version. Rate jumps in whole spikes over 3 s: 3.6e-5 1.0 Hz, 3.65e-5 1.0, 3.675e-5 1.67, 3.7e-5 1.67, 3.8e-5 2.0, 4.0e-5 2.67. 3.65e-5 (1.0 Hz, one spike short of 1.33) is used. gi_scale = 3 x g_scale."
+}
