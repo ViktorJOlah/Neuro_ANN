@@ -1,0 +1,241 @@
+{
+ "_note": "Densities in S/cm2. Distance specs: {type: exp|gauss|step|tuft}, see l23_cell._dist_value. Values marked in the README as fitted were tuned by validation/tune.py against validation/targets.json.",
+ "morphology": "502359001.swc",
+ "celsius": 34.0,
+ "dt": 0.025,
+ "v_init": -80.0,
+ "settle_ms": 400.0,
+ "ena": 53.0,
+ "ek": -95.0,
+ "cao": 2.0,
+ "tuft_depth_um": 100.0,
+ "fourap": 0.2,
+ "fourap_kv3": 0.3,
+ "passive": {
+  "Ra": 120.0,
+  "cm": 1.0,
+  "g_pas": 6.5e-05,
+  "e_pas": -80.0,
+  "spine_factor": 1.5,
+  "spine_start_um": 30.0
+ },
+ "axon": {
+  "hillock_L_d": [
+   15.0,
+   1.6
+  ],
+  "ais_L_d": [
+   35.0,
+   1.0
+  ],
+  "myelin_L_d": [
+   500.0,
+   0.8
+  ],
+  "myelin_cm": 0.04,
+  "myelin_g_pas": 1e-06
+ },
+ "hcn": {
+  "mech": "Ih_Olah",
+  "vhalf": -85.0,
+  "k": 6.85,
+  "tauscale": 3.0,
+  "ehcn": -45.0
+ },
+ "channels": {
+  "soma": [
+   "NaTs2_t",
+   "Nap_Et2",
+   "Kv3_1",
+   "K_Pst",
+   "K_Tst",
+   "Im",
+   "SK",
+   "Ca_HVA",
+   "Ca_LVA",
+   "CaDynamics",
+   "Ih_Olah"
+  ],
+  "hillock": [
+   "NaTa_t",
+   "Kv3_1",
+   "K_Pst"
+  ],
+  "ais": [
+   "NaTa_t",
+   "Nap_Et2",
+   "Kv3_1",
+   "K_Pst"
+  ],
+  "basal": [
+   "NaTs2_t",
+   "Nap_Et2",
+   "Kv3_1",
+   "KA_L23",
+   "Im",
+   "SK",
+   "Ca_HVA",
+   "Ca_LVA",
+   "CaDynamics",
+   "Ih_Olah"
+  ],
+  "apical": [
+   "NaTs2_t",
+   "Kv3_1",
+   "KA_L23",
+   "Im",
+   "SK",
+   "Ca_HVA",
+   "Ca_LVA",
+   "CaDynamics",
+   "Ih_Olah",
+   "K_Pst"
+  ]
+ },
+ "densities": {
+  "soma": {
+   "gbar_NaTs2_t": 0.3,
+   "gbar_Nap_Et2": 0.0001,
+   "gbar_Kv3_1": 0.3,
+   "gbar_K_Pst": 0.002,
+   "gbar_K_Tst": 0.02,
+   "gbar_Im": 0.0004,
+   "gbar_SK": 0.0005,
+   "gbar_Ca_HVA": 0.0005,
+   "gbar_Ca_LVA": 0.001,
+   "gamma_CaDynamics": 0.05,
+   "decay_CaDynamics": 80.0,
+   "gbar_Ih_Olah": {
+    "type": "gauss",
+    "base": 0.0,
+    "peak": 0.00015,
+    "mu": 0.0,
+    "sd": 42.5
+   }
+  },
+  "hillock": {
+   "gbar_NaTa_t": 1.0,
+   "gbar_Kv3_1": 0.5,
+   "gbar_K_Pst": 0.05
+  },
+  "ais": {
+   "gbar_NaTa_t": 4.0,
+   "gbar_Nap_Et2": 0.002,
+   "gbar_Kv3_1": 1.0,
+   "gbar_K_Pst": 0.1
+  },
+  "basal": {
+   "gbar_NaTs2_t": 0.02,
+   "gbar_Nap_Et2": {
+    "type": "step",
+    "d0": 70.0,
+    "inner": 0.0,
+    "outer": 0.0001
+   },
+   "gbar_Kv3_1": 0.004,
+   "gbar_Im": 0.0002,
+   "gbar_SK": 0.0002,
+   "gbar_Ca_HVA": {
+    "type": "gauss",
+    "base": 5e-05,
+    "peak": 0.0002,
+    "mu": 80.0,
+    "sd": 50.0
+   },
+   "gbar_Ca_LVA": {
+    "type": "gauss",
+    "base": 0.0002,
+    "peak": 0.0006,
+    "mu": 80.0,
+    "sd": 50.0
+   },
+   "gamma_CaDynamics": 0.002,
+   "decay_CaDynamics": 50.0,
+   "gbar_Ih_Olah": {
+    "type": "gauss",
+    "base": 0.0,
+    "peak": 0.00015,
+    "mu": 0.0,
+    "sd": 42.5
+   },
+   "gbar_KA_L23": 0.0
+  },
+  "apical": {
+   "gbar_NaTs2_t": {
+    "type": "exp",
+    "g0": 0.1,
+    "lam": 150.0,
+    "floor": 0.005
+   },
+   "gbar_Kv3_1": {
+    "type": "tuft",
+    "inner": 0.004,
+    "outer": 0.01
+   },
+   "gbar_Im": 0.0002,
+   "gbar_SK": 5e-05,
+   "gbar_Ca_HVA": {
+    "type": "gauss_tuft",
+    "base": 5e-05,
+    "peak": 0.0002,
+    "mu": 80.0,
+    "sd": 50.0,
+    "tuft": 0.002
+   },
+   "gbar_Ca_LVA": {
+    "type": "gauss_tuft",
+    "base": 0.0002,
+    "peak": 0.0006,
+    "mu": 80.0,
+    "sd": 50.0,
+    "tuft": 0.005
+   },
+   "gamma_CaDynamics": 0.002,
+   "decay_CaDynamics": 50.0,
+   "gbar_Ih_Olah": {
+    "type": "gauss",
+    "base": 0.0,
+    "peak": 0.00015,
+    "mu": 0.0,
+    "sd": 42.5
+   },
+   "gbar_KA_L23": {
+    "type": "tuft",
+    "inner": 0.01,
+    "outer": 0.03
+   },
+   "gbar_K_Pst": {
+    "type": "tuft",
+    "inner": 0.0,
+    "outer": 0.01
+   }
+  }
+ },
+ "synapse": {
+  "g_ampa_uS": 0.0005,
+  "nmda_ratio": {
+   "type": "gauss",
+   "base": 0.3,
+   "peak": 1.5,
+   "mu": 0.0,
+   "sd": 127.0
+  },
+  "ampa_tau1": 0.2,
+  "ampa_tau2": 2.0,
+  "nmda_tau1": 2.0,
+  "nmda_tau2": 50.0,
+  "nmda_cafrac": 0.1,
+  "gaba_tau1": 0.5,
+  "gaba_tau2": 8.0,
+  "e_gaba": -75.0,
+  "g_gaba_uS": 0.001,
+  "nmda_vshift": -10.0
+ },
+ "trunk_min_diam_um": 1.5,
+ "_notes": {},
+ "tuft_ca_scale": 1.0,
+ "_tuft_note": "Tuft Ca2+ zone knobs: tuft_ca_scale multiplies tuft HVA/LVA; tuft_ka_scale, tuft_kv3_scale, tuft_kd_scale multiply the tuft KA_L23 (Kv4), Kv3.1 and K_Pst (slow D-like, 4-AP sensitive) brake. In vivo constrained: 1/1/1/0 (plateaus come easily). In vitro constrained: 1/1/1/4 (a slow K brake lets bAPs and the critical-frequency boost through but cuts plateaus short; dendritic 4-AP unmasks the full wave).",
+ "tuft_ka_scale": 1.0,
+ "tuft_kv3_scale": 1.0,
+ "tuft_kd_scale": 0.0
+}

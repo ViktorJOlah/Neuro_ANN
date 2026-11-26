@@ -245,11 +245,15 @@ class L23Cell:
         if t == "step":           # value beyond d0, else inner
             return spec["outer"] if d >= spec["d0"] else spec.get("inner", 0.0)
         if t == "gauss_tuft":     # proximal Gaussian bump (bAP Ca2+ peak) + a tuft value (Ca2+ zone)
-            if self._is_tuft(sec, seg.x):
-                return spec["tuft"]
+            if self._is_tuft(sec, seg.x):          # tuft Ca2+ zone, scaled by tuft_ca_scale (zone strength)
+                return spec["tuft"] * self.p.get("tuft_ca_scale", 1.0)
             return spec["base"] + spec["peak"] * np.exp(-0.5 * ((d - spec["mu"]) / spec["sd"]) ** 2)
         if t == "tuft":           # value where height > tuft threshold, else inner
-            return spec["outer"] if self._is_tuft(sec, seg.x) else spec.get("inner", 0.0)
+            if self._is_tuft(sec, seg.x):          # tuft K+ brake: KA (Kv4), K_P (slow D-like) and Kv3.1 scaled separately
+                key = ("tuft_ka_scale" if "KA" in name else "tuft_kd_scale" if "K_Pst" in name
+                       else "tuft_kv3_scale")
+                return spec["outer"] * self.p.get(key, 1.0)
+            return spec.get("inner", 0.0)
         raise ValueError(t)
 
     def _is_tuft(self, sec, x):

@@ -88,7 +88,8 @@
    "Ca_HVA",
    "Ca_LVA",
    "CaDynamics",
-   "Ih_Olah"
+   "Ih_Olah",
+   "K_Pst"
   ]
  },
  "densities": {
@@ -202,6 +203,11 @@
     "type": "tuft",
     "inner": 0.01,
     "outer": 0.03
+   },
+   "gbar_K_Pst": {
+    "type": "tuft",
+    "inner": 0.0,
+    "outer": 0.01
    }
   }
  },
@@ -226,5 +232,10 @@
   "nmda_vshift": -10.0
  },
  "trunk_min_diam_um": 1.5,
- "_notes": {}
+ "_notes": {},
+ "tuft_ca_scale": 1.0,
+ "_tuft_note": "Tuft Ca2+ zone knobs: tuft_ca_scale multiplies tuft HVA/LVA; tuft_ka_scale, tuft_kv3_scale, tuft_kd_scale multiply the tuft KA_L23 (Kv4), Kv3.1 and K_Pst (slow D-like, 4-AP sensitive) brake. In vivo constrained: 1/1/1/0 (plateaus come easily). In vitro constrained: 1/1/1/4 (a slow K brake lets bAPs and the critical-frequency boost through but cuts plateaus short; dendritic 4-AP unmasks the full wave).",
+ "tuft_ka_scale": 1.0,
+ "tuft_kv3_scale": 1.0,
+ "tuft_kd_scale": 4.0
 }
