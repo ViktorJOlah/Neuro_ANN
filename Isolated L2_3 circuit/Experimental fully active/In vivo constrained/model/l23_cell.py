@@ -272,6 +272,7 @@ class L23Cell:
                     for seg in sec:
                         d = h.distance(seg.x, sec=sec)
                         setattr(seg, mech_param, self._dist_value(spec, d, key, sec, seg))
+        self._branch_na()
         # global HCN kinetics (Ih_Olah: Olah et al. 2025 eLife)
         hm = p["hcn"]["mech"]
         for sec in h.allsec():
@@ -290,10 +291,42 @@ class L23Cell:
                         if hasattr(mech, attr):
                             self._base[(sec.name(), seg.x, mech.name())] = getattr(mech, attr)
 
+    def _branch_na(self):
+        """Thin-branch Na+ (Smith et al. 2013 in vivo constraint). params['branch_na'] =
+        {scale, start_um, hotspot_g, hotspot_len_um, min_len_um, vshm, vshh}: NaTs2_t on non-trunk dendrites
+        beyond start_um is multiplied by scale (stronger bAP attenuation into thin branches), and every branch
+        section longer than min_len_um gets a Na+ hot spot (NaDend, hotspot_g S/cm2 over hotspot_len_um at its
+        centre, as in the Smith et al. 2013 model). NaDend has the NaTs2_t kinetics with activation and
+        inactivation shifted by vshm / vshh mV, so it can still fire spikelets on a depolarised NMDA plateau.
+        Optional sub-dicts "basal", "apical" (non-trunk apical incl. tuft) and "tuft" (applied after "apical") override any key."""
+        b = self.p.get("branch_na")
+        if not b:
+            return
+        trunk = set(self.trunk)
+        basal = set(self.basal)
+        base = b
+        for sec in self.dends:
+            if sec in trunk:
+                continue
+            # optional per-region overrides: branch_na["apical"] / branch_na["basal"] = {key: value}
+            region = "basal" if sec in basal else ("tuft" if self._is_tuft(sec, 0.5) else "apical")
+            b = dict(base); b.update(base.get("apical", {}) if region == "tuft" else {}); b.update(base.get(region, {}))
+            if b.get("hotspot_g", 0) > 0:
+                sec.insert("NaDend")
+                for seg in sec:
+                    seg.gbar_NaDend = 0.0; seg.vshm_NaDend = b.get("vshm", 0.0); seg.vshh_NaDend = b.get("vshh", 0.0)
+            hot = sec.L >= b.get("min_len_um", 40.0)
+            for seg in sec:
+                d = h.distance(seg.x, sec=sec)
+                if d >= b.get("start_um", 0.0) and h.ismembrane("NaTs2_t", sec=sec):
+                    seg.gbar_NaTs2_t *= b.get("scale", 1.0)
+                if hot and b.get("hotspot_g", 0) > 0 and abs(seg.x - 0.5) * sec.L <= b.get("hotspot_len_um", 0.0) / 2:
+                    seg.gbar_NaDend = b["hotspot_g"]
+
     # ------------------------------------------------------------------ manipulations
     BLOCKS = {
         "HCN": [("Ih_Olah", 0.0), ("Ih_L23", 0.0)],
-        "TTX": [("NaTs2_t", 0.0), ("NaTa_t", 0.0), ("Nap_Et2", 0.0)],
+        "TTX": [("NaTs2_t", 0.0), ("NaTa_t", 0.0), ("Nap_Et2", 0.0), ("NaDend", 0.0)],
         "4AP": [("KA_L23", "fourap"), ("K_Tst", "fourap"), ("K_Pst", "fourap"), ("Kv3_1", "fourap_kv3")],
         "Ca": [("Ca_HVA", 0.0), ("Ca_LVA", 0.0)],
         "SK": [("SK", 0.0)],

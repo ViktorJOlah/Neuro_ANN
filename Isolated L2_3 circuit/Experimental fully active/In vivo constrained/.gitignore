@@ -3,3 +3,4 @@ arm64/
 __pycache__/
 *.pyc
 results/invivo/*.npz
+results/smith/*.npz

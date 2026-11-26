@@ -10,19 +10,23 @@ Viktor's review draft ("What we really know about L2/3 PCs", v3) and Olah, Wu, K
 V1 model. It sits next to `Standard/` but is a separate, experimental line of work: it is not an ANN and
 is not part of the R21 pipeline.
 
-First working version. Everything below is a first fit by hand, not an optimisation.
+First working version. Everything below is a first fit by hand, not an optimisation. Since 2026-11-26 the
+basal and oblique dendrites are also fitted to in vivo dendritic patch recordings (Smith et al. 2013,
+section "Dendrites in vivo" below); the sibling in vitro version is not.
 
 ## Layout
 
 | path | what |
 |---|---|
 | `morphology/502359001.swc` | Allen Cux2 L2/3 PC reconstruction (axon replaced by hillock, AIS, myelin) |
-| `mechanisms/` | Allen mod files, plus `Ih_Olah.mod`, `NMDA_Ca.mod`, `KA_L23.mod` (new) |
+| `mechanisms/` | Allen mod files, plus `Ih_Olah.mod`, `NMDA_Ca.mod`, `KA_L23.mod`, `NaDend.mod` (new) |
 | `model/l23_cell.py`, `model/params.json` | cell builder, all densities and distance rules in one json |
 | `validation/` | targets (`targets.json`, with sources), protocols and `run_validation.py` |
 | `invivo/` | input builder from the Billeh V1 network, runner, analysis, `run_all.sh` |
 | `results/validation/` | fig1-fig7 and `summary.json` |
 | `results/invivo/` | `summary.json` and space-time figures (the raw npz files are not committed; `run_all.sh` remakes them in ~4 min) |
+| `invivo/visual_drive.py`, `smith_probe.py`, `smith_suite.py` | Smith et al. 2013 tests: tuned grating drive, dendritic "pipettes", the suite |
+| `results/smith/` | Smith-style figures `fig_s1`-`fig_s4` and `smith_summary.json` (npz not committed; `smith_suite.py` remakes them in ~15 min) |
 
 ```
 cd "Isolated L2_3 circuit/Experimental fully active/In vivo constrained"
@@ -30,6 +34,7 @@ nrnivmodl mechanisms
 python validation/run_validation.py --out results/validation     # ~9 min
 python invivo/build_inputs.py        # needs the v1_point network files (see the script header)
 bash invivo/run_all.sh && python invivo/analyze_invivo.py results/invivo
+python invivo/smith_suite.py --jobs 3   # Smith et al. 2013 dendritic recordings
 ```
 
 ## Design
@@ -42,7 +47,8 @@ bash invivo/run_all.sh && python invivo/analyze_invivo.py results/invivo
 * **NMDA (Olah 2025).** `NMDA_Ca.mod`: Jahr-Stevens Mg block with a voltage shift (-10 mV, the paper's
   fitted "NMDA activation voltage"), 10% of the current carried by Ca²⁺ into `cai`. The NMDA:AMPA ratio
   is a soma-centred Gaussian (0.3 far away, 1.5 at the soma, sd 127 µm), the paper's Fig 4e best fit.
-* **Na⁺.** NaTs2 falls exponentially along the apical dendrite (λ 150 µm) so bAPs decline gradually.
+* **Na⁺.** NaTs2 falls exponentially along the apical trunk and tuft (λ 150 µm) so bAPs decline gradually
+  there. Apical obliques have none and basal branches carry Na⁺ hot spots (see "Dendrites in vivo").
   The trunk is widened to ≥1.5 µm (the reconstruction is ~0.9 µm), which the trunk needs to couple
   dendritic spikes to the soma.
 * **Ca²⁺ electrogenesis and its K⁺ brake.** HVA/LVA peak at ~80 µm (bAP Ca²⁺ hot spot) and form a
@@ -50,7 +56,8 @@ bash invivo/run_all.sh && python invivo/analyze_invivo.py results/invivo
   zone back. `4APd` (dendritic 4-AP: KA, K_T, K_P x0.2, Kv3.1 x0.3) unmasks it, as Gooch 2022 showed in
   human L2/3. In mouse this is a model prediction.
 * **Tuft knobs** in `params.json`: `tuft_ca_scale` (tuft HVA/LVA), `tuft_ka_scale`, `tuft_kv3_scale`,
-  `tuft_kd_scale` (tuft KA, Kv3.1 and slow K_P brakes). Here 1/1/1/0.
+  `tuft_kd_scale` (tuft KA, Kv3.1 and slow K_P brakes). Here 1.4/1/1/0 (tuft_ca_scale was 1.0 before the
+  Smith refit; 1.4 brings the top-down plateau threshold back to 10 Hz).
 * **Basal dendrites** have no A current. With it, clustered basal input was always sublinear; without it,
   the Branco & Häusser supralinearity appears and nothing else moved (Rin 72.7→74.1 MΩ, EPSP widths <0.5 ms).
 
@@ -66,20 +73,62 @@ Pharmacology in the code: `HCN`, `NMDA`, `AMPA`, `TTX`, `Ca`, `4AP` (whole cell)
 | tau, HCN block (ms) | ~13.5 | 12.0 |
 | L4 EPSP half-width ctrl / Cs / Cs+MK801 / MK801 (ms) | 10.1 / 23.6 / 11.8 / 9.0 | 16.1 / 25.3 / 13.5 / 9.8 |
 | L1 EPSP half-width ctrl / Cs / Cs+MK801 / MK801 (ms) | 14.3 / 16.2 / 19.9 / 13.6 | 15.0 / 20.6 / 17.4 / 13.1 |
-| bAP amplitude at 150 µm (mV) | ~75 | 78 (50 at 250 µm, 28 at 340 µm) |
-| bAP velocity (m/s) | 0.21-0.23 | 0.20 |
+| bAP amplitude at 150 µm on the trunk (mV) | ~75 | 70 (46 at 250 µm, 27 at 340 µm) |
+| bAP velocity (m/s) | 0.21-0.23 | 0.18 |
 | bAP Ca²⁺ peak distance (µm) | 50-100 | 191 (miss) |
-| current for a soma AP from a brief trunk EPSC (nA) | 1.14 | 2.6 (miss) |
-| soma APs per dendritic spike | 1-2, never ≥3 | 1 |
+| current for a soma AP from a brief trunk EPSC (nA) | 1.14 | none up to the largest tested (miss; 2.6 before the Smith refit) |
+| soma APs per dendritic spike | 1-2, never ≥3 | 0 (see above) |
 | TTX abolishes dendritic spike | yes | yes |
-| critical frequency (Hz) | 128 | tuft Ca²⁺ jumps 2.5x from 80 to 100 Hz and peaks at 140 Hz |
-| Ca²⁺ boost from 4-AP at 1 nA (mV) | unmasked (human) | 11.5 → 22.5 (4APd) |
-| basal NMDA supralinearity, proximal / distal (%) | 128 / 209 | 151 / 184 |
+| critical frequency (Hz) | 128 | tuft Ca²⁺ jumps 5x from 80 to 100 Hz and becomes a full plateau at 120 Hz |
+| Ca²⁺ boost from 4-AP at 1 nA (mV) | unmasked (human) | 13.0 → 26.0 (4APd) |
+| basal NMDA supralinearity, proximal / distal (%) | 128 / 209 | 162 / 206 |
 
 Figures: `results/validation/fig1`-`fig7`. The Ca²⁺ space-time panel (fig6) shows the three kinds of
 dendritic Ca²⁺ event the model makes: a bAP-train wave that reaches into the tuft above the critical
 frequency, a local tuft NMDA spike from 20 clustered synapses (Ca²⁺ in 19% of the tree, 2.3x the
 NMDA-blocked response, no soma AP), and a tuft-wide Ca²⁺ plateau from a trunk-end current step.
+
+## Dendrites in vivo: Smith et al. 2013
+
+Viktor asked for dendritic recordings that look like Smith, Smith, Branco & Häusser 2013 (Nature 503:115;
+whole-cell patch of thin apical dendrites of superficial mouse V1 L2/3 PCs during drifting gratings), not
+like CA1 dendrites. The slice-fitted dendrites gave CA1-like recordings: large regenerative bAPs everywhere
+and no local events. What changed (`params.json` `branch_na`, `_smith_note`):
+
+* **Apical obliques have no Na⁺** (`branch_na.scale` 0 on non-trunk, non-tuft apical). bAPs there attenuate
+  passively to ~28 mV at 100-150 µm (Smith 27 mV). Hot spots on obliques regenerated bAPs to 60-90 mV
+  whatever their threshold (tested vshm 4-15), so obliques have none.
+* **Basal branches > 40 µm get a 20 µm Na⁺ hot spot** at their centre (`NaDend.mod`, 0.3 S/cm², NaTs2
+  kinetics, activation +4 / inactivation +5 mV), as in Smith's own model. They fire local spikelets on
+  NMDA envelopes. Smith notes that superficial L2/3 cells have no prominent trunk or tuft, so their
+  recorded apical dendrites are geometrically like basal dendrites; that is why the basal branches carry
+  the match here.
+* **Trunk, tuft and basal shafts keep the slice NaTs2.** With fully passive dendrites the top-down tuft
+  plateaus vanished (none up to 20 Hz top-down); they need the bAP and Na⁺ in the trunk and tuft.
+  `tuft_ca_scale` 1.4 restores the 10 Hz threshold.
+* **Tuned visual input** (`invivo/visual_drive.py`, `calibration.json` `visual`). The Billeh edges onto
+  this cell carry no stimulus structure (L2/3 and L4 E weights onto it are ~0), so Smith's experiment
+  needs its own drive: 180 axons × 2 contacts with von Mises preferred orientations, rates locked to a
+  2 Hz drifting grating, clustered by preference on 12 branches, plus 200 untuned perisomatic GABA-A
+  inputs locked to the grating. (With 6 contacts per axon the "spikelets" were compound EPSPs that
+  survived TTX, so 2 are used.)
+* **Spike detection** in the model "pipettes" (`smith_probe.py`): prominence > 6 mV, rise > 15 mV/ms,
+  peak above -45 mV. Smith's definitions: isolated spike ≥ 50 ms from any other; bAP = isolated and
+  coincident with a soma AP.
+
+| Smith 2013 | data | model (`results/smith/smith_summary.json`) |
+|---|---|---|
+| bAP at 100-150 µm, obliques and basal (mV) | 27 | 28 (FWHM 1.8 ms; Smith 2.0) |
+| bAP at 175-300 µm (mV) | 11 | 39 (trunk end and tuft, which Smith's superficial cells lack; oblique 200 µm alone ~21) |
+| dendritic events | 20-40 mV, 100-300 ms envelopes with spikelets | yes on basal branches at the preferred orientation (fig_s1, fig_s2); obliques show small EPSPs and bAPs |
+| dendritic vs somatic spike rate | distal > soma | basal 10-11 Hz vs soma 1.5 Hz at the preferred orientation |
+| orientation tuning of dendritic bursts | tuned, same preference as the soma | yes (fig_s4) |
+| MK-801 | abolishes bursts | abolishes bursts and bAPs (soma silent, see "NMDA carries most of the drive") |
+| -50 pA into the dendrite | bursts -68%, bAPs -30% | bursts -89%, bAPs -71% (too strong: distal Rin 530-650 MΩ vs Smith's 100-300) |
+
+Remaining misses: the dendritic input resistance is 2-3x Smith's, so the hyperpolarisation test
+overshoots; obliques have no local spikes; and the somatic rate averaged over the whole run (0.5 Hz with
+grey screen) is below Smith's 1.5 Hz.
 
 ## In vivo-like input
 
@@ -89,19 +138,21 @@ NMDA-blocked response, no soma AP), and a tuft-wide Ca²⁺ plateau from a trunk
 the soma; L2/3 anywhere outside the tuft; background everywhere; Pvalb perisomatic; Sst distal apical;
 L1 Htr3a in the tuft. The Billeh network has no top-down cortical input, so a synthetic tuft stream
 (100 Poisson inputs at 0-20 Hz) is swept. The conductance scale (3.6e-5 µS per pA) was set so cell 82141
-fires at its GLIF rate (1.33 Hz). The other two cells then come out at 0.67 Hz (GLIF 0.67) and
-3.3 Hz (GLIF 4.0) with no further tuning.
+fired at its GLIF rate (1.33 Hz) before the Smith refit (1.0 Hz now). The other two cells then came out at 0.67 Hz (GLIF 0.67) and
+3.3 Hz (GLIF 4.0) with no further tuning (0.33 and 2.33 Hz now).
 
 | cell 82141, 3 s | rate (Hz) | soma Vm | tuft Ca²⁺ events/s | tuft plateaus |
 |---|---|---|---|---|
-| control | 1.33 | -66.6 ± 3.6 | 1.0 (peak 144 nM) | none |
-| top-down 5 Hz | 2.33 | -65.9 | 1.3 (224 nM) | none |
-| top-down 10 Hz | 11.3 | -64.9 | 1.7 (959 nM) | yes, 300 ms tuft plateau driving a burst |
-| top-down 20 Hz | 25.0 | -61.4 | 1.3 (2.7 µM) | yes |
-| HCN block | 1.0 | -66.9 | 0.7 | none |
-| HCN block, top-down 10 Hz | 11.7 | -65.4 | 1.7 | yes |
+| control | 1.0 | -66.6 ± 3.2 | 1.0 (peak 108 nM) | none |
+| top-down 5 Hz | 1.33 | -65.7 | 1.3 (192 nM) | none |
+| top-down 10 Hz | 12.0 | -64.4 | 1.7 (1.2 µM) | yes, 300 ms tuft plateau driving a burst |
+| top-down 20 Hz | 23.0 | -61.7 | 1.0 (3.1 µM) | yes |
+| HCN block | 1.0 | -67.4 | 1.0 | none |
+| HCN block, top-down 10 Hz | 12.0 | -65.0 | 1.7 | yes |
 | NMDA block (any top-down) | 0 | -74.5 | 0 | none |
-| dendritic 4-AP | 28.7 | -63.9 | plateaus | constant |
+| dendritic 4-AP | 32.7 | -58.6 | plateaus | constant |
+
+(After the Smith refit. Cells 81559 / 80733: 0.33 / 2.33 Hz.)
 
 What this first test says:
 
@@ -114,16 +165,16 @@ What this first test says:
 3. **Top-down input sets a threshold for tuft Ca²⁺ plateaus.** At 10 Hz top-down input, a ~300 ms tuft
    plateau appears (µM Ca²⁺ across the tuft) and drives a high-frequency burst at the soma
    (`results/invivo/spacetime_cell82141_control_td10_s0.png`). At 5 Hz there are none. This is the
-   "dendritic Ca²⁺ wave" regime. The rate jump (2.3 → 11 Hz) is steep.
-4. **HCN block barely changes in vivo firing** (1.33 → 1.0 Hz), even though it widens unitary EPSPs.
-5. **Dendritic 4-AP makes the cell hyperexcitable** (29-38 Hz, tuft plateaus all the time). So the K⁺
+   "dendritic Ca²⁺ wave" regime. The rate jump (1.3 → 12 Hz) is steep.
+4. **HCN block barely changes in vivo firing** (1.0 → 1.0 Hz), even though it widens unitary EPSPs.
+5. **Dendritic 4-AP makes the cell hyperexcitable** (33-40 Hz, tuft plateaus all the time). So the K⁺
    brake is what keeps the tuft Ca²⁺ zone quiet in this model.
 
 ## Known gaps and limitations
 
 * L4 control EPSPs are too wide (16 vs 10 ms) and the L1 HCN effect is too big (20.6 vs 16.2 ms).
 * The bAP Ca²⁺ peak sits at ~190 µm (the tuft Ca²⁺ zone), not 50-100 µm.
-* The dendritic current threshold is 2.6 nA, not 1.14 nA. No doublets come from brief dendritic currents,
+* A brief trunk-end current no longer fires a soma AP at all (1.14 nA in data, 2.6 nA before the Smith refit). No doublets come from brief dendritic currents,
   but bursts and doublets do appear in vivo during plateaus.
 * Once triggered, the tuft Ca²⁺ plateau is close to all-or-none and lasts as long as its drive. The review
   says rodent L2/3 Ca²⁺ electrogenesis is weak, so the tuft Ca zone may be too strong in control.
