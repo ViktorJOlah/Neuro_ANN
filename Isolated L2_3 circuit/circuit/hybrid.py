@@ -378,13 +378,15 @@ class NestInterneurons:
 
 
 def run(prep, standard_dir, gain, tstop, out, threads=1, log_every=100, replay_pc=None, probe=0,
-        pc_to_in_gain=None, population=None):
+        pc_to_in_gain=None, population=None, front_jit=True):
     """Run the hybrid circuit. ``gain`` multiplies every synapse onto a PC; ``pc_to_in_gain`` every
     PC -> interneuron synapse (float or {class: factor}; None = the same as ``gain``, the PR 9 rule). ``replay_pc``: an l23 spikes file whose PC spikes replace the ANN (a
     check of the loop: with the GLIF network's own PC spikes, the interneurons must reproduce it).
     ``probe``: record the synaptic current of the first ``probe`` PCs at 1 ms.
     ``population``: a population JSON (``population.py``) giving each PC its own fitted model and,
-    optionally, its own input scale; without it every PC is the Standard."""
+    optionally, its own input scale; without it every PC is the Standard.
+    ``front_jit``: XLA-compile the CNN-LSTM front end (the default). On some GPUs the non-XLA path,
+    which can use cuDNN's fused LSTM, is faster; both give the same model."""
     sys.path.insert(0, os.path.abspath(standard_dir))
     import standard_model as sm
     from .pc_layer import BatchedStandard
@@ -415,9 +417,9 @@ def run(prep, standard_dir, gain, tstop, out, threads=1, log_every=100, replay_p
         models, assign, in_scale = read_population(population)
         assert len(assign) == n_pc, "population assignment must cover every PC of the prep"
         I0 = gain * np.asarray(I_ext[0], np.float32) * (1.0 if in_scale is None else in_scale)
-        cells = MixedStandard(models, assign, standard_dir, I_first=I0)
+        cells = MixedStandard(models, assign, standard_dir, I_first=I0, jit=front_jit)
     elif not replay_pc:
-        cells = BatchedStandard(sm.load(standard_dir), n_pc, I_first=gain * np.asarray(I_ext[0], np.float32))
+        cells = BatchedStandard(sm.load(standard_dir), n_pc, I_first=gain * np.asarray(I_ext[0], np.float32), jit=front_jit)
     probe_I = np.zeros((T, probe), np.float32)
     pc_spk, in_spk = [], []
     I_mean = np.zeros(T, np.float32)
@@ -467,7 +469,8 @@ def run(prep, standard_dir, gain, tstop, out, threads=1, log_every=100, replay_p
     if probe:
         np.save(os.path.join(out, "probe_current.npy"), probe_I)
     info = {"gain": gain, "pc_to_in_gain": pc_to_in_gain, "tstop": tstop,
-            "population": os.path.abspath(population) if population else None, "wall_s": time.time() - t_start, "timers_s": timers,
+            "population": os.path.abspath(population) if population else None, "front_jit": bool(front_jit),
+            "wall_s": time.time() - t_start, "timers_s": timers,
             "pc_rate_hz": len(P) / n_pc / (T / 1000), "interneuron_rate_hz": len(Q) / n_in / (T / 1000),
             "pc_spikes": int(len(P)), "interneuron_spikes": int(len(Q))}
     with open(os.path.join(out, "run.json"), "w") as f:
@@ -687,6 +690,8 @@ def main(argv=None):
     b.add_argument("--pc-to-in-gain", help="factor on PC -> interneuron synapses: a number or Pvalb=..,Sst=..,Htr3a=.. "
                    "(default: same as --gain)")
     b.add_argument("--population", help="population JSON: a fitted model (and input scale) per PC")
+    b.add_argument("--no-front-jit", action="store_true", help="run the CNN-LSTM front end without XLA (try on GPU)")
+    b.add_argument("--log-every", type=int, default=100, help="print progress every N ms")
     c = sp.add_parser("tune")
     c.add_argument("--prep", required=True); c.add_argument("--standard-dir", required=True)
     c.add_argument("--reference", required=True); c.add_argument("--out", required=True)
@@ -708,7 +713,8 @@ def main(argv=None):
         prepare(x.config, x.extract_dir, x.v1ext_spikes, x.out, x.tstop)
     elif x.cmd == "run":
         run(x.prep, x.standard_dir, x.gain, x.tstop, x.out, x.threads, replay_pc=x.replay_pc, probe=x.probe,
-            pc_to_in_gain=parse_gain(x.pc_to_in_gain), population=x.population)
+            pc_to_in_gain=parse_gain(x.pc_to_in_gain), population=x.population,
+            front_jit=not x.no_front_jit, log_every=x.log_every)
     elif x.cmd == "report":
         report(x.prep, x.extract_dir, x.reference, x.hybrid_spikes, x.out, x.tune_json, x.tstop,
                previous_spikes=x.previous_spikes)
