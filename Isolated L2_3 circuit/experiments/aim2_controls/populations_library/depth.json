@@ -1,0 +1,157 @@
+{
+ "models": [
+  {
+   "name": "314857059",
+   "dir": "../../population/library/314857059"
+  },
+  {
+   "name": "318808427",
+   "dir": "../../population/library/318808427"
+  },
+  {
+   "name": "323452245",
+   "dir": "../../population/library/323452245"
+  },
+  {
+   "name": "323788096",
+   "dir": "../../population/library/323788096"
+  },
+  {
+   "name": "324532703",
+   "dir": "../../population/library/324532703"
+  },
+  {
+   "name": "356237593",
+   "dir": "../../population/library/356237593"
+  },
+  {
+   "name": "382982932",
+   "dir": "../../population/library/382982932"
+  },
+  {
+   "name": "473611755",
+   "dir": "../../population/library/473611755"
+  },
+  {
+   "name": "476086391",
+   "dir": "../../population/library/476086391"
+  },
+  {
+   "name": "477129850",
+   "dir": "../../population/library/477129850"
+  },
+  {
+   "name": "480798873",
+   "dir": "../../population/library/480798873"
+  },
+  {
+   "name": "483027960",
+   "dir": "../../population/library/483027960"
+  },
+  {
+   "name": "484509440",
+   "dir": "../../population/library/484509440"
+  },
+  {
+   "name": "485887209",
+   "dir": "../../population/library/485887209"
+  },
+  {
+   "name": "486510127",
+   "dir": "../../population/library/486510127"
+  },
+  {
+   "name": "486753754",
+   "dir": "../../population/library/486753754"
+  },
+  {
+   "name": "486776965",
+   "dir": "../../population/library/486776965"
+  },
+  {
+   "name": "487661754",
+   "dir": "../../population/library/487661754"
+  },
+  {
+   "name": "489751692",
+   "dir": "../../population/library/489751692"
+  },
+  {
+   "name": "489923501",
+   "dir": "../../population/library/489923501"
+  },
+  {
+   "name": "490376252",
+   "dir": "../../population/library/490376252"
+  },
+  {
+   "name": "490982660",
+   "dir": "../../population/library/490982660"
+  },
+  {
+   "name": "500955426",
+   "dir": "../../population/library/500955426"
+  },
+  {
+   "name": "501022658",
+   "dir": "../../population/library/501022658"
+  },
+  {
+   "name": "502100978",
+   "dir": "../../population/library/502100978"
+  },
+  {
+   "name": "502269786",
+   "dir": "../../population/library/502269786"
+  },
+  {
+   "name": "502359001",
+   "dir": "../../population/library/502359001"
+  },
+  {
+   "name": "505512874",
+   "dir": "../../population/library/505512874"
+  },
+  {
+   "name": "513510227",
+   "dir": "../../population/library/513510227"
+  },
+  {
+   "name": "513579447",
+   "dir": "../../population/library/513579447"
+  },
+  {
+   "name": "514530024",
+   "dir": "../../population/library/514530024"
+  },
+  {
+   "name": "515056927",
+   "dir": "../../population/library/515056927"
+  },
+  {
+   "name": "517974394",
+   "dir": "../../population/library/517974394"
+  },
+  {
+   "name": "521399472",
+   "dir": "../../population/library/521399472"
+  },
+  {
+   "name": "521409057",
+   "dir": "../../population/library/521409057"
+  },
+  {
+   "name": "521958756",
+   "dir": "../../population/library/521958756"
+  },
+  {
+   "name": "571306690",
+   "dir": "../../population/library/571306690"
+  },
+  {
+   "name": "584254833",
+   "dir": "../../population/library/584254833"
+  }
+ ],
+ "assignment": "assign_depth.npy"
+}

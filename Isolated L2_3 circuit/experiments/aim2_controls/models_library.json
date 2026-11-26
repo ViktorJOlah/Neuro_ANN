@@ -1,0 +1,271 @@
+{
+ "note": "Population library (roadmap step 2): every use == 1 cell of experiments/population/library/index.csv that has a soma depth (38 of 41). Dirs point at the library; merged in PR 18.",
+ "models": [
+  {
+   "name": "314857059",
+   "dir": "../population/library/314857059",
+   "source": "real recording, population fit",
+   "normalized_depth": 0.449122248126135,
+   "allen_rheobase_pa": 230.0
+  },
+  {
+   "name": "318808427",
+   "dir": "../population/library/318808427",
+   "source": "real recording, population fit",
+   "normalized_depth": 0.336104086394618,
+   "allen_rheobase_pa": 130.0
+  },
+  {
+   "name": "323452245",
+   "dir": "../population/library/323452245",
+   "source": "real recording, population fit",
+   "normalized_depth": 0.198924304025774,
+   "allen_rheobase_pa": 390.0
+  },
+  {
+   "name": "323788096",
+   "dir": "../population/library/323788096",
+   "source": "real recording, population fit",
+   "normalized_depth": 0.437055713536167,
+   "allen_rheobase_pa": 70.0
+  },
+  {
+   "name": "324532703",
+   "dir": "../population/library/324532703",
+   "source": "real recording, population fit",
+   "normalized_depth": 0.511830878942488,
+   "allen_rheobase_pa": 250.0
+  },
+  {
+   "name": "356237593",
+   "dir": "../population/library/356237593",
+   "source": "real recording, population fit",
+   "normalized_depth": 0.40687879714093,
+   "allen_rheobase_pa": 70.0
+  },
+  {
+   "name": "382982932",
+   "dir": "../population/library/382982932",
+   "source": "real recording, population fit",
+   "normalized_depth": 0.359625761964297,
+   "allen_rheobase_pa": 130.0
+  },
+  {
+   "name": "473611755",
+   "dir": "../population/library/473611755",
+   "source": "real recording, population fit",
+   "normalized_depth": 0.313011387767044,
+   "allen_rheobase_pa": 250.0
+  },
+  {
+   "name": "476086391",
+   "dir": "../population/library/476086391",
+   "source": "real recording, population fit",
+   "normalized_depth": 0.334450922619109,
+   "allen_rheobase_pa": 230.0
+  },
+  {
+   "name": "477129850",
+   "dir": "../population/library/477129850",
+   "source": "real recording, population fit",
+   "normalized_depth": 0.311179701503573,
+   "allen_rheobase_pa": 250.0
+  },
+  {
+   "name": "480798873",
+   "dir": "../population/library/480798873",
+   "source": "real recording, population fit",
+   "normalized_depth": 0.307287405472617,
+   "allen_rheobase_pa": 110.0
+  },
+  {
+   "name": "483027960",
+   "dir": "../population/library/483027960",
+   "source": "real recording, population fit",
+   "normalized_depth": 0.355684460776538,
+   "allen_rheobase_pa": 90.0
+  },
+  {
+   "name": "484509440",
+   "dir": "../population/library/484509440",
+   "source": "real recording, population fit",
+   "normalized_depth": 0.325991426830212,
+   "allen_rheobase_pa": 90.0
+  },
+  {
+   "name": "485887209",
+   "dir": "../population/library/485887209",
+   "source": "real recording, population fit",
+   "normalized_depth": 0.46412670762232,
+   "allen_rheobase_pa": 90.0
+  },
+  {
+   "name": "486510127",
+   "dir": "../population/library/486510127",
+   "source": "real recording, population fit",
+   "normalized_depth": 0.330301534216101,
+   "allen_rheobase_pa": 170.0
+  },
+  {
+   "name": "486753754",
+   "dir": "../population/library/486753754",
+   "source": "real recording, population fit",
+   "normalized_depth": 0.459250828826052,
+   "allen_rheobase_pa": 110.0
+  },
+  {
+   "name": "486776965",
+   "dir": "../population/library/486776965",
+   "source": "real recording, population fit",
+   "normalized_depth": 0.452888982601988,
+   "allen_rheobase_pa": 160.0
+  },
+  {
+   "name": "487661754",
+   "dir": "../population/library/487661754",
+   "source": "real recording, population fit",
+   "normalized_depth": 0.173199853451935,
+   "allen_rheobase_pa": 70.0
+  },
+  {
+   "name": "489751692",
+   "dir": "../population/library/489751692",
+   "source": "real recording, population fit",
+   "normalized_depth": 0.421221115504717,
+   "allen_rheobase_pa": 70.0
+  },
+  {
+   "name": "489923501",
+   "dir": "../population/library/489923501",
+   "source": "real recording, population fit",
+   "normalized_depth": 0.414277110293757,
+   "allen_rheobase_pa": 70.0
+  },
+  {
+   "name": "490376252",
+   "dir": "../population/library/490376252",
+   "source": "real recording, population fit",
+   "normalized_depth": 0.203354381343987,
+   "allen_rheobase_pa": 90.0
+  },
+  {
+   "name": "490982660",
+   "dir": "../population/library/490982660",
+   "source": "real recording, population fit",
+   "normalized_depth": 0.409450936715001,
+   "allen_rheobase_pa": 190.0
+  },
+  {
+   "name": "500955426",
+   "dir": "../population/library/500955426",
+   "source": "real recording, population fit",
+   "normalized_depth": 0.370122665204617,
+   "allen_rheobase_pa": 90.0
+  },
+  {
+   "name": "501022658",
+   "dir": "../population/library/501022658",
+   "source": "real recording, population fit",
+   "normalized_depth": 0.296655024853648,
+   "allen_rheobase_pa": 310.0
+  },
+  {
+   "name": "502100978",
+   "dir": "../population/library/502100978",
+   "source": "real recording, population fit",
+   "normalized_depth": 0.399759678598686,
+   "allen_rheobase_pa": 50.0
+  },
+  {
+   "name": "502269786",
+   "dir": "../population/library/502269786",
+   "source": "real recording, population fit",
+   "normalized_depth": 0.366710959501243,
+   "allen_rheobase_pa": 230.0
+  },
+  {
+   "name": "502359001",
+   "dir": "../population/library/502359001",
+   "source": "real recording, population fit",
+   "normalized_depth": 0.25856935846156,
+   "allen_rheobase_pa": 150.0
+  },
+  {
+   "name": "505512874",
+   "dir": "../population/library/505512874",
+   "source": "real recording, population fit",
+   "normalized_depth": 0.124457911995211,
+   "allen_rheobase_pa": 210.0
+  },
+  {
+   "name": "513510227",
+   "dir": "../population/library/513510227",
+   "source": "real recording, population fit",
+   "normalized_depth": 0.0894255728406049,
+   "allen_rheobase_pa": 190.0
+  },
+  {
+   "name": "513579447",
+   "dir": "../population/library/513579447",
+   "source": "real recording, population fit",
+   "normalized_depth": 0.307655377654018,
+   "allen_rheobase_pa": 50.0
+  },
+  {
+   "name": "514530024",
+   "dir": "../population/library/514530024",
+   "source": "real recording, population fit",
+   "normalized_depth": 0.422048413181706,
+   "allen_rheobase_pa": 59.9999961853027
+  },
+  {
+   "name": "515056927",
+   "dir": "../population/library/515056927",
+   "source": "real recording, population fit",
+   "normalized_depth": 0.400072643238265,
+   "allen_rheobase_pa": 50.0
+  },
+  {
+   "name": "517974394",
+   "dir": "../population/library/517974394",
+   "source": "real recording, population fit",
+   "normalized_depth": 0.36825096005547,
+   "allen_rheobase_pa": 110.0
+  },
+  {
+   "name": "521399472",
+   "dir": "../population/library/521399472",
+   "source": "real recording, population fit",
+   "normalized_depth": 0.22494025757455,
+   "allen_rheobase_pa": 190.0
+  },
+  {
+   "name": "521409057",
+   "dir": "../population/library/521409057",
+   "source": "real recording, population fit",
+   "normalized_depth": 0.137858823584519,
+   "allen_rheobase_pa": 210.0
+  },
+  {
+   "name": "521958756",
+   "dir": "../population/library/521958756",
+   "source": "real recording, population fit",
+   "normalized_depth": 0.427889755745547,
+   "allen_rheobase_pa": 90.0
+  },
+  {
+   "name": "571306690",
+   "dir": "../population/library/571306690",
+   "source": "real recording, population fit",
+   "normalized_depth": 0.191517532503886,
+   "allen_rheobase_pa": 250.0
+  },
+  {
+   "name": "584254833",
+   "dir": "../population/library/584254833",
+   "source": "real recording, population fit",
+   "normalized_depth": 0.22256396075456,
+   "allen_rheobase_pa": 170.0
+  }
+ ]
+}
