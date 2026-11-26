@@ -10,8 +10,12 @@ V1 model. Two versions, side by side, with identical code. Only the tuft Ca²⁺
 | `In vitro constrained/` | plateaus are rare in control (cut short by a slow 4-AP-sensitive K⁺ brake); dendritic 4-AP unmasks the full wave | rodent slice data (weak L2/3 Ca²⁺ electrogenesis; Larkum 2007, Waters 2003; Gooch 2022 4-AP) |
 
 The knobs are in each `model/params.json`: `tuft_ca_scale` (tuft HVA/LVA), `tuft_ka_scale`,
-`tuft_kv3_scale`, `tuft_kd_scale` (tuft KA, Kv3.1, slow K_P). In vivo constrained: 1/1/1/0. In vitro
+`tuft_kv3_scale`, `tuft_kd_scale` (tuft KA, Kv3.1, slow K_P). In vivo constrained: 1.4/1/1/0. In vitro
 constrained: 1/1/1/4. Anything in between gives an intermediate cell.
+
+The in vivo constrained version's basal and oblique dendrites are also fitted to in vivo dendritic patch
+recordings (Smith et al. 2013 Nature): passive obliques, basal Na⁺ hot spots, local NMDA/Na⁺ bursts under
+tuned visual input. See its README, "Dendrites in vivo". The in vitro version keeps the slice-fitted dendrites.
 
 Each folder is self-contained: `nrnivmodl mechanisms`, then `validation/run_validation.py` and
 `invivo/run_all.sh` (see its README).

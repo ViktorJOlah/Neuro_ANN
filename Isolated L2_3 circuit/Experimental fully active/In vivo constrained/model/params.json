@@ -233,9 +233,28 @@
  },
  "trunk_min_diam_um": 1.5,
  "_notes": {},
- "tuft_ca_scale": 1.0,
+ "tuft_ca_scale": 1.4,
  "_tuft_note": "Tuft Ca2+ zone knobs: tuft_ca_scale multiplies tuft HVA/LVA; tuft_ka_scale, tuft_kv3_scale, tuft_kd_scale multiply the tuft KA_L23 (Kv4), Kv3.1 and K_Pst (slow D-like, 4-AP sensitive) brake. In vivo constrained: 1/1/1/0 (plateaus come easily). In vitro constrained: 1/1/1/4 (a slow K brake lets bAPs and the critical-frequency boost through but cuts plateaus short; dendritic 4-AP unmasks the full wave).",
  "tuft_ka_scale": 1.0,
  "tuft_kv3_scale": 1.0,
- "tuft_kd_scale": 0.0
+ "tuft_kd_scale": 0.0,
+ "branch_na": {
+  "scale": 0.0,
+  "start_um": 0.0,
+  "hotspot_g": 0.3,
+  "hotspot_len_um": 20.0,
+  "min_len_um": 40.0,
+  "vshm": 4.0,
+  "vshh": 5.0,
+  "apical": {
+   "hotspot_g": 0.0
+  },
+  "basal": {
+   "scale": 1.0
+  },
+  "tuft": {
+   "scale": 1.0
+  }
+ },
+ "_smith_note": "2026-11-26: dendritic Na+ refitted to Smith et al. 2013 (in vivo whole-cell recordings from thin apical dendrites of superficial mouse V1 L2/3 PCs, which they note lack a prominent trunk/tuft and are geometrically like basal dendrites). Apical obliques (non-trunk, non-tuft apical) have no NaTs2 (branch_na scale 0), so bAPs attenuate passively there: ~25-30 mV at 100-150 um (Smith 27). Basal branches > 40 um get a 20 um NaDend hot spot at their centre (0.3 S/cm2, NaTs2 kinetics shifted +4/+5 mV), as in Smith's own model: local spikelets on NMDA envelopes. Obliques get no hot spot: there they regenerated bAPs to 60-90 mV (CA1-like) whatever their threshold. Trunk, tuft and basal keep the slice NaTs2 (apical exp g0 0.1, lam 150, floor 0.005; basal 0.02): removing it abolished the top-down tuft plateaus. tuft_ca_scale 1.4 (was 1.0) restores the plateau threshold to 10 Hz top-down (5 Hz: none)."
 }

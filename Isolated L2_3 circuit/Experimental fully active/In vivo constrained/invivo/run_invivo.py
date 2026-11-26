@@ -80,12 +80,40 @@ def zone_for(cls):
     return "dend_gt50"
 
 
-def build(cell, inputs, g_scale, gi_scale, td_rate, td_w, seed, nmda_ratio=None):
+def cluster_sites(cell, rng, n, min_d=60.0):
+    """n cluster centres on non-trunk dendritic branches beyond min_d um (length-weighted)."""
+    segs = []
+    for sec in cell.dends:
+        if sec in cell.trunk:
+            continue
+        for seg in sec:
+            if h.distance(seg.x, sec=sec) >= min_d:
+                segs.append((sec, seg.x, sec.L / sec.nseg))
+    w = np.array([s[2] for s in segs]); w /= w.sum()
+    return [segs[i][:2] for i in rng.choice(len(segs), n, replace=False, p=w)]
+
+
+def build(cell, inputs, g_scale, gi_scale, td_rate, td_w, seed, nmda_ratio=None, cluster=None):
+    """cluster (optional, Smith et al. 2013-style functional clustering): {"frac": f, "n": n_clusters,
+    "span_um": s, "classes": [...], "min_d": um}. The fraction f of excitatory edges of those classes with
+    the highest presynaptic rates (the stimulus-driven inputs) put all their contacts within span_um of one
+    of n cluster centres on non-trunk branches, instead of being scattered over their zone."""
     rng = np.random.default_rng(seed)
     Z = zone_pools(cell)
     pick = {}
     for k, pool in Z.items():
         w = np.array([p["w"] for p in pool]); pick[k] = (pool, w / w.sum())
+    clustered = set(); centres = []
+    if cluster and cluster.get("frac", 0) > 0:
+        cl_rng = np.random.default_rng(seed + 1000)
+        centres = cluster_sites(cell, cl_rng, cluster["n"], cluster.get("min_d", 60.0))
+        cand = [i for i in range(len(inputs["src_class"])) if inputs["src_class"][i] in cluster["classes"]
+                and inputs["ei"][i] == "e"]
+        rates = np.array([inputs["offsets"][i + 1] - inputs["offsets"][i] for i in cand], float)
+        order = [cand[j] for j in np.argsort(-rates)]
+        for j, i in enumerate(order[:int(round(cluster["frac"] * len(order)))]):
+            clustered.add((i, j % cluster["n"]))
+        clustered = dict(clustered)
     keep = []                         # (netcons, event times incl. delay)
     cls, ei, wts, dly = inputs["src_class"], inputs["ei"], inputs["weight_pA"], inputs["delay_ms"]
     sp, off = inputs["spikes"], inputs["offsets"]
@@ -95,34 +123,42 @@ def build(cell, inputs, g_scale, gi_scale, td_rate, td_w, seed, nmda_ratio=None)
         if cls[i] == "bkg":
             lab = rng.integers(N_BKG, size=len(t))
             for j in range(N_BKG):
-                trains.append(("bkg", "e", wts[i], dly[i], t[lab == j], 1))
+                trains.append(("bkg", "e", wts[i], dly[i], t[lab == j], 1, None))
         else:
-            trains.append((cls[i], ei[i], wts[i], dly[i], t, K_PER_EDGE))
+            trains.append((cls[i], ei[i], wts[i], dly[i], t, K_PER_EDGE, clustered.get(i) if clustered else None))
     for j in range(N_TD if td_rate > 0 else 0):
         n = rng.poisson(td_rate * T_STOP / 1000.0)
-        trains.append(("topdown", "e", td_w, 2.0, np.sort(rng.uniform(0, T_STOP, n)), K_PER_EDGE))
+        trains.append(("topdown", "e", td_w, 2.0, np.sort(rng.uniform(0, T_STOP, n)), K_PER_EDGE, None))
     counts = {}
-    for c, e, w, d, t, k in trains:
+    span = cluster.get("span_um", 20.0) if cluster else 0
+    for c, e, w, d, t, k, ci in trains:
         if len(t) == 0:
             continue
         pool, p = pick[zone_for(c)]
         for _ in range(k):
-            s = pool[rng.choice(len(pool), p=p)]
+            if ci is not None:
+                sec, x0 = centres[ci]
+                x = float(np.clip(x0 + rng.uniform(-0.5, 0.5) * span / sec.L, 0.01, 0.99))
+                s = dict(sec=sec, x=x)
+                c_lab = c + " (cluster)"
+            else:
+                s = pool[rng.choice(len(pool), p=p)]
+                c_lab = c
             if e == "e":
                 syn = cell.add_synapse(s["sec"], s["x"], g_ampa=g_scale * abs(w) / k, nmda_ratio=nmda_ratio)
             else:
                 syn = cell.add_synapse(s["sec"], s["x"], g_ampa=gi_scale * abs(w) / k, kind="inh")
-            syn["src"] = c
+            syn["src"] = c_lab
             ncs = cell.drive(syn, None)
             keep.append((ncs, np.asarray(t, float) + d))
-            counts[c] = counts.get(c, 0) + 1
+            counts[c_lab] = counts.get(c_lab, 0) + 1
     return keep, counts
 
 
-def run(cell_id, cond, td_rate, g_scale, gi_scale, td_w, seed, inputs_dir, record_dend=True, params=None):
+def run(cell_id, cond, td_rate, g_scale, gi_scale, td_w, seed, inputs_dir, record_dend=True, params=None, cluster=None):
     cell = L23Cell(params or load_params())
     inputs = dict(np.load(os.path.join(inputs_dir, f"cell_{cell_id}.npz"), allow_pickle=False))
-    keep, counts = build(cell, inputs, g_scale, gi_scale, td_rate, td_w, seed)
+    keep, counts = build(cell, inputs, g_scale, gi_scale, td_rate, td_w, seed, cluster=cluster)
     for b in cond.split("+"):
         if b != "control":
             cell.block(b)
@@ -168,7 +204,8 @@ def main():
     cal = json.load(open(os.path.join(HERE, "calibration.json"))) if os.path.exists(os.path.join(HERE, "calibration.json")) else {}
     g = a.g_scale if a.g_scale is not None else cal.get("g_scale", 2e-4)
     gi = a.gi_scale if a.gi_scale is not None else cal.get("gi_scale", 3 * g)
-    r = run(a.cell, a.cond, a.td_rate, g, gi, a.td_w, a.seed, a.inputs, record_dend=not a.no_dend)
+    r = run(a.cell, a.cond, a.td_rate, g, gi, a.td_w, a.seed, a.inputs, record_dend=not a.no_dend,
+            cluster=cal.get("cluster"))
     os.makedirs(a.out, exist_ok=True)
     tag = f"cell{a.cell}_{a.cond.replace('+', '-')}_td{a.td_rate:g}_s{a.seed}"
     meta = r.pop("seg_meta", None)
