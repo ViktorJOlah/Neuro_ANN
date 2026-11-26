@@ -1,0 +1,23 @@
+{
+ "square": {
+  "n": 8,
+  "max_abs_dVm": 0.0,
+  "spikes_standard": 43,
+  "spikes_with_layer": 43,
+  "spike_mismatch": 0
+ },
+ "ramp": {
+  "n": 8,
+  "max_abs_dVm": 0.0,
+  "spikes_standard": 107,
+  "spikes_with_layer": 107,
+  "spike_mismatch": 0
+ },
+ "noise": {
+  "n": 8,
+  "max_abs_dVm": 0.0,
+  "spikes_standard": 104,
+  "spikes_with_layer": 104,
+  "spike_mismatch": 0
+ }
+}

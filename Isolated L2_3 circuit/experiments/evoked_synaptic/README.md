@@ -1,5 +1,86 @@
 # Evoked synaptic input: can the Standard model's front end learn it? (feasibility test)
 
+## Update 2026-11-26: hardcoded synaptic kernel layer (smooth EPSPs by construction)
+
+Viktor's question: the tcn64 D EPSPs (previous update) look jagged, with extra bumps, while NEURON's are smooth.
+Can EPSP dynamics be hardcoded in a layer that, like an AlphaSynapse or a GLIF, computes the current from the
+membrane potential and the time since each event?
+
+**Yes, and it removes the artefacts.** Where the jaggedness came from (panels a, d, e): D's current passes through the
+CNN-LSTM's 64 ms window. That gives a dip before the EPSP (−0.45 mV L2/3, −0.70 mV L1 on 057), a kink or drop
+when the event leaves the 64 ms window (dotted line), and extra wiggles in trains (6.5 spurious extrema/s on 057 vs 3.0).
+
+**The layer** (`code/synaptic_kernel.py`):
+
+    somatic DC --64 ms window--> CNN-LSTM front end --> x(t) --+--> Izhikevich (Vm, spikes) + branches
+                                                               |            | Vm(t-1)
+    stim pulses --> depression R --> rise/decay states --> g(t) --> I_syn = g (E_rev - Vm)
+
+- Per pathway: two recursive states per kernel component, updated every 1 ms like the branch gates:
+  xr ← xr·e^(−1/τr) + a, xd ← xd·e^(−1/τd) + a, g = w·norm·(xd − xr) (difference of exponentials; τr→τd is an alpha synapse).
+  a = pulse intensity × R, with Tsodyks–Markram depression R (U, τ_rec). The state carries how long ago each event arrived,
+  so the layer needs no window.
+- I_syn = g·(E_rev − Vm), using the Izhikevich Vm of the previous step, so the driving force comes for free. An optional
+  NMDA-like slow term with a Mg block B(V) exists (`--nmda`), but it was not run (AMPA-only data).
+- Learnable per pathway: w, τr, τd, E_rev, U, τ_rec (12 numbers for 1 component, 20 for 2 components). The kernel goes
+  straight into the Izhikevich input. The CNN-LSTM front end sees only the somatic current, so somatic-injection behaviour
+  is untouched. Check: with no events the layer adds exactly zero current (`code/check_somatic.py`: 24 Standard
+  square/ramp/noise traces, max |ΔVm| 0.0 mV, 0 spike mismatches).
+- **clean**: nothing else. **soft**: a small 64 ms CNN over the stimulus sets each event's conductance gain (exp, zero-init).
+  The ANN can scale events (summation, intensity nonlinearity) but cannot change the kernel shape.
+- Same training recipe as the tcn64 D (spike-free batches, 5× weight 0–25 ms after pulses, 150 one-step warm-up steps,
+  then free running), 400 steps, ~23 min on 1 thread (`code/fit_kernel.py`).
+
+**One kernel component was not enough** (round 1, `kernel_clean`, `kernel_soft`). The EPSPs were smooth, but they
+decayed too slowly and peaked 20–35 % low (754 L2/3 0.75, L1 0.67; Vm RMSE 0.82 vs 0.67 mV). The bare Izhikevich
+membrane decays more slowly than the cell. For injected current, the front end corrects this; a synaptic current that
+bypasses it does not get that correction. **Fix:** a second, slow component that is subtracted (`--ncomp 2 --signed`,
+τd 16–72 ms). This is a smooth membrane correction, not a synaptic property. It is the smooth version of the undershoot
+the free-current oracle found earlier.
+
+![kernel layer](results_ampa/kernel_layer.png)
+
+Held-out traces (20 per cell; isolated events: n = 27 L1, 23 L2/3):
+
+| | 754 tcn64 D | 754 clean | 754 soft | 057 tcn64 D | 057 clean | 057 soft |
+|---|---|---|---|---|---|---|
+| Vm RMSE away from spikes (mV) | 0.67 | 0.69 | 0.68 | **1.68** | 1.95 | 1.86 |
+| L2/3 peak, model/NEURON | 0.84 | **0.95** | 0.94 | 0.94 | 0.96 | 0.96 |
+| L1 peak, model/NEURON | 0.86 | 0.85 | 0.81 | 0.96 | 0.96 | 0.96 |
+| L2/3 shape error, peak-normalised | 0.057 | 0.076 | 0.075 | 0.064 | 0.082 | 0.069 |
+| L1 shape error, peak-normalised | 0.083 | 0.070 | 0.069 | 0.157 | 0.185 | 0.179 |
+| dip before EPSP, L2/3 / L1 (mV) | −0.02 / −0.02 | −0.01 / 0.00 | −0.01 / 0.00 | −0.45 / −0.70 | −0.02 / −0.02 | −0.02 / −0.02 |
+| EPSPs with >1 peak (L1) | 0 % | 0 % | 0 % | 22 % | 0 % | 0 % |
+| spurious wiggles per s (NEURON: 0) | 2.2 | 2.6 | 2.5 | 6.5 | 3.0 | 2.9 |
+| spikes, model (NEURON) | 8 (9) | 6 (9) | 6 (9) | 21 (14) | 26 (14) | 23 (14) |
+
+(The NEURON traces have release noise. That noise, not jaggedness, explains most of the remaining "spurious wiggles":
+they are extrema ≥0.05 mV with no NEURON extremum within 3 ms. Metrics: `code/shape_metrics.py` → `shape.json`.)
+
+What this shows:
+- **Smoothness is fixed by construction**: no dip before the EPSP, no kink at 64 ms, no multi-peak EPSPs, and wiggles halve on 057.
+  The tcn64 D on 754 was already fairly clean; on 057 it was the jagged one.
+- **Peaks**: the L2/3 peak, which was the long-standing problem on 754, goes from 0.84 to 0.95, at the right time (9–10 ms vs 8).
+- **Overall accuracy**: on 754 (the Standard's own cell), the kernel layer is equal to D (0.68–0.69 vs 0.67 mV). On 057
+  (all-active dendrites) it is 0.2–0.3 mV worse, and only on Poisson trains (2.4 vs 1.9 mV; isolated pulses 1.35 vs 1.26).
+  This is supralinear summation in 057's active tuft, which a linear kernel with depression cannot produce. The soft
+  variant's event gain recovers about a third of it (1.95 → 1.86). The kernel's L1 EPSP on 057 also decays somewhat too
+  slowly. 057 over-fires a little more (23–26 vs 21 spikes, NEURON 14).
+- Fitted kinetics are physiological-looking: L2/3 somatic-equivalent τr 1.6–1.8, τd 2.2 ms; L1 τr 4.5–6.8, τd 6.7–14 ms;
+  E_rev −2.6 to +1.4 mV; U 0.36–0.55, τ_rec 170–370 ms (the simulation used U 0.4, τ_rec 300 ms).
+
+**Recommendation.** Use the kernel layer (soft variant) as the synaptic input stage on top of S. It gives smooth EPSPs,
+correct L2/3 peaks, explicit driving force, a few interpretable numbers per pathway (gain, τ, E_rev, depression) that
+are the per-cell input features the network decomposition needs, and no change to somatic behaviour. If real recordings
+show strong supralinear summation (057-like), let the soft gain CNN see more history, or add the NMDA term. The tcn64 D
+stays as the more flexible reference.
+
+Run: `EVOKED_SET=ampa python fit_kernel.py --cell <cell> --variant soft --ncomp 2 --signed [--init <round-1 folder>]`,
+then `python shape_metrics.py <results dirs>`, `python plot_kernel.py`, `python check_somatic.py <dir>`.
+Round 2 was started from round-1 values for the first component (`--init`; the folder needs a `kernel.json`).
+Results: `results_ampa/<cell>/kernel_{clean,soft}[_k2s]/` (kernel.json, metrics.json, shape.json, test_predictions.npz
+with the synaptic current), `results_ampa/kernel_layer.{png,json}`.
+
 ## Update 2026-11-24 (2): L2/3 EPSP peak fixed by training changes (64 ms window, AMPA only)
 
 The AMPA-only rerun below under-predicted the fast L2/3 EPSP peak. Per held-out isolated pulse (no other pulse
