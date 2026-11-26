@@ -42,20 +42,35 @@ def load_model(model_dir, standard_dir):
     return sm.StandardCell(p["izhikevich"], p["branches"], net)
 
 
+IDENTITY_CORR = dict(k0=1.0, c1=0.0, tau1=2.0, c2=0.0, tau2=20.0)
+
+
+def load_corr(c):
+    """Membrane correction for the kernel layer: a calibration.json path, a dict, or None (identity)."""
+    if c is None:
+        return dict(IDENTITY_CORR)
+    if isinstance(c, str):
+        return json.load(open(c))["correction"]
+    return c
+
+
 def read_population(path):
     pop = json.load(open(path))
     base = os.path.dirname(os.path.abspath(path))
     res = lambda f: f if os.path.isabs(f) else os.path.join(base, f)  # noqa: E731
     assign = np.load(res(pop["assignment"])).astype(np.int64)
     scale = np.load(res(pop["input_scale"])).astype(np.float32) if pop.get("input_scale") else None
-    models = [dict(m, dir=res(m["dir"])) for m in pop["models"]]
+    models = [dict(m, dir=res(m["dir"]), **({"corr": res(m["corr"])} if isinstance(m.get("corr"), str) else {}))
+              for m in pop["models"]]
     return models, assign, scale
 
 
 class MixedStandard:
     """K BatchedStandard layers, one per model, each over the PCs assigned to it."""
 
-    def __init__(self, models, assign, standard_dir, I_first=None, jit=True):
+    def __init__(self, models, assign, standard_dir, I_first=None, jit=True, kernel=None):
+        """kernel: None, or the shared kernel settings dict(E_e, E_i, V_ref); each model's membrane correction is
+        read from m["corr"] (a calibration.json path or a dict), identity if missing."""
         from .pc_layer import BatchedStandard
         self.n = len(assign)
         self.groups = []
@@ -65,8 +80,17 @@ class MixedStandard:
             if len(idx) == 0:
                 continue
             cell = load_model(m["dir"], standard_dir)
-            self.groups.append((idx, BatchedStandard(cell, len(idx), I_first=I_first[idx], jit=jit)))
+            kern = None
+            if kernel is not None:
+                kern = dict(kernel, corr=load_corr(m.get("corr")))
+            self.groups.append((idx, BatchedStandard(cell, len(idx), I_first=I_first[idx], jit=jit, kernel=kern)))
         assert sum(len(i) for i, _ in self.groups) == self.n, "every PC needs a model"
+
+    def step_kernel(self, I_e, I_i):
+        out = np.zeros(self.n, bool)
+        for idx, layer in self.groups:
+            out[idx] = layer.step_kernel(I_e[idx], I_i[idx])
+        return out
 
     def step(self, I_t):
         I_t = np.asarray(I_t, np.float32)

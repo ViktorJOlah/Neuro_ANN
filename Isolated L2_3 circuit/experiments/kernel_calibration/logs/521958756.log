@@ -1,0 +1,15 @@
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795687439.200708    5559 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795687439.201354    5559 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795687440.371171    5559 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795687440.371484    5559 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+[521958756    14s] rheobase 110 pA
+[521958756    33s] no correction: validation RMSE 2.423 mV
+[521958756   143s] it 24 loss 0.2809 val 0.676 {'k0': 0.939, 'c1': -0.066, 'tau1': 5.837, 'c2': -0.068, 'tau2': 46.928}
+[521958756   236s] it 49 loss 0.5436 val 0.692 {'k0': 0.909, 'c1': -0.098, 'tau1': 5.95, 'c2': -0.08, 'tau2': 44.272}
+[521958756   323s] it 74 loss 0.5087 val 0.613 {'k0': 0.919, 'c1': -0.093, 'tau1': 6.373, 'c2': -0.075, 'tau2': 44.048}
+[521958756   410s] it 99 loss 1.1797 val 0.730 {'k0': 0.911, 'c1': -0.106, 'tau1': 6.557, 'c2': -0.086, 'tau2': 43.202}
+[521958756   496s] it 124 loss 1.1421 val 1.002 {'k0': 0.9, 'c1': -0.119, 'tau1': 6.513, 'c2': -0.096, 'tau2': 42.177}
+[521958756   586s] it 149 loss 0.9283 val 0.827 {'k0': 0.905, 'c1': -0.114, 'tau1': 6.569, 'c2': -0.09, 'tau2': 42.214}
+[521958756   588s] fit {'rmse_mV': 1.0335780382156372, 'rough_ratio': 0.8883187174797058, 'spikes_model': 1, 'spikes_target': 3, 'sd_target_mV': 6.322046756744385} no correction {'rmse_mV': 1.7312145233154297, 'rough_ratio': 0.9873982667922974, 'spikes_model': 8, 'spikes_target': 3, 'sd_target_mV': 5.928874492645264}

@@ -1,0 +1,15 @@
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795678693.479213    2746 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795678693.479636    2746 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795678695.554789    2746 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1795678695.555379    2746 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+[480798873    14s] rheobase 120 pA
+[480798873    32s] no correction: validation RMSE 5.495 mV
+[480798873   127s] it 24 loss 16.5444 val 5.217 {'k0': 0.998, 'c1': -0.006, 'tau1': 5.363, 'c2': -0.026, 'tau2': 51.718}
+[480798873   212s] it 49 loss 23.7813 val 6.509 {'k0': 1.092, 'c1': 0.076, 'tau1': 5.18, 'c2': 0.036, 'tau2': 54.3}
+[480798873   298s] it 74 loss 29.0676 val 7.231 {'k0': 1.189, 'c1': 0.16, 'tau1': 4.817, 'c2': 0.119, 'tau2': 49.401}
+[480798873   385s] it 99 loss 37.6268 val 7.422 {'k0': 1.199, 'c1': 0.168, 'tau1': 4.77, 'c2': 0.128, 'tau2': 48.573}
+[480798873   473s] it 124 loss 43.3909 val 7.433 {'k0': 1.199, 'c1': 0.168, 'tau1': 4.768, 'c2': 0.128, 'tau2': 48.559}
+[480798873   561s] it 149 loss 46.2013 val 7.575 {'k0': 1.199, 'c1': 0.168, 'tau1': 4.767, 'c2': 0.127, 'tau2': 48.562}
+[480798873   563s] fit {'rmse_mV': 4.3835015296936035, 'rough_ratio': 0.976097047328949, 'spikes_model': 8, 'spikes_target': 4, 'sd_target_mV': 4.7477850914001465} no correction {'rmse_mV': 4.63749361038208, 'rough_ratio': 0.9798516631126404, 'spikes_model': 9, 'spikes_target': 4, 'sd_target_mV': 4.725391387939453}

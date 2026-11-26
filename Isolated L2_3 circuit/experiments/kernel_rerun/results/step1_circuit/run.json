@@ -1,0 +1,27 @@
+{
+  "gain": 1.18,
+  "pc_to_in_gain": {
+    "L2/3 Pvalb": 1.06,
+    "L2/3 Sst": 1.04,
+    "L2/3 Htr3a": 1.04
+  },
+  "tstop": 3000.0,
+  "synapses": "kernel",
+  "kernel": {
+    "E_e": 0.0,
+    "E_i": -80.0,
+    "V_ref": -55.0
+  },
+  "corr": "experiments/kernel_calibration/results/487661754/calibration.json",
+  "population": null,
+  "wall_s": 298.21234679222107,
+  "timers_s": {
+    "pc": 62.75029706954956,
+    "nest": 94.16662406921387,
+    "route": 13.311971187591553
+  },
+  "pc_rate_hz": 1.3777286214626778,
+  "interneuron_rate_hz": 4.041245450869389,
+  "pc_spikes": 231694,
+  "interneuron_spikes": 119928
+}

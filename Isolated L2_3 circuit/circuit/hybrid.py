@@ -159,9 +159,9 @@ class PSCBank:
         pk = np.where(port == PC_PORTS[0], 0, 1)
         np.add.at(self.buf, (step % self.ring, pk, trg), w)
 
-    def advance_ms(self):
-        I_tot = self.I.sum(0)
-        acc = 0.5 * I_tot
+    def advance_ms(self, per_port=False):
+        """Mean current of the next millisecond: summed (n,), or per port (2, n) with ``per_port``."""
+        acc = 0.5 * self.I.copy()
         for q in range(SUB):
             self.I = self.P21 * self.y1 + self.P22 * self.I
             self.y1 = self.P11 * self.y1
@@ -169,9 +169,9 @@ class PSCBank:
             self.y1 += self.buf[slot] * (np.e / self.taus)
             self.buf[slot] = 0.0
             self.j += 1
-            I_tot = self.I.sum(0)
-            acc += I_tot if q < SUB - 1 else 0.5 * I_tot
-        return acc / SUB
+            acc += self.I if q < SUB - 1 else 0.5 * self.I
+        acc /= SUB
+        return acc if per_port else acc.sum(0)
 
 
 def prepare(config, extract_dir, v1ext_spikes, out, tstop=3000.0, block_ms=100):
@@ -266,6 +266,9 @@ def prepare(config, extract_dir, v1ext_spikes, out, tstop=3000.0, block_ms=100):
     # ---- replayed input onto PCs: precomputed current, (T, n_pc) float32, mean over each ms ---
     T = int(round(tstop))
     I_ext = np.lib.format.open_memmap(os.path.join(out, "pc_external_current.npy"), "w+", np.float32, (T, n_pc))
+    # per receptor port too (E->E port 1, I->E port 2), for the kernel layer's driving force
+    I_ext_e = np.lib.format.open_memmap(os.path.join(out, "pc_external_current_e.npy"), "w+", np.float32, (T, n_pc))
+    I_ext_i = np.lib.format.open_memmap(os.path.join(out, "pc_external_current_i.npy"), "w+", np.float32, (T, n_pc))
     bank = PSCBank(n_pc, ring=4 * block_ms + 64)
     streams = []
     for prefix, spikes, pop in (("v1ext_l23", v1ext_spikes, "v1ext"), ("lgn_l23", lgn_file, None), ("bkg_l23", bkg_file, None)):
@@ -288,9 +291,12 @@ def prepare(config, extract_dir, v1ext_spikes, out, tstop=3000.0, block_ms=100):
                 # jump at the end of step (stamp + off - 1): the PSC starts at stamp*RES + d_eff
                 bank.push(stamp[lo:hi][rep] + csr.off[idx] - 1, csr.trg[idx], csr.w[idx], csr.port[idx])
         for k in range(b0 // 4, min(T, (b0 + nb) // 4)):
-            I_ext[k] = bank.advance_ms()
+            pp = bank.advance_ms(per_port=True)
+            I_ext_e[k], I_ext_i[k] = pp[0], pp[1]
+            I_ext[k] = pp.sum(0)
         print(f"[prepare] external current {min(T, (b0 + nb) // 4)}/{T} ms", flush=True)
-    I_ext.flush()
+    for z in (I_ext, I_ext_e, I_ext_i):
+        z.flush()
     with h5py.File(os.path.join(out, "ids.h5"), "w") as f:
         f["pc_to_l23"] = pc_ids
         f["in_to_l23"] = in_ids
@@ -377,14 +383,21 @@ class NestInterneurons:
         self.nest.Cleanup()
 
 
+KERNEL = dict(E_e=0.0, E_i=-80.0, V_ref=-55.0)   # kernel-layer synapses: reversal potentials, normalisation (mV)
+
+
 def run(prep, standard_dir, gain, tstop, out, threads=1, log_every=100, replay_pc=None, probe=0,
-        pc_to_in_gain=None, population=None):
+        pc_to_in_gain=None, population=None, synapses="kernel", corr=None):
     """Run the hybrid circuit. ``gain`` multiplies every synapse onto a PC; ``pc_to_in_gain`` every
     PC -> interneuron synapse (float or {class: factor}; None = the same as ``gain``, the PR 9 rule). ``replay_pc``: an l23 spikes file whose PC spikes replace the ANN (a
     check of the loop: with the GLIF network's own PC spikes, the interneurons must reproduce it).
     ``probe``: record the synaptic current of the first ``probe`` PCs at 1 ms.
     ``population``: a population JSON (``population.py``) giving each PC its own fitted model and,
-    optionally, its own input scale; without it every PC is the Standard."""
+    optionally, its own input scale; without it every PC is the Standard.
+    ``synapses``: "kernel" (default since 2026-11-26) sends the per-port alpha PSCs through the kernel layer
+    (conductance with driving force, normalised at KERNEL["V_ref"], plus each model's membrane correction; the front
+    end sees no current). "current" is the PR 9 path: the summed current through the 64 ms front end.
+    ``corr``: calibration.json for the Standard's correction when no population is given."""
     sys.path.insert(0, os.path.abspath(standard_dir))
     import standard_model as sm
     from .pc_layer import BatchedStandard
@@ -393,7 +406,11 @@ def run(prep, standard_dir, gain, tstop, out, threads=1, log_every=100, replay_p
     meta = json.load(open(os.path.join(prep, "prepare.json")))
     n_pc, n_in = meta["n_pc"], meta["n_in"]
     T = int(round(tstop))
+    kernel = synapses == "kernel"
     I_ext = np.load(os.path.join(prep, "pc_external_current.npy"), mmap_mode="r")
+    if kernel:
+        I_ext_e = np.load(os.path.join(prep, "pc_external_current_e.npy"), mmap_mode="r")
+        I_ext_i = np.load(os.path.join(prep, "pc_external_current_i.npy"), mmap_mode="r")
     assert T <= I_ext.shape[0], "prepare with a longer --tstop"
     pc2pc, in2pc = CSR.load(os.path.join(prep, "pc_to_pc.npz")), CSR.load(os.path.join(prep, "in_to_pc.npz"))
     with h5py.File(os.path.join(prep, "ids.h5")) as f:
@@ -415,25 +432,35 @@ def run(prep, standard_dir, gain, tstop, out, threads=1, log_every=100, replay_p
         models, assign, in_scale = read_population(population)
         assert len(assign) == n_pc, "population assignment must cover every PC of the prep"
         I0 = gain * np.asarray(I_ext[0], np.float32) * (1.0 if in_scale is None else in_scale)
-        cells = MixedStandard(models, assign, standard_dir, I_first=I0)
+        cells = MixedStandard(models, assign, standard_dir, I_first=I0, kernel=KERNEL if kernel else None)
     elif not replay_pc:
-        cells = BatchedStandard(sm.load(standard_dir), n_pc, I_first=gain * np.asarray(I_ext[0], np.float32))
+        from .population import load_corr
+        cells = BatchedStandard(sm.load(standard_dir), n_pc, I_first=gain * np.asarray(I_ext[0], np.float32),
+                                kernel=dict(KERNEL, corr=load_corr(corr)) if kernel else None)
     probe_I = np.zeros((T, probe), np.float32)
     pc_spk, in_spk = [], []
     I_mean = np.zeros(T, np.float32)
     timers = dict(pc=0.0, nest=0.0, route=0.0)
     for k in range(T):
         t0 = time.time()
-        I_k = gain * (np.asarray(I_ext[k], np.float64) + bank.advance_ms())
-        if in_scale is not None:
-            I_k = I_k * in_scale
+        pp = bank.advance_ms(per_port=True)
+        if kernel:
+            I_e = gain * (np.asarray(I_ext_e[k], np.float64) + pp[0])
+            I_i = gain * (np.asarray(I_ext_i[k], np.float64) + pp[1])
+            if in_scale is not None:
+                I_e, I_i = I_e * in_scale, I_i * in_scale
+            I_k = I_e + I_i
+        else:
+            I_k = gain * (np.asarray(I_ext[k], np.float64) + pp.sum(0))
+            if in_scale is not None:
+                I_k = I_k * in_scale
         I_mean[k] = I_k.mean()
         probe_I[k] = I_k[:probe]
         if replay_pc:
             lo, hi = np.searchsorted(rts, [k + 1e-9, k + 1 + 1e-9])  # spikes in (k, k+1]
             fired, t_spk = rid[lo:hi], rts[lo:hi]
         else:
-            fired = np.flatnonzero(cells.step(I_k))
+            fired = np.flatnonzero(cells.step_kernel(I_e, I_i) if kernel else cells.step(I_k))
             t_spk = np.full(len(fired), k + 1.0)
         t1 = time.time()
         nest_part.set_pc_spikes(fired, t_spk)
@@ -466,7 +493,8 @@ def run(prep, standard_dir, gain, tstop, out, threads=1, log_every=100, replay_p
     np.save(os.path.join(out, "pc_mean_input_current.npy"), I_mean)
     if probe:
         np.save(os.path.join(out, "probe_current.npy"), probe_I)
-    info = {"gain": gain, "pc_to_in_gain": pc_to_in_gain, "tstop": tstop,
+    info = {"gain": gain, "pc_to_in_gain": pc_to_in_gain, "tstop": tstop, "synapses": synapses,
+            "kernel": KERNEL if kernel else None, "corr": corr,
             "population": os.path.abspath(population) if population else None, "wall_s": time.time() - t_start, "timers_s": timers,
             "pc_rate_hz": len(P) / n_pc / (T / 1000), "interneuron_rate_hz": len(Q) / n_in / (T / 1000),
             "pc_spikes": int(len(P)), "interneuron_spikes": int(len(Q))}
@@ -496,7 +524,8 @@ def format_gain(g):
     return ",".join(f"{k.replace('L2/3 ', '')}={v}" for k, v in g.items())
 
 
-def _run_subprocess(prep, standard_dir, gain, tstop, out, threads, pc_to_in_gain=None, population=None):
+def _run_subprocess(prep, standard_dir, gain, tstop, out, threads, pc_to_in_gain=None, population=None,
+                    synapses="kernel", corr=None):
     """One run per process: NEST can only be built once per process."""
     import subprocess
     here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -504,7 +533,8 @@ def _run_subprocess(prep, standard_dir, gain, tstop, out, threads, pc_to_in_gain
     subprocess.run([sys.executable, "-m", "circuit.hybrid", "run", "--prep", prep, "--standard-dir", standard_dir,
                     "--gain", str(gain), "--tstop", str(tstop), "--out", out, "--threads", str(threads)]
                    + (["--pc-to-in-gain", format_gain(pc_to_in_gain)] if pc_to_in_gain is not None else [])
-                   + (["--population", population] if population else []),
+                   + (["--population", population] if population else [])
+                   + ["--synapses", synapses] + (["--corr", corr] if corr else []),
                    check=True, env=env)
     return json.load(open(os.path.join(out, "run.json")))
 
@@ -519,7 +549,7 @@ def reference_rate(reference, prep, t0=0.0, t1=3000.0):
 
 
 def tune(prep, standard_dir, reference, out, tstop=1500.0, gains=(1.0,), max_iter=6, tol=0.1, threads=1,
-         pc_to_in_gain=None, population=None, target=None):
+         pc_to_in_gain=None, population=None, target=None, synapses="kernel", corr=None):
     """Search the gain onto PCs until the PC rate over 0..tstop is within ``tol`` of the GLIF network's.
     ``pc_to_in_gain`` stays fixed during the search (None = equal to the searched gain, the PR 9 rule).
 
@@ -555,7 +585,7 @@ def tune(prep, standard_dir, reference, out, tstop=1500.0, gains=(1.0,), max_ite
         if round(g, 4) in done:
             continue
         r = _run_subprocess(prep, standard_dir, g, tstop, os.path.join(out, f"gain_{g:.4f}"), threads, pc_to_in_gain,
-                            population)
+                            population, synapses=synapses, corr=corr)
         hist.append({"gain": g, "pc_rate_hz": r["pc_rate_hz"], "interneuron_rate_hz": r["interneuron_rate_hz"]})
         json.dump({"target_pc_rate_hz": target, "tstop": tstop, "history": hist}, open(path, "w"), indent=2)
         print(f"[tune] gain {g:.4f}: PC {r['pc_rate_hz']:.3f} Hz (target {target:.3f})", flush=True)
@@ -687,6 +717,9 @@ def main(argv=None):
     b.add_argument("--pc-to-in-gain", help="factor on PC -> interneuron synapses: a number or Pvalb=..,Sst=..,Htr3a=.. "
                    "(default: same as --gain)")
     b.add_argument("--population", help="population JSON: a fitted model (and input scale) per PC")
+    b.add_argument("--synapses", choices=("kernel", "current"), default="kernel",
+                   help="kernel: synaptic kernel layer (default); current: summed PSC current through the front end (PR 9)")
+    b.add_argument("--corr", help="calibration.json with the Standard's membrane correction (kernel mode, no population)")
     c = sp.add_parser("tune")
     c.add_argument("--prep", required=True); c.add_argument("--standard-dir", required=True)
     c.add_argument("--reference", required=True); c.add_argument("--out", required=True)
@@ -696,6 +729,9 @@ def main(argv=None):
     c.add_argument("--threads", type=int, default=1)
     c.add_argument("--pc-to-in-gain", help="fixed factor on PC -> interneuron synapses (default: same as the searched gain)")
     c.add_argument("--population", help="population JSON: a fitted model (and input scale) per PC")
+    c.add_argument("--synapses", choices=("kernel", "current"), default="kernel",
+                   help="kernel: synaptic kernel layer (default); current: summed PSC current through the front end (PR 9)")
+    c.add_argument("--corr", help="calibration.json with the Standard's membrane correction (kernel mode, no population)")
     c.add_argument("--target", type=float, help="target mean PC rate (Hz) instead of the GLIF network's")
     d = sp.add_parser("report")
     d.add_argument("--prep", required=True); d.add_argument("--extract-dir", required=True)
@@ -708,13 +744,13 @@ def main(argv=None):
         prepare(x.config, x.extract_dir, x.v1ext_spikes, x.out, x.tstop)
     elif x.cmd == "run":
         run(x.prep, x.standard_dir, x.gain, x.tstop, x.out, x.threads, replay_pc=x.replay_pc, probe=x.probe,
-            pc_to_in_gain=parse_gain(x.pc_to_in_gain), population=x.population)
+            pc_to_in_gain=parse_gain(x.pc_to_in_gain), population=x.population, synapses=x.synapses, corr=x.corr)
     elif x.cmd == "report":
         report(x.prep, x.extract_dir, x.reference, x.hybrid_spikes, x.out, x.tune_json, x.tstop,
                previous_spikes=x.previous_spikes)
     else:
         print(json.dumps(tune(x.prep, x.standard_dir, x.reference, x.out, x.tstop, x.gains, x.max_iter, x.tol,
-                              x.threads, parse_gain(x.pc_to_in_gain), x.population, x.target), indent=2))
+                              x.threads, parse_gain(x.pc_to_in_gain), x.population, x.target, x.synapses, x.corr), indent=2))
 
 
 if __name__ == "__main__":
