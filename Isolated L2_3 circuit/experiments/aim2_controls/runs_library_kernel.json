@@ -1,0 +1,32 @@
+{
+ "GLIF network": {
+  "spikes": "/home/user/v1/runs/l23_reference_spikes.h5",
+  "population": null,
+  "interneurons": "diverse",
+  "gain": null
+ },
+ "homogeneous": {
+  "spikes": "/home/user/v1/K/standard_inadj3/spikes.h5",
+  "population": "homogeneous",
+  "interneurons": "diverse",
+  "gain": 1.18
+ },
+ "heterogeneous, shuffled": {
+  "spikes": "/home/user/v1/A2/lib_tune_shuffled/gain_1.0039/spikes.h5",
+  "population": "shuffled",
+  "interneurons": "diverse",
+  "gain": 1.0039
+ },
+ "heterogeneous, depth-placed": {
+  "spikes": "/home/user/v1/A2/lib_final_depth/spikes.h5",
+  "population": "depth",
+  "interneurons": "diverse",
+  "gain": 1.0039
+ },
+ "heterogeneous, rheobase-matched": {
+  "spikes": "/home/user/v1/A2/lib_tune_rheo/gain_1.1250/spikes.h5",
+  "population": "rheo_matched",
+  "interneurons": "diverse",
+  "gain": 1.125
+ }
+}
