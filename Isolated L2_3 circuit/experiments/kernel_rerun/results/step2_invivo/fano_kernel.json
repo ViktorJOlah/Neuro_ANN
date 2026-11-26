@@ -1,0 +1,71 @@
+{
+ "fano_median": {
+  "GLIF network": 0.345679012345679,
+  "ANN-PC network, kernel layer": 0.34426229508196715
+ },
+ "fano_iqr": {
+  "GLIF network": [
+   0.20930232558139533,
+   0.5555555555555556
+  ],
+  "ANN-PC network, kernel layer": [
+   0.20187793427230044,
+   0.5730994152046784
+  ]
+ },
+ "n_cells": {
+  "GLIF network": 36533,
+  "ANN-PC network, kernel layer": 37422
+ },
+ "n_trials": {
+  "GLIF network": 10,
+  "ANN-PC network, kernel layer": 10
+ },
+ "silent_per_trial_0_5_3s": {
+  "GLIF network": 0.2962002961271563,
+  "ANN-PC network, kernel layer": 0.2795404677381951
+ },
+ "silent_all_trials": {
+  "GLIF network": 0.17145048789624845,
+  "ANN-PC network, kernel layer": 0.1484560358206825
+ },
+ "previous (PR 14 current path)": {
+  "fano_median": {
+   "in vivo (Neuropixels L2/3 RS)": 2.651282051282051,
+   "GLIF network": 0.345679012345679,
+   "ANN-PC network": 0.35042735042735035
+  },
+  "fano_iqr": {
+   "in vivo (Neuropixels L2/3 RS)": [
+    1.8550877192982451,
+    4.076073059360731
+   ],
+   "GLIF network": [
+    0.20930232558139533,
+    0.5555555555555556
+   ],
+   "ANN-PC network": [
+    0.20987654320987653,
+    0.574074074074074
+   ]
+  },
+  "n_cells": {
+   "in vivo (Neuropixels L2/3 RS)": 593,
+   "GLIF network": 36533,
+   "ANN-PC network": 36533
+  },
+  "n_trials": {
+   "GLIF network": 10,
+   "ANN-PC network": 10
+  },
+  "silent_per_trial_0.5_3s": {
+   "in vivo Poisson est.": 0.2849904486804025,
+   "GLIF network": 0.2962002961271563,
+   "ANN-PC network": 0.294762473910484
+  },
+  "silent_all_trials": {
+   "GLIF network": 0.17145048789624845,
+   "ANN-PC network": 0.15880264730542126
+  }
+ }
+}

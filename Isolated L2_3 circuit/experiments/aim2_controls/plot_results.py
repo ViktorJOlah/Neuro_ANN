@@ -17,7 +17,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 INK, MUTED, GRID = "#222222", "#6b6b6b", "#dddddd"
 COL = {"in vivo": INK, "homogeneous": "#2a78d6", "heterogeneous, shuffled": "#eb6834",
        "heterogeneous, depth-placed": "#1baf7a", "heterogeneous, rheobase-matched": "#6250d6",
-       "GLIF network": "#9a9a9a",
+       "heterogeneous, rheobase-matched (DC-gain corrected)": "#b04fc2", "GLIF network": "#9a9a9a",
        "homogeneous, homogeneous interneurons": "#2a78d6", "heterogeneous, homogeneous interneurons": "#eb6834"}
 
 
@@ -51,7 +51,8 @@ def main():
 
     # ---------- Figure 1: distributions vs in vivo -----------------------------------------------
     main_conds = [c for c in ("homogeneous", "heterogeneous, shuffled", "heterogeneous, depth-placed",
-                              "heterogeneous, rheobase-matched") if c in C]
+                              "heterogeneous, rheobase-matched",
+                              "heterogeneous, rheobase-matched (DC-gain corrected)") if c in C]
     fig, axs = plt.subplots(1, 3, figsize=(14, 4.2), gridspec_kw=dict(wspace=0.32, width_ratios=[1.3, 1, 1]))
     ax = axs[0]
     ccdf(ax, iv, f"in vivo, Neuropixels L2/3 RS (n={len(iv)})", INK)
@@ -69,7 +70,8 @@ def main():
             ax.bar(i, C[c][key], 0.6, color=COL[c])
             ax.errorbar(i, md, yerr=[[md - lo], [hi - md]], color=INK, capsize=3, lw=1)
         ax.set_xticks(xs, ["in vivo"] + [{"homogeneous": "homog.", "heterogeneous, shuffled": "het.\nshuffled",
-                                         "heterogeneous, depth-placed": "het.\ndepth", "heterogeneous, rheobase-matched": "het.\nrheo-\nmatched"}.get(c, c)
+                                         "heterogeneous, depth-placed": "het.\ndepth", "heterogeneous, rheobase-matched": "het.\nrheo-\nmatched",
+                                         "heterogeneous, rheobase-matched (DC-gain corrected)": "het.\nrheo +\nDC gain"}.get(c, c)
                                         for c in main_conds], fontsize=7.5)
         ax.set(ylabel=lab)
     axs[1].set_title("B  Top-10% spike share")

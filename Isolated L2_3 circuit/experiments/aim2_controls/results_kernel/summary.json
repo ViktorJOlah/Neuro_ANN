@@ -311,6 +311,48 @@
    },
    "KS_shape_active_vs_invivo": 0.21654427974763713,
    "interneuron_rate_hz_grating": 3.8572583906186817
+  },
+  "heterogeneous, rheobase-matched (DC-gain corrected)": {
+   "n": 56057,
+   "mean": 1.5276379399539755,
+   "median": 0.8,
+   "frac_silent": 0.3646288599104483,
+   "p90": 4.4,
+   "p99": 7.2,
+   "max": 14.0,
+   "top10_share": 0.3630299831376964,
+   "top1_share": 0.05277760910284138,
+   "sd_log10_active": 0.3803636328177356,
+   "skew_log10_active": -0.34533135447888064,
+   "at_invivo_n": {
+    "top10_share": [
+     0.33932051522476464,
+     0.36529782550558,
+     0.39309072969012754
+    ],
+    "p99": [
+     6.023999999999978,
+     6.823999999999978,
+     7.647999999999956
+    ],
+    "max": [
+     7.6,
+     9.2,
+     13.2
+    ],
+    "frac_silent": [
+     0.3277310924369748,
+     0.36470588235294116,
+     0.40172268907563
+    ],
+    "mean": [
+     1.3808067226890754,
+     1.5253781512605045,
+     1.6665546218487395
+    ]
+   },
+   "KS_shape_active_vs_invivo": 0.20886321174321892,
+   "interneuron_rate_hz_grating": 4.249090173877881
   }
  },
  "rank_test": {
@@ -645,6 +687,89 @@
    "r2_both": 0.7921072190425589,
    "top10_cells_homog_percentile_median": 0.8899245410921026,
    "spearman_rate_vs_depth": 0.0004422556662411705
+  },
+  "heterogeneous, rheobase-matched (DC-gain corrected)": {
+   "per_model": [
+    {
+     "model": "487661754",
+     "n": 7007,
+     "mean_hz": 2.719908662765806,
+     "frac_silent": 0.1291565577279863,
+     "share_of_top10_cells": 0.26625082074852263,
+     "share_of_spikes": 0.22255438209699796,
+     "rheobase_pa": 90.0
+    },
+    {
+     "model": "513531471",
+     "n": 7008,
+     "mean_hz": 0.8638698630136986,
+     "frac_silent": 0.4925799086757991,
+     "share_of_top10_cells": 0.03693368351936967,
+     "share_of_spikes": 0.0706955583477745,
+     "rheobase_pa": 150.0
+    },
+    {
+     "model": "521409057",
+     "n": 7007,
+     "mean_hz": 1.3426573426573427,
+     "frac_silent": 0.3650635079206508,
+     "share_of_top10_cells": 0.09241628365068943,
+     "share_of_spikes": 0.10986187858207178,
+     "rheobase_pa": 220.0
+    },
+    {
+     "model": "486262299",
+     "n": 7007,
+     "mean_hz": 1.3745112030826319,
+     "frac_silent": 0.3906093906093906,
+     "share_of_top10_cells": 0.10587655942219304,
+     "share_of_spikes": 0.11246829559945257,
+     "rheobase_pa": 500.0
+    },
+    {
+     "model": "502359001",
+     "n": 7007,
+     "mean_hz": 1.9928071928071929,
+     "frac_silent": 0.27286998715570143,
+     "share_of_top10_cells": 0.19107025607353906,
+     "share_of_spikes": 0.16305987752642617,
+     "rheobase_pa": 160.0
+    },
+    {
+     "model": "318808427",
+     "n": 7007,
+     "mean_hz": 2.4288283145426006,
+     "frac_silent": 0.19523333809048093,
+     "share_of_top10_cells": 0.2521339461588969,
+     "share_of_spikes": 0.1987369620761653,
+     "rheobase_pa": 120.0
+    },
+    {
+     "model": "382982932",
+     "n": 7007,
+     "mean_hz": 0.5939203653489368,
+     "frac_silent": 0.604110175538747,
+     "share_of_top10_cells": 0.01969796454366382,
+     "share_of_spikes": 0.04859706567890624,
+     "rheobase_pa": 120.0
+    },
+    {
+     "model": "502269786",
+     "n": 7007,
+     "mean_hz": 0.9046953046953047,
+     "frac_silent": 0.4673897531040388,
+     "share_of_top10_cells": 0.03562048588312541,
+     "share_of_spikes": 0.0740259800922055,
+     "rheobase_pa": 200.0
+    }
+   ],
+   "spearman_rate_vs_minus_rheobase": 0.16136796234186684,
+   "r2_model_identity": 0.1596672354777744,
+   "spearman_rate_vs_homogeneous_rate": 0.8359649748672519,
+   "r2_input_drive": 0.6672669520019892,
+   "r2_both": 0.8266551090047476,
+   "top10_cells_homog_percentile_median": 0.9254954778172217,
+   "spearman_rate_vs_depth": 0.0019398187823102262
   }
  },
  "depth_vs_input": {
@@ -686,6 +811,11 @@
    "Pvalb": 4.878305432183122,
    "Sst": 4.569622641509434,
    "Htr3a": 2.9287100103199175
+  },
+  "heterogeneous, rheobase-matched (DC-gain corrected)": {
+   "Pvalb": 5.715476597198497,
+   "Sst": 5.071132075471698,
+   "Htr3a": 3.0035087719298246
   }
  }
 }

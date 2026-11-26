@@ -150,6 +150,12 @@ interneurons are unchanged GLIF cells, so the synapses onto them keep Allen's we
 "Interneuron rates" below). `tune` searches a until the mean PC rate matches the GLIF network,
 with `--pc-to-in-gain` held fixed.
 
+**Synapses (default from 2026-11-26: kernel layer).** `run`/`tune --synapses kernel` (the default) turns each port's
+Allen alpha PSC into a conductance (normalised at −55 mV; E_exc 0, E_inh −80 mV). The conductance enters the Izhikevich
+layer through the per-cell membrane correction (`--corr`, or each model's `corr` in a population file), not through the
+CNN-LSTM, whose input is then zero. `--synapses current` is the older path (PR 9/14). Tuned kernel settings: `--gain 1.18
+--pc-to-in-gain "Pvalb=1.06,Sst=1.04,Htr3a=1.04"`. See `experiments/kernel_rerun/README.md`.
+
 **Checks.**
 - Loop check: replaying the GLIF network's own PC spikes through the loop (`run --replay-pc`)
   reproduces all 120,075 interneuron spikes of the GLIF network exactly. The PC input current

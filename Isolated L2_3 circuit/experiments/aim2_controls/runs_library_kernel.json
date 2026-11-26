@@ -28,5 +28,11 @@
   "population": "rheo_matched",
   "interneurons": "diverse",
   "gain": 1.125
+ },
+ "heterogeneous, rheobase-matched (DC-gain corrected)": {
+  "spikes": "/home/user/v1/A2/lib_tune_rheo_dc/gain_1.3503/spikes.h5",
+  "population": "rheo_matched_dc",
+  "interneurons": "diverse",
+  "gain": 1.3503
  }
 }
