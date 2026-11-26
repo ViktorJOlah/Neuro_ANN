@@ -1,0 +1,50 @@
+{
+  "_note": "Experimental targets for the Experimental fully active L2/3 model. 'src' gives the source as cited in Viktor's review (v3) or in Olah et al. 2025 eLife 96002 (figure). Mouse V1 L2/3 unless noted.",
+  "passive": {
+    "rin_ctrl_MOhm": {"value": 74.8, "src": "Olah 2025 Fig 2f (Cs+ experiment, mouse V1)"},
+    "rin_hcn_block_MOhm": {"value": 105.0, "src": "Olah 2025 Fig 2f"},
+    "vrest_ctrl_mV": {"value": -76.75, "src": "Olah 2025 Fig 2e"},
+    "dvrest_hcn_block_mV": {"value": -3.54, "src": "Olah 2025 Fig 2e (-76.75 -> -80.29)"},
+    "sag_mV_at_-4pA_pF": {"value": 1.5, "src": "Olah 2025 Fig 2c (read off plot, ~1-2 mV); mean sag 0.7 mV Fig 2d"},
+    "ss_mV_at_-4pA_pF_ctrl": {"value": -14.0, "src": "Olah 2025 Fig 2b (read off plot)"},
+    "ss_mV_at_-4pA_pF_cs": {"value": -29.0, "src": "Olah 2025 Fig 2b (read off plot)"},
+    "tau_ms_cs": {"value": 13.5, "src": "Olah 2025 Fig 2g (Cs+, flat ~13-14 ms)"}
+  },
+  "epsp_pathway_halfwidth_ms": {
+    "L4_control": {"value": 10.11, "src": "Olah 2025 Fig 4h"},
+    "L4_HCN": {"value": 23.61, "src": "Olah 2025 Fig 4h (Cs+)"},
+    "L4_HCN+NMDA": {"value": 11.8, "src": "Olah 2025 Fig 4h (Cs+ + MK-801)"},
+    "L4_NMDA": {"value": 8.97, "src": "Olah 2025 Fig 4h (MK-801)"},
+    "L1_control": {"value": 14.25, "src": "Olah 2025 Fig 4h"},
+    "L1_HCN": {"value": 16.22, "src": "Olah 2025 Fig 4h"},
+    "L1_HCN+NMDA": {"value": 19.92, "src": "Olah 2025 Fig 4h"},
+    "L1_NMDA": {"value": 13.62, "src": "Olah 2025 Fig 4h"}
+  },
+  "epsp_site_halfwidth_ms": {
+    "proximal_control": {"value": 17.42, "src": "Olah 2025 Fig 3c (<100 um)"},
+    "proximal_HCN": {"value": 40.95, "src": "Olah 2025 Fig 3c (ZD7288)"},
+    "distal_control": {"value": 22.68, "src": "Olah 2025 Fig 3c (>100 um)"},
+    "distal_HCN": {"value": 28.65, "src": "Olah 2025 Fig 3c"}
+  },
+  "bap": {
+    "amp_at_150um_mV": {"value": 75, "src": "Waters et al. 2003 (rat L2/3; review 5.2)"},
+    "length_constant_um": {"value": 317, "src": "Waters et al. 2003"},
+    "velocity_m_s": {"value": 0.22, "src": "Gooch 2022; Olah 2025a (rat L2/3, 0.21-0.23)"},
+    "train_decline_at_250um_pct": {"value": 20, "src": "Larkum 2007 (10 APs, slice)"},
+    "ca_peak_distance_um": {"value": [50, 100], "src": "Waters 2003, Krieger 2009, Park 2019 (~80 um)"}
+  },
+  "dendritic_spikes": {
+    "isolated_beyond_um": {"value": 170, "src": "Larkum 2007"},
+    "dend_spike_halfwidth_ms": {"value": [1.5, 2.6], "src": "Gooch 2022 (Na+, 1.5 ms); Larkum 2007 (2.6 ms)"},
+    "dend_current_threshold_nA": {"value": 1.14, "src": "Ledergerber & Larkum 2012"},
+    "max_somatic_APs_per_dendritic_spike": {"value": 2, "src": "Larkum 2007 (single AP or doublet, never >=3)"},
+    "ttx_abolishes": {"value": true, "src": "Gooch 2022"},
+    "critical_frequency_Hz": {"value": 128, "src": "Larkum 2007"},
+    "fourap_unmasks_ca": {"value": true, "src": "Gooch 2022 (human L2/3; untested in rodent: a model prediction here)"}
+  },
+  "nmda": {
+    "basal_supralinearity_base_pct": {"value": 128, "src": "Branco & Hausser 2011 (rat L2/3)"},
+    "basal_supralinearity_tip_pct": {"value": 209, "src": "Branco & Hausser 2011"},
+    "sEPSP_amplification_-80_to_-55": {"value": 1.69, "src": "Olah 2025 Fig 4c (MK-801: 1.43)"}
+  }
+}
