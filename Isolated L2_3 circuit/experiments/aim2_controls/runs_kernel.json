@@ -1,0 +1,50 @@
+{
+ "GLIF network": {
+  "spikes": "/home/user/v1/runs/l23_reference_spikes.h5",
+  "population": null,
+  "interneurons": "diverse",
+  "gain": null
+ },
+ "homogeneous": {
+  "spikes": "/home/user/v1/K/standard_inadj3/spikes.h5",
+  "population": "homogeneous",
+  "interneurons": "diverse",
+  "gain": 1.18
+ },
+ "heterogeneous, shuffled": {
+  "spikes": "/home/user/v1/A2/tune_shuffled/gain_1.6212/spikes.h5",
+  "population": "shuffled",
+  "interneurons": "diverse",
+  "gain": 1.6212
+ },
+ "heterogeneous, depth-placed": {
+  "spikes": "/home/user/v1/A2/final_depth/spikes.h5",
+  "population": "depth",
+  "interneurons": "diverse",
+  "gain": 1.6212
+ },
+ "homogeneous, homogeneous interneurons": {
+  "spikes": "/home/user/v1/A2/tune_homog_in/gain_1.1924/spikes.h5",
+  "population": "homogeneous",
+  "interneurons": "homogeneous",
+  "gain": 1.1924
+ },
+ "heterogeneous, homogeneous interneurons": {
+  "spikes": "/home/user/v1/A2/final_shuffled_homog_in/spikes.h5",
+  "population": "shuffled",
+  "interneurons": "homogeneous",
+  "gain": 1.6212
+ },
+ "heterogeneous, rheobase-matched": {
+  "spikes": "/home/user/v1/A2/tune_rheo/gain_1.0513/spikes.h5",
+  "population": "rheo_matched",
+  "interneurons": "diverse",
+  "gain": 1.0513
+ },
+ "heterogeneous, rheobase-matched (DC-gain corrected)": {
+  "spikes": "/home/user/v1/A2/tune_rheo_dc/gain_1.3666/spikes.h5",
+  "population": "rheo_matched_dc",
+  "interneurons": "diverse",
+  "gain": 1.3666
+ }
+}

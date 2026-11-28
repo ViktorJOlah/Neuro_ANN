@@ -38,12 +38,13 @@ def front_dc(S, dc, T):
 
 
 _RUN = {}
+CORR = None      # membrane correction from experiments/kernel_calibration (--corr), applied to the synaptic current
 
 
 def simulate(S, K, G, stim, dc, V, seed_ms=F.EVAL_SEED, chunk=10, isyn=False):
     key = (id(S), id(K), id(G))
     if key not in _RUN:
-        _RUN[key] = tf.function(lambda x, ev, Vg, Sm, M, cu: SK.run_syn(S, K, x, ev, Vg, Sm, M, cu, False, return_isyn=True),
+        _RUN[key] = tf.function(lambda x, ev, Vg, Sm, M, cu: SK.run_syn(S, K, x, ev, Vg, Sm, M, cu, False, return_isyn=True, corr=CORR),
                                 reduce_retracing=True)
     vms, iss = [], []
     for k in range(0, len(stim), chunk):
@@ -61,6 +62,7 @@ def main():
     ap.add_argument("--cell", required=True)
     ap.add_argument("--variant", choices=("clean", "soft"), default="clean")
     ap.add_argument("--ncomp", type=int, default=1, help="difference-of-exponential components per pathway")
+    ap.add_argument("--corr", default="", help="calibration.json from experiments/kernel_calibration: fixed membrane correction from S alone")
     ap.add_argument("--signed", action="store_true", help="components 2.. enter with a minus sign (membrane correction)")
     ap.add_argument("--nmda", action="store_true", help="add an NMDA-like slow kernel with Mg block")
     ap.add_argument("--delay", type=int, nargs=2, default=[2, 2], help="L1, L2/3 delay (ms) from pulse to conductance onset")
@@ -74,20 +76,26 @@ def main():
     ap.add_argument("--event-win", type=int, default=25)
     ap.add_argument("--batch", type=int, default=24)
     ap.add_argument("--init", default="", help="start from this results folder (kernel.json, gain weights)")
+    ap.add_argument("--minutes", type=float, default=0, help="training data budget (0 = all training traces)")
     ap.add_argument("--tag", default="")
     ap.add_argument("--threads", type=int, default=2)
     ap.add_argument("--out", default=os.path.join(F.HERE, "..", "results" + F.SET))
     args = ap.parse_args()
     tf.keras.utils.set_random_seed(0)
     t0 = time.time()
-    name = f"kernel_{args.variant}{'_nmda' if args.nmda else ''}{f'_k{args.ncomp}' if args.ncomp > 1 else ''}{'s' if args.signed else ''}{args.tag}"
+    name = f"kernel_{args.variant}{'_nmda' if args.nmda else ''}{f'_k{args.ncomp}' if args.ncomp > 1 else ''}{'s' if args.signed else ''}{'_corr' if args.corr else ''}{f'_{args.minutes:g}min' if args.minutes else ''}{args.tag}"
     out = os.path.join(args.out, args.cell, name)
     os.makedirs(out, exist_ok=True)
     log = lambda *a: print(f"[{args.cell} {name} {time.time()-t0:5.0f}s]", *a, flush=True)
 
+    global CORR
+    if args.corr:
+        CORR = {k: tf.constant(float(v)) for k, v in json.load(open(args.corr))["correction"].items()}
     data = F.load_data(args.cell)
     n, T = data["V"].shape
     test, train = F.split(n)
+    if args.minutes:
+        train = train[:max(1, int(round(args.minutes * 60000 / T)))]
     S = F.load_somatic(args.cell)
     init = json.load(open(os.path.join(args.init, "kernel.json")))["init"] if args.init else None
     K = SK.KernelLayer(args.ncomp, args.nmda, args.delay, init, args.signed)
@@ -106,7 +114,7 @@ def main():
     @tf.function(reduce_retracing=True)
     def step(s, x, Vg, Sm, M, W, one_step):
         with tf.GradientTape() as tape:
-            vm, _ = SK.run_syn(S, K, x, SK.events(K, s, G), Vg, Sm, M, tf.constant(clamp_ms), one_step)
+            vm, _ = SK.run_syn(S, K, x, SK.events(K, s, G), Vg, Sm, M, tf.constant(clamp_ms), one_step, corr=CORR)
             e = tf.minimum(vm[:, clamp_ms:], F.TRAIN_CLIP) - tf.minimum(Vg[:, clamp_ms:], F.TRAIN_CLIP)
             Mi = M[:, clamp_ms:]
             if one_step:
@@ -160,7 +168,7 @@ def main():
     kj = K.as_json()
     init_out = dict(tau_r=kj["tau_r"], tau_d=kj["tau_d"], w=kj["w"], E_rev=kj["E_rev"],
                     lg_U=np.asarray(K.lg_U.numpy()).tolist(), tau_rec=kj["tau_rec"])
-    json.dump(dict(values=kj, init=init_out, ncomp=args.ncomp, nmda=args.nmda, delay=args.delay, signed=args.signed), open(os.path.join(out, "kernel.json"), "w"), indent=1)
+    json.dump(dict(values=kj, init=init_out, ncomp=args.ncomp, nmda=args.nmda, delay=args.delay, signed=args.signed, corr=args.corr), open(os.path.join(out, "kernel.json"), "w"), indent=1)
     if G is not None:
         G.save_weights(os.path.join(out, "gain.weights.h5"))
     np.savez_compressed(os.path.join(out, "test_predictions.npz"), vm=vm.astype(np.float32), test=test, isyn=isyn.astype(np.float32))

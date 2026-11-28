@@ -1,0 +1,52 @@
+{
+  "gain": 1.18,
+  "pc_to_in_gain": {
+    "L2/3 Pvalb": 1.06,
+    "L2/3 Sst": 1.04,
+    "L2/3 Htr3a": 1.04
+  },
+  "per_class_rates_0_tstop": {
+    "L2/3 E": {
+      "glif_hz": 1.3759625619161449,
+      "previous_hz": 1.359598266050627,
+      "hybrid_hz": 1.3774372513691422
+    },
+    "L2/3 Pvalb": {
+      "glif_hz": 5.696276050563717,
+      "previous_hz": 5.658694909463614,
+      "hybrid_hz": 5.650950916752078
+    },
+    "L2/3 Sst": {
+      "glif_hz": 4.7809748427672965,
+      "previous_hz": 4.692924528301887,
+      "hybrid_hz": 4.7105345911949685
+    },
+    "L2/3 Htr3a": {
+      "glif_hz": 2.727210182318542,
+      "previous_hz": 2.6587547299621606,
+      "hybrid_hz": 2.7754385964912283
+    }
+  },
+  "distribution_grating": {
+    "GLIF network": {
+      "mean_rate_E_hz": 1.5816972010632038,
+      "silent_fraction_E": 0.295074656153558,
+      "top10_share_E": 0.327817452619517,
+      "median_rate_E_hz": 1.2
+    },
+    "ANN PCs, PR 9 (gain 0.85, PC\u2192IN 1.00)": {
+      "mean_rate_E_hz": 1.5755463189253793,
+      "silent_fraction_E": 0.27810978111565016,
+      "top10_share_E": 0.30387543534676026,
+      "median_rate_E_hz": 1.2
+    },
+    "ANN PCs (gain 1.18, PC\u2192IN 1.06/1.04/1.04)": {
+      "mean_rate_E_hz": 1.5380202294093512,
+      "silent_fraction_E": 0.27764596749736875,
+      "top10_share_E": 0.3045902886676379,
+      "median_rate_E_hz": 1.2
+    }
+  },
+  "pc_rate_correlation_pearson": 0.9633039902722447,
+  "pc_rate_correlation_spearman": 0.9660602693580745
+}

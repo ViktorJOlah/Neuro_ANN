@@ -1,0 +1,46 @@
+{
+ "models": [
+  {
+   "name": "487661754",
+   "dir": "../../../Standard",
+   "corr": "../../kernel_calibration/results/487661754/calibration.json"
+  },
+  {
+   "name": "513531471",
+   "dir": "../../real_cells/results/513531471/standard",
+   "corr": "../../kernel_calibration/results/fits8_513531471/calibration.json"
+  },
+  {
+   "name": "521409057",
+   "dir": "../../real_cells/results/521409057/standard",
+   "corr": "../../kernel_calibration/results/fits8_521409057/calibration.json"
+  },
+  {
+   "name": "486262299",
+   "dir": "../../data_budget/results/486262299/full",
+   "corr": "../../kernel_calibration/results/fits8_486262299/calibration.json"
+  },
+  {
+   "name": "502359001",
+   "dir": "../../data_budget/results/502359001/full",
+   "corr": "../../kernel_calibration/results/fits8_502359001/calibration.json"
+  },
+  {
+   "name": "318808427",
+   "dir": "../../real_cells/results/318808427/standard",
+   "corr": "../../kernel_calibration/results/fits8_318808427/calibration.json"
+  },
+  {
+   "name": "382982932",
+   "dir": "../../real_cells/results/382982932/standard",
+   "corr": "../../kernel_calibration/results/fits8_382982932/calibration.json"
+  },
+  {
+   "name": "502269786",
+   "dir": "../../real_cells/results/502269786/standard",
+   "corr": "../../kernel_calibration/results/fits8_502269786/calibration.json"
+  }
+ ],
+ "assignment": "assign_shuffled.npy",
+ "input_scale": "input_scale_rheo_dc.npy"
+}

@@ -87,10 +87,15 @@ def build_gain_net(width=16):
     return keras.Model(inp, y)
 
 
-def run_syn(S, K, x, ev, V_gt, gt_spk, gt_in, clamp_until, one_step=False, return_isyn=False):
+def run_syn(S, K, x, ev, V_gt, gt_spk, gt_in, clamp_until, one_step=False, return_isyn=False, i_ext=None, corr=None):
     """S.run (Standard Izhikevich layer + branches) with the kernel layer's current added to the Izhikevich input.
     x: front-end current (B, T) from the somatic DC only; ev: event amplitudes (B, T, 2) = intensity x gain,
-    already aligned so ev[:, t] arrives at step t (delay applied by the caller)."""
+    already aligned so ev[:, t] arrives at step t (delay applied by the caller).
+    i_ext: optional (B, T) current (pA) added to the synaptic current, e.g. current-based PSCs.
+    corr: optional membrane correction, a property of S (see experiments/kernel_calibration): the summed synaptic
+    current I is replaced by k0 I + c1 LP(tau1) I + c2 LP(tau2) I (LP = unit-area exponential low-pass, c signed),
+    a smooth stand-in for what the front end does to current transients. DC gain = k0 + c1 + c2.
+    dict of k0, c1, tau1, c2, tau2 (scalars or (B,))."""
     P, Q = S.p, S.q
     a, b, ts, Vs, V0, g = P["a"], P["b"], P["time_scale"], P["Vs"], P["V0"], P["g"]
     c = (Q["c_mV"] - V0) / Vs
@@ -115,6 +120,10 @@ def run_syn(S, K, x, ev, V_gt, gt_spk, gt_in, clamp_until, one_step=False, retur
     xr = tf.zeros([n, 2, K.ncomp]); xd = tf.zeros([n, 2, K.ncomp])
     xrn = tf.zeros([n, 2]); xdn = tf.zeros([n, 2])
     R = tf.ones([n, 2])
+    if corr is not None:
+        c_k0, c_1, c_2 = corr["k0"], corr["c1"], corr["c2"]
+        c_d1, c_d2 = tf.exp(-1.0 / corr["tau1"]), tf.exp(-1.0 / corr["tau2"])
+        z1 = tf.zeros([n]); z2 = tf.zeros([n])
     th_dec = tf.exp(-1.0 / tf.maximum(Q["th_tau"], 1.0))
     vm_ta, s_ta, i_ta = (tf.TensorArray(tf.float32, size=T) for _ in range(3))
     h = 0.5 * ts
@@ -146,6 +155,12 @@ def run_syn(S, K, x, ev, V_gt, gt_spk, gt_in, clamp_until, one_step=False, retur
             B = 1.0 / (1.0 + tf.exp(-0.062 * vclip) * (1.0 / 3.57))
             isyn = isyn + tf.reduce_sum(nrmn * (xdn - xrn) * B * (0.0 - vclip), -1)
         isyn = isyn * K.on
+        if i_ext is not None:
+            isyn = isyn + i_ext[:, t]
+        if corr is not None:                                           # unit-area exponential low-passes of I
+            z1 = z1 * c_d1 + (1.0 - c_d1) * isyn
+            z2 = z2 * c_d2 + (1.0 - c_d2) * isyn
+            isyn = c_k0 * isyn + c_1 * z1 + c_2 * z2
         xt = x[:, t] + g * (ib + isyn)
         for _ in range(2):
             v = v + h * (0.04 * v * v + 5.0 * v + 140.0 - u + xt)

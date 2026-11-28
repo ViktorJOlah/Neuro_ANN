@@ -1,0 +1,196 @@
+{
+ "models": [
+  {
+   "name": "314857059",
+   "dir": "../../population/library/314857059",
+   "corr": "../../kernel_calibration/results/314857059/calibration.json"
+  },
+  {
+   "name": "318808427",
+   "dir": "../../population/library/318808427",
+   "corr": "../../kernel_calibration/results/318808427/calibration.json"
+  },
+  {
+   "name": "323452245",
+   "dir": "../../population/library/323452245",
+   "corr": "../../kernel_calibration/results/323452245/calibration.json"
+  },
+  {
+   "name": "323788096",
+   "dir": "../../population/library/323788096",
+   "corr": "../../kernel_calibration/results/323788096/calibration.json"
+  },
+  {
+   "name": "324532703",
+   "dir": "../../population/library/324532703",
+   "corr": "../../kernel_calibration/results/324532703/calibration.json"
+  },
+  {
+   "name": "356237593",
+   "dir": "../../population/library/356237593",
+   "corr": "../../kernel_calibration/results/356237593/calibration.json"
+  },
+  {
+   "name": "382982932",
+   "dir": "../../population/library/382982932",
+   "corr": "../../kernel_calibration/results/382982932/calibration.json"
+  },
+  {
+   "name": "473611755",
+   "dir": "../../population/library/473611755",
+   "corr": "../../kernel_calibration/results/473611755/calibration.json"
+  },
+  {
+   "name": "476086391",
+   "dir": "../../population/library/476086391",
+   "corr": "../../kernel_calibration/results/476086391/calibration.json"
+  },
+  {
+   "name": "477129850",
+   "dir": "../../population/library/477129850",
+   "corr": "../../kernel_calibration/results/477129850/calibration.json"
+  },
+  {
+   "name": "480798873",
+   "dir": "../../population/library/480798873",
+   "corr": "../../kernel_calibration/results/480798873/calibration.json"
+  },
+  {
+   "name": "483027960",
+   "dir": "../../population/library/483027960",
+   "corr": "../../kernel_calibration/results/483027960/calibration.json"
+  },
+  {
+   "name": "484509440",
+   "dir": "../../population/library/484509440",
+   "corr": "../../kernel_calibration/results/484509440/calibration.json"
+  },
+  {
+   "name": "485887209",
+   "dir": "../../population/library/485887209",
+   "corr": "../../kernel_calibration/results/485887209/calibration.json"
+  },
+  {
+   "name": "486510127",
+   "dir": "../../population/library/486510127",
+   "corr": "../../kernel_calibration/results/486510127/calibration.json"
+  },
+  {
+   "name": "486753754",
+   "dir": "../../population/library/486753754",
+   "corr": "../../kernel_calibration/results/486753754/calibration.json"
+  },
+  {
+   "name": "486776965",
+   "dir": "../../population/library/486776965",
+   "corr": "../../kernel_calibration/results/486776965/calibration.json"
+  },
+  {
+   "name": "487661754",
+   "dir": "../../population/library/487661754",
+   "corr": "../../kernel_calibration/results/487661754/calibration.json"
+  },
+  {
+   "name": "489751692",
+   "dir": "../../population/library/489751692",
+   "corr": "../../kernel_calibration/results/489751692/calibration.json"
+  },
+  {
+   "name": "489923501",
+   "dir": "../../population/library/489923501",
+   "corr": "../../kernel_calibration/results/489923501/calibration.json"
+  },
+  {
+   "name": "490376252",
+   "dir": "../../population/library/490376252",
+   "corr": "../../kernel_calibration/results/490376252/calibration.json"
+  },
+  {
+   "name": "490982660",
+   "dir": "../../population/library/490982660",
+   "corr": "../../kernel_calibration/results/490982660/calibration.json"
+  },
+  {
+   "name": "500955426",
+   "dir": "../../population/library/500955426",
+   "corr": "../../kernel_calibration/results/500955426/calibration.json"
+  },
+  {
+   "name": "501022658",
+   "dir": "../../population/library/501022658",
+   "corr": "../../kernel_calibration/results/501022658/calibration.json"
+  },
+  {
+   "name": "502100978",
+   "dir": "../../population/library/502100978",
+   "corr": "../../kernel_calibration/results/502100978/calibration.json"
+  },
+  {
+   "name": "502269786",
+   "dir": "../../population/library/502269786",
+   "corr": "../../kernel_calibration/results/502269786/calibration.json"
+  },
+  {
+   "name": "502359001",
+   "dir": "../../population/library/502359001",
+   "corr": "../../kernel_calibration/results/502359001/calibration.json"
+  },
+  {
+   "name": "505512874",
+   "dir": "../../population/library/505512874",
+   "corr": "../../kernel_calibration/results/505512874/calibration.json"
+  },
+  {
+   "name": "513510227",
+   "dir": "../../population/library/513510227",
+   "corr": "../../kernel_calibration/results/513510227/calibration.json"
+  },
+  {
+   "name": "513579447",
+   "dir": "../../population/library/513579447",
+   "corr": "../../kernel_calibration/results/513579447/calibration.json"
+  },
+  {
+   "name": "514530024",
+   "dir": "../../population/library/514530024",
+   "corr": "../../kernel_calibration/results/514530024/calibration.json"
+  },
+  {
+   "name": "515056927",
+   "dir": "../../population/library/515056927",
+   "corr": "../../kernel_calibration/results/515056927/calibration.json"
+  },
+  {
+   "name": "517974394",
+   "dir": "../../population/library/517974394",
+   "corr": "../../kernel_calibration/results/517974394/calibration.json"
+  },
+  {
+   "name": "521399472",
+   "dir": "../../population/library/521399472",
+   "corr": "../../kernel_calibration/results/521399472/calibration.json"
+  },
+  {
+   "name": "521409057",
+   "dir": "../../population/library/521409057",
+   "corr": "../../kernel_calibration/results/521409057/calibration.json"
+  },
+  {
+   "name": "521958756",
+   "dir": "../../population/library/521958756",
+   "corr": "../../kernel_calibration/results/521958756/calibration.json"
+  },
+  {
+   "name": "571306690",
+   "dir": "../../population/library/571306690",
+   "corr": "../../kernel_calibration/results/571306690/calibration.json"
+  },
+  {
+   "name": "584254833",
+   "dir": "../../population/library/584254833",
+   "corr": "../../kernel_calibration/results/584254833/calibration.json"
+  }
+ ],
+ "assignment": "assign_shuffled.npy",
+ "input_scale": "input_scale_rheo_dc.npy"
+}

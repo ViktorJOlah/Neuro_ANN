@@ -12,6 +12,7 @@ folder is named `L2_3` because `/` can't be used in a folder name.)
 | `training/` | The ANN training pipeline (CNN-LSTM models, curriculum and two-stage training). A copy of the repo-level `training/`. |
 | `experiments/izhikevich_subthreshold/` | Izhikevich layer alone fitted to the spike-free simulations (current in, Vm out): code, metrics and plots for two variants. |
 | `circuit/` | Step 5: the L2/3 circuit cut out of the Allen V1 point network, with the other layers, LGN and background replayed as fixed spike streams. See `circuit/README.md`. |
+| `experiments/kernel_rerun/` | The rerun of steps 0-4 with the synaptic kernel layer, which is the default architecture from 2026-11-26. |
 | `izhikevich/` | A batched, differentiable Izhikevich (2003) top layer, checked to be bit-identical to the published model. See `izhikevich/README.md`. |
 
 The repo-level `simulations/` and `training/` folders are unchanged, so old paths and Colab

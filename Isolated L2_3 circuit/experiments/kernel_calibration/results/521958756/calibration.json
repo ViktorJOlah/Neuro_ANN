@@ -1,0 +1,29 @@
+{
+ "cell": "521958756",
+ "model_dir": null,
+ "rheobase_pA": 110.0,
+ "correction": {
+  "k0": 0.9189714193344116,
+  "c1": -0.09313157945871353,
+  "tau1": 6.372541904449463,
+  "c2": -0.07454299926757812,
+  "tau2": 44.048370361328125
+ },
+ "best_iter": 74,
+ "test": {
+  "rmse_mV": 1.0335780382156372,
+  "rough_ratio": 0.8883187174797058,
+  "spikes_model": 1,
+  "spikes_target": 3,
+  "sd_target_mV": 6.322046756744385
+ },
+ "test_no_correction": {
+  "rmse_mV": 1.7312145233154297,
+  "rough_ratio": 0.9873982667922974,
+  "spikes_model": 8,
+  "spikes_target": 3,
+  "sd_target_mV": 5.928874492645264
+ },
+ "iters": 150,
+ "wall_s": 588.3605678081512
+}

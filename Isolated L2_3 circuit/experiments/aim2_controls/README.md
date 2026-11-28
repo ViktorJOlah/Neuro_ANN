@@ -170,6 +170,16 @@ A matched pair was first run with every PC→IN synapse at 0.82, the PR 9 rule b
 (`old_pcin082_*`, not in `runs.json`). It gave the same picture: top-10% share 0.32 → 0.50, p99 6.0 → 7.2 Hz,
 63% silent, and an R² of 0.66 for model identity vs 0.13 for input.
 
+## Rerun with the synaptic kernel layer (default from 2026-11-26)
+
+`results_kernel/` (8 fits) and `results_library_kernel/` (library) repeat every condition with synaptic input through the
+kernel layer and a per-model membrane correction (`populations*/*_kernel.json`, made by `make_kernel_populations.py`;
+runs in `runs_kernel.json`, `runs_library_kernel.json`). The conclusions hold: shuffled top-10% share 0.43 (8 fits) and
+0.63 (library), identity R² 0.68 / 0.81 against input drive 0.12 / 0.05, and no depth effect. The rheobase-matched control
+no longer cancels heterogeneity, because each model's correction scales synaptic drive by a different DC gain. A
+`rheo_matched_dc` control that also divides by the DC gain restores the 8-fit result (0.36) but not the library one (0.44).
+Details: `../kernel_rerun/README.md`.
+
 ## Reproduce
 
 ```
