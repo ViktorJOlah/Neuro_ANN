@@ -1,0 +1,135 @@
+{
+ "LGd": {
+  "fano_all": {
+   "median": 5.680672268907563,
+   "n": 1021
+  },
+  "fano_still": {
+   "median": 4.615125424746049,
+   "n": 858
+  },
+  "fano_run": {
+   "median": 3.550320795573021,
+   "n": 526
+  },
+  "fano_detrended": {
+   "median": 4.477547645002444,
+   "n": 1021
+  },
+  "rate_mod_run_median": 1.4540927482103954
+ },
+ "VISp L2/3": {
+  "fano_all": {
+   "median": 2.690835736839893,
+   "n": 476
+  },
+  "fano_still": {
+   "median": 2.2565375071578546,
+   "n": 429
+  },
+  "fano_run": {
+   "median": 2.2448979591836733,
+   "n": 283
+  },
+  "fano_detrended": {
+   "median": 2.208012490133511,
+   "n": 476
+  },
+  "rate_mod_run_median": 1.2810425877796991
+ },
+ "VISp L4": {
+  "fano_all": {
+   "median": 3.0958033064857995,
+   "n": 669
+  },
+  "fano_still": {
+   "median": 2.271232876712328,
+   "n": 595
+  },
+  "fano_run": {
+   "median": 2.276252319109462,
+   "n": 429
+  },
+  "fano_detrended": {
+   "median": 2.3336996336996334,
+   "n": 669
+  },
+  "rate_mod_run_median": 1.5121951219512197
+ },
+ "VISp L5": {
+  "fano_all": {
+   "median": 3.041345413221729,
+   "n": 966
+  },
+  "fano_still": {
+   "median": 2.064814814814815,
+   "n": 855
+  },
+  "fano_run": {
+   "median": 1.9962714392244594,
+   "n": 631
+  },
+  "fano_detrended": {
+   "median": 2.1899346527525805,
+   "n": 966
+  },
+  "rate_mod_run_median": 1.4833333333333334
+ },
+ "VISp L6a": {
+  "fano_all": {
+   "median": 3.1583011583011578,
+   "n": 399
+  },
+  "fano_still": {
+   "median": 2.258760107816712,
+   "n": 349
+  },
+  "fano_run": {
+   "median": 2.1250000000000004,
+   "n": 251
+  },
+  "fano_detrended": {
+   "median": 2.1951459049182005,
+   "n": 399
+  },
+  "rate_mod_run_median": 1.4552286423254164
+ },
+ "VISp L6b": {
+  "fano_all": {
+   "median": 9.264285714285714,
+   "n": 5
+  },
+  "fano_still": {
+   "median": 3.9210526315789473,
+   "n": 3
+  },
+  "fano_run": {
+   "median": 4.975080928923294,
+   "n": 4
+  },
+  "fano_detrended": {
+   "median": 5.610342261904762,
+   "n": 5
+  },
+  "rate_mod_run_median": 3.6779352226720645
+ },
+ "VISp nan": {
+  "fano_all": {
+   "median": 3.776682406769222,
+   "n": 46
+  },
+  "fano_still": {
+   "median": 2.5783258723599634,
+   "n": 46
+  },
+  "fano_run": {
+   "median": 2.663796477495108,
+   "n": 22
+  },
+  "fano_detrended": {
+   "median": 3.3183782577358425,
+   "n": 46
+  },
+  "rate_mod_run_median": 1.7350450937950939
+ }
+}

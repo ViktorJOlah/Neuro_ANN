@@ -1,0 +1,52 @@
+{
+ "LGd": {
+  "shared_sd_trial": 0.2132813217123204,
+  "shared_var_bin": 0.06890767312207527,
+  "frac_state": 0.5631510784987792,
+  "beta_running": 0.08179608980310613,
+  "beta_pupil_sd": 0.12489872745657361,
+  "timescale_s": 3.5,
+  "n_units": 49.0,
+  "sessions": 25
+ },
+ "L2/3": {
+  "shared_sd_trial": 0.2914249381662916,
+  "shared_var_bin": 0.3168579072019441,
+  "frac_state": 0.18713490036446417,
+  "beta_running": 0.25716307953816225,
+  "beta_pupil_sd": 0.004245272651440287,
+  "timescale_s": 0.5,
+  "n_units": 11.0,
+  "sessions": 31
+ },
+ "L4": {
+  "shared_sd_trial": 0.21979589409582315,
+  "shared_var_bin": 0.136180302614138,
+  "frac_state": 0.38112074008500596,
+  "beta_running": 0.24247048214188838,
+  "beta_pupil_sd": 0.05002514833126942,
+  "timescale_s": 0.5,
+  "n_units": 14.5,
+  "sessions": 44
+ },
+ "L5": {
+  "shared_sd_trial": 0.18591388321289626,
+  "shared_var_bin": 0.07968410609744166,
+  "frac_state": 0.5168296192580892,
+  "beta_running": 0.17305711182841096,
+  "beta_pupil_sd": 0.09338368297791601,
+  "timescale_s": 0.5,
+  "n_units": 21.0,
+  "sessions": 43
+ },
+ "L6": {
+  "shared_sd_trial": 0.19737214192438918,
+  "shared_var_bin": 0.05664091332952583,
+  "frac_state": 0.7766805062201781,
+  "beta_running": 0.22330894858989128,
+  "beta_pupil_sd": 0.10299237275061805,
+  "timescale_s": 1.0,
+  "n_units": 10.0,
+  "sessions": 33
+ }
+}
